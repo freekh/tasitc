@@ -2,11 +2,11 @@
 const template = (routes) => {
   return `<!DOCTYPE html>
 <html>
-<head>
-</head>
-<body>
-</body>
-<script src='${routes.javascript}'></script>
+  <head>
+  </head>
+  <body>
+  </body>
+  <script src='${routes.javascript}'></script>
 </html>
 `
 }

@@ -15,8 +15,11 @@
     "browserify-incremental": "^3.0.1",
     "bunyan": "^1.5.1",
     "express": "^4.13.3",
+    "global": "^4.3.0",
     "mercury": "^14.0.0",
-    "nodemon": "^1.8.0"
+    "node-sass": "^3.4.1",
+    "nodemon": "^1.8.0",
+    "xtend": "^4.0.1"
   },
   "engines": {
     "node": ">=4.2.1"

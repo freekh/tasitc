@@ -3,10 +3,11 @@ const template = (routes) => {
   return `<!DOCTYPE html>
 <html>
   <head>
+    <link rel="stylesheet" type="text/css" href="${routes.css}">
   </head>
   <body>
   </body>
-  <script src='${routes.javascript}'></script>
+  <script src="${routes.javascript}"></script>
 </html>
 `
 }

@@ -11,10 +11,11 @@ module.exports = {
     })
   },
   css: (req, res) => {
-    res.contentType('application/javascript')
-    build.css(res, true)
-    res.on('error', (err) => {
-      log.error(err.stack)
+    res.contentType('text/css')
+    build.css().then((css) => {
+      res.send(css.toString())
+    }).catch(err => {
+      log.error(err)
       res.sendStatus(500)
     })
   }

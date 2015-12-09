@@ -1,0 +1,72 @@
+
+last, <snapshot>, current
+
+html (html-head (css (tingeer/github))) (body ) #fail on html (head )
+
+cd google
+ls threads | sort --date | head | cat
+cd ..
+ls
+--save--
+
+curl
+google freekh@<tab> {mail, drive, search} {ls, search} |
+install (google/freekh@gmail google/fredrik@tingeer.com) mail
+cat google
+edit google (open https://tsitc.com/tsitc/google)
+github/{id, auth}/freekh/{repos, ls, }
+env { oauth: {google: { key: 123, secret: 456 } } }
+install google freekh@gmail.com ((ln (which /google/current) ~/google) auth freekh@gmail.com ~/google/freekh@gmail.com)
+cd google
+google auth freekh@gmail.com #(read 'password')
+| share #share results, publish script
+
+respond (webhook) , curl, open, lns, read, js
+
+
+
+||
+
+
+listen ~/bar > (keys google)
+request https://test & listen ~/bar
+
+eval 1 + 1 //2
+eval "1 + 1 + 1" //3
+
+(eval "(name) => `hello ${name}`") fredrik
+
+"(name) => `hello ${name}`" | publish ~/test
+test 'fredrik' // hello fredrik
+
+publish ("(name) => 'hello' + world")
+
+https://tsitc.com/freekh/test
+
+eval (using (request https://.../browserify/raw) browserify) > ~/browserify
+publish ~/browserify //https://tsitc/freekh/browserify
+
+
+[request a, request b] | browserify > ~/foo
+
+
+html (head (script (url ~/test))) (body (div.Faen { test: ''} [ ]))
+ln (html (body ~/test)) ~/
+publish (ln ($?) ~/public/(hash $?) ) // random output
+
+~/google/drive Example.js > ~/docs/important //~/docs/important/123cabc
+
+ln ~/google/drive Example.js ~/docs/important
+
+snapshot ~/docs/important ~/docs/important/1 ( cat (which ~/docs/important) > ~/docs/important/1 )
+
+~/docs/important
+
+
+
+
+
+link
+permissions grant ~/
+
+read "Get password"

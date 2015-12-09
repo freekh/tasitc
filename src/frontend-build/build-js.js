@@ -26,7 +26,7 @@ module.exports = (stream, incremental, options) => {
     })
   }
 
-  b.add(frontendDir + '/app.js')
+  b.add(frontendDir + '/main.js')
 
   const bundle = b.bundle()
 

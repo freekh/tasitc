@@ -4,8 +4,8 @@ const spa = require('./spa')
 const routes = {
   frontend: {
     html: '/',
-    javascript: '/js/main',
-    css: '/css/main'
+    javascript: '/js/main.js',
+    css: '/css/main.css'
   }
 }
 

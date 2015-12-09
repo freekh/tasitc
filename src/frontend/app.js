@@ -5,12 +5,20 @@ const hg = require('mercury')
 const xtend = require('xtend')
 const h = hg.h
 
+const cli = require('./components/cli')
+
 let App = () => {
-  return hg.state({})
+  return hg.state({
+    cli: cli()
+  })
 }
 
 App.render = (state) => {
-  return h('div.container')
+  return h('div.container', [
+    cli.render(state.cli)
+  ])
 }
 
-hg.app(document.body, App(), App.render)
+module.exports = () => {
+  hg.app(document.body, App(), App.render)
+}

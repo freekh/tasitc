@@ -1,6 +1,9 @@
 const sass = require('node-sass')
 
-module.exports = () => {
+const path = require('path')
+const env = require('../shared/env')
+
+module.exports = (stream) => {
   return new Promise((resolve, reject) => {
     sass.render({
       file: path.resolve(env.appDir + '/src/frontend/main.scss')
@@ -8,7 +11,7 @@ module.exports = () => {
       if (err) {
         reject(err)
       } else {
-        resolve(result)
+        resolve(result.css)
       }
     });
   })

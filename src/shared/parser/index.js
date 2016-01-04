@@ -1,10 +1,10 @@
 
 const builtIns = {
   'listen': (path) => {
-
+    console.log('listen on ', path)
   },
   'request': (path) => {
-
+    console.log('request from ', path)
   }
 }
 

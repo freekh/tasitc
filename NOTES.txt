@@ -29,10 +29,16 @@ respond (webhook) , curl, open, lns, read, js
 
 
 listen ~/bar > (keys google)
-request https://test & listen ~/bar
 
+
+(request https://test) & (listen ~/bar > (keys google))
+
+request https://test & listen ~/bar > (keys google)
 eval 1 + 1 //2
+
 eval "1 + 1 + 1" //3
+
+echo 'fredrik' | ~/test
 
 (eval "(name) => `hello ${name}`") fredrik
 

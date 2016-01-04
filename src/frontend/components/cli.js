@@ -12,7 +12,15 @@ let cli = () => {
     channels: {
       parse: (state, data) => {
         const input = data[InputName]
-        console.log(parser.parse(input))
+        const astLike = parser.parse(input)
+        const failed = astLike.find(node => !node.success)
+        if (!failed) {
+          astLike.forEach(expr => {
+            expr.cmd(expr.args)
+          })
+        } else {
+          console.log('failed at', failed)
+        }
       }
     }
   })

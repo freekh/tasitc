@@ -3,11 +3,13 @@ const request = require('request-promise')
 
 const builtIns = {
   'listen': (path) => {
-    console.log(path)
-    request.get(env.server + '/cmd/listen', {
+    return request.get(env.server + '/cmd/listen', {
       qs: { path }
-    }).then((data) => {
-      //TODO
+    })
+  },
+  'eval': (data) => {
+    return request.get(env.server + '/cmd/eval', {
+      qs: { data }
     })
   },
   'request': (path) => {

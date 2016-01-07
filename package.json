@@ -20,6 +20,7 @@
     "node-sass": "^3.4.1",
     "nodemon": "^1.8.0",
     "parsimmon": "^0.7.0",
+    "request-promise": "^1.0.2",
     "xtend": "^4.0.1"
   },
   "engines": {

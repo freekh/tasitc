@@ -1,5 +1,9 @@
+
+const port = process.env['PORT'] || 8080
+
 module.exports = {
-  port: process.env['PORT'] || 8080,
+  port,
+  server: process.env['SERVER'] || 'http://localhost:' + port,
   appDir: process.cwd(),
   tmpDir: process.cwd() + '/.tmp/'
 }

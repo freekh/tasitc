@@ -1,7 +1,14 @@
+const env = require('../env')
+const request = require('request-promise')
 
 const builtIns = {
   'listen': (path) => {
-    console.log('listen on ', path)
+    console.log(path)
+    request.get(env.server + '/cmd/listen', {
+      qs: { path }
+    }).then((data) => {
+      //TODO
+    })
   },
   'request': (path) => {
     console.log('request from ', path)

@@ -5,6 +5,7 @@
   "author": "",
   "license": "ISC",
   "scripts": {
+    "test": "./node_modules/nodeunit/bin/nodeunit src/test/index.js",
     "start": "node node_modules/nodemon/bin/nodemon.js  src/backend/app.js | node_modules/bunyan/bin/bunyan"
   },
   "dependencies": {
@@ -24,5 +25,8 @@
   },
   "engines": {
     "node": ">=4.2.1"
+  },
+  "devDependencies": {
+    "nodeunit": "^0.9.1"
   }
 }

@@ -17,45 +17,31 @@ const comment = P.string('#').then(P.takeWhile(l => {
 const ignore = P.whitespace.or(comment.many())
 const lexeme = p => p.skip(optWhitespace)
 
-const id = lexeme(regex(/[a-zA-Z_][a-zA-z0-9_]*/))
-const exprEnd = P.string('\\n', '\n').or(P.eof)
-const params = lparen
-
-const p1 = id.map(v => {
-  return { value: v, type: 'command' }
-}).skip(P.eof)
-
-const p2 = id.map(v => {
-  return { value: v, type: 'command' }
-}).skip(lparen).then(
-  id.skip(string('\'')).then(regex(/.[^\']*/)).skip(string('\'')).skip(rparen)
-)
-
-const expr = lazy('expr', () => ignore.then(
-  alt(
-    p1, p2
+const id = lexeme(regex(/[a-zA-Z_][a-zA-z0-9_]*/)).map(value => {
+  return {
+    type: "id",
+    value
+  }
+})
+const str = string('\'').then(regex(/.[^\']*/)).skip(string('\'')).map(value => {
+  return {
+    type: 'string',
+    value
+  }
+})
 
 
-  )
-))
+let expr;
+let form = lazy('form', () => lparen.then(P.seq(id, expr.many())).skip(rparen))
+expr = lazy('expression', () => {
+  return alt(
+    str, form
+  ).skip(P.optWhitespace)
+})
 const command = ignore.then(expr.many())
 
 module.exports = {
   parse: (input) => {
-    // const lparen = string('(')
-    // const rparen = string(')')
-    //
-    // const expr = lazy('expression', () => {
-    //   return form.or(atom)
-    // })
-    //
-    // const number = lexeme(regex(/[0-9]+/)).map(parseInt)
-    // const id = lexeme(regex(/[a-z_]\w*/i))
-    //
-    // const atom = number.or(id)
-    //
-    // const form = lparen.then(expr.many()).skip(lparen)
-    // return alt(expr, ).parse(input)
     console.log(input)
 
     const result = command.parse(input)

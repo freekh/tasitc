@@ -48,16 +48,22 @@ module.exports = {
       }
       // testUtils(test).equals(parser.parse(`html (
       // )`), asts.html1)
-      console.log(parser.parse(`#comment
-        html`))
-      console.log(parser.parse(`#comment
-          (h 'div')`))
-      console.log(parser.parse(`#comment
-          html (h 'div')`))
-      console.log(parser.parse(`#comment
-        html (
-          h 'div'
-        )`))
+
+
+
+      // console.log(parser.parse(`#comment
+      //   html`))
+      console.log(JSON.stringify(parser.parse(`(h 'div' (h 'div.Foo'))`), null, 2))
+      console.log(JSON.stringify(parser.parse(`(h)`), null, 2))
+      // console.log(parser.parse(`#comment
+      //     html (h 'div')`))
+      // console.log(parser.parse(`#comment
+      //   html (
+      //     h 'div'
+      //   )`))
+
+
+
 
       // testUtils(test).equals(parser.parse(`html (
       //   div '#Foo.Bar' [

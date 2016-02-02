@@ -34,9 +34,13 @@ const str = string('\'').then(regex(/.[^\']*/)).skip(string('\'')).map(value => 
 let expr;
 let form = lazy('form', () => lparen.then(P.seq(id, expr.many())).skip(rparen))
 expr = lazy('expression', () => {
-  return alt(
-    str, form
-  ).skip(P.optWhitespace)
+  return ignore.then(alt(
+    str, form, alt(
+      id.skip(string('\n').or(P.eof)),
+      P.seq(id.skip(lparen).skip(string('\n')), ignore.then(P.seq(id, expr.many()))).skip(rparen),
+      P.seq(id, form)
+    )
+  )).skip(P.optWhitespace)
 })
 const command = ignore.then(expr.many())
 

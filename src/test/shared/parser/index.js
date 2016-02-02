@@ -51,20 +51,24 @@ module.exports = {
 
 
 
-      // console.log(parser.parse(`#comment
-      //   html`))
+      console.log(JSON.stringify(parser.parse(`#comment
+        html`)))
+      console.log(JSON.stringify(parser.parse(`#comment
+        (h 'div' (h 'div.Foo'))`), null, 2))
       console.log(JSON.stringify(parser.parse(`(h 'div' (h 'div.Foo'))`), null, 2))
       console.log(JSON.stringify(parser.parse(`(h)`), null, 2))
-      // console.log(parser.parse(`#comment
-      //     html (h 'div')`))
-      // console.log(parser.parse(`#comment
-      //   html (
-      //     h 'div'
-      //   )`))
+      console.log(JSON.stringify(parser.parse(`#comment
+          html (h 'div')`), null, 2))
+      console.log(JSON.stringify(parser.parse(`#comment
+        html (
+          h 'div'
+        )`), null, 2))
+      console.log(JSON.stringify(parser.parse(`div '#Foo.Bar' (
+        div '.Zoo' 'hello'
+      )`), null, 2))
 
 
-
-
+      //
       // testUtils(test).equals(parser.parse(`html (
       //   div '#Foo.Bar' [
       //     div '.Zoo' 'hello'

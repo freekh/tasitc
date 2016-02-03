@@ -50,23 +50,44 @@ module.exports = {
       // )`), asts.html1)
 
 
+      const exprs = [
+        `#comment
+          html`,
 
-      console.log(JSON.stringify(parser.parse(`#comment
-        html`)))
-      console.log(JSON.stringify(parser.parse(`#comment
-        (h 'div' (h 'div.Foo'))`), null, 2))
-      console.log(JSON.stringify(parser.parse(`(h 'div' (h 'div.Foo'))`), null, 2))
-      console.log(JSON.stringify(parser.parse(`(h)`), null, 2))
-      console.log(JSON.stringify(parser.parse(`#comment
-          html (h 'div')`), null, 2))
-      console.log(JSON.stringify(parser.parse(`#comment
-        html (
-          h 'div'
-        )`), null, 2))
-      console.log(JSON.stringify(parser.parse(`div '#Foo.Bar' (
-        div '.Zoo' 'hello'
-      )`), null, 2))
+        `#comment
+          (h 'div' (h 'div.Foo'))`,
 
+        `(h 'div' (h 'div.Foo' (string 'blah \\' bah')))`,
+
+        `(h 'div' (h "div.Foo" (string "blah '\\"' bah")))`, //I dont think it works if we do a double escape, so fix that...
+
+        `(h)`,
+
+        `#comment
+            html (h 'div')`,
+
+        `#comment
+          html (
+            h 'div'
+          )`,
+
+        `div '#Foo.Bar' [ #comment
+            div '.Zoo' 'hello',
+            div 'Test-Class'
+          ]` //TODO: div 'foo' [][][] works?
+        //TOOD: ?? `div .Zoo`
+      ]
+
+      exprs.forEach(expr => {
+        console.log('##############################')
+        console.log(expr)
+        console.log('##############################')
+
+        const res = parser.parse(expr)
+        if (true || !res.status) {
+          console.log(JSON.stringify(res, null, 2))
+        }
+      })
 
       //
       // testUtils(test).equals(parser.parse(`html (

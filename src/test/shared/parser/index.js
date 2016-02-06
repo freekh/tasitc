@@ -54,6 +54,12 @@ module.exports = {
         `#comment
           html`,
 
+        `ls ~/dir`,
+        `ls '~/my dir'`,
+        `(ls ~/dir)`,
+        `(ls '~/my dir')`,
+        `(ls '~/my dir' 'blah me' 'blah me2')`,
+
         `#comment
           (h 'div' (h 'div.Foo'))`,
 
@@ -71,11 +77,61 @@ module.exports = {
             h 'div'
           )`,
 
-        `div '#Foo.Bar' [ #comment
-            div '.Zoo' 'hello',
+        `['test' 'cool']`,
+
+        `div '#Foo.Bar' [
+            div '.Zoo' 'hello'
             div 'Test-Class'
-          ]` //TODO: div 'foo' [][][] works?
-        //TOOD: ?? `div .Zoo`
+          ]`, //TODO: div 'foo' [][][] works?
+        // // //TOOD: ?? `div .Zoo`
+        // //
+
+        `cat ./foo.json | $.bar`,
+
+        `(cat ./foo.json) | $.bar`,
+
+        `(~/google/mail --sort='name' --account='foo')`,
+
+        `(~/google/mail --sort='name' --account='foo') | li ?.title`,
+
+
+        `html (
+          ul (~/google/mail --account=(account freekh@gmail.com) | li ?.title)
+        )`,
+
+        `~/google/mail --account=(account freekh@gmail.com) > ~/gmail`, //not needed
+
+        `h { "style": { "color": "red" } } 'test'`,
+
+        `html [
+          h1 { "style": { "color": "red" } } (~/google/drive/cat --account=(account freekh@gmail.com) Document.gdoc |
+            ~/google/drive/gdoc2html | $ '.Title'
+          )
+          ul (~/google/mail --account=(account freekh@gmail.com) | li ?.title)
+        ]`,
+        `html [
+          h1 (~/google/drive/cat --account=(account ?.account) Document.gdoc |
+            ~/google/drive/gdoc2html | $ 'h1'
+          )
+          ul (~/google/mail --account=(account ?.account) | li ?.title)
+        ] > post ~/public/stuff`,
+
+        `{ "elem": "ul.Mails" } | html [
+          h1 (~/google/drive/cat --account=(account ?.account) Document.gdoc |
+            ~/google/drive/gdoc2html | $ '.Title'
+          )
+          h ?.elem
+        ] (
+            js/tsitc-inject { "mails": url (~/google/mail --account=(account ?.account) | li ?.title), "elem": ?.elem }
+        ) (js """
+         $(document).load(() => {
+           xhr.open(tsitc.mails));
+           xhr.load = () => {
+             JSON.parse(xhr.response).forEach(mail => $(tsitc.elem).appendChild($(<li>).text(mail.title)))
+           };
+           xhr.send()
+         })
+        """ | /babel)  (js (url /jquery)) > post ~/public/fancy-stuff`
       ]
 
       exprs.forEach(expr => {

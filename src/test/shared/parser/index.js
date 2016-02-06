@@ -1,3 +1,5 @@
+'use strict'
+
 const Parser = require('src/main/shared/parser')
 
 const testUtils = (test) => {
@@ -76,62 +78,63 @@ module.exports = {
           html (
             h 'div'
           )`,
-
+        //
         `['test' 'cool']`,
+        //
+        // `div '#Foo.Bar' [
+        //     div '.Zoo' 'hello'
+        //     div 'Test-Class'
+        //   ]`, //TODO: div 'foo' [][][] works?
+        // // // //TOOD: ?? `div .Zoo`
+        // // //
+        //
+        // `cat ./foo.json | $.bar`,
+        //
+        // `(cat ./foo.json) | $.bar`,
+        //
+        // `(~/google/mail --sort='name' --account='foo')`,
+        //
+        // `(~/google/mail --sort='name' --account='foo') | li ?.title`,
+        //
+        //
+        // `html (
+        //   ul (~/google/mail --account=(account freekh@gmail.com) | li ?.title)
+        // )`,
+        //
+        // `~/google/mail --account=(account freekh@gmail.com) > ~/gmail`, //not needed
+        //
+        // `h { "style": { "color": "red" } } 'test'`,
+        //
+        // `html [
+        //   h1 { "style": { "color": "red" } } (~/google/drive/cat --account=(account freekh@gmail.com) Document.gdoc |
+        //     ~/google/drive/gdoc2html | $ '.Title'
+        //   )
+        //   ul (~/google/mail --account=(account freekh@gmail.com) | li ?.title)
+        // ]`,
+        // `html [
+        //   h1 (~/google/drive/cat --account=(account ?.account) Document.gdoc |
+        //     ~/google/drive/gdoc2html | $ 'h1'
+        //   )
+        //   ul (~/google/mail --account=(account ?.account) | li ?.title)
+        // ] > post ~/public/stuff`,
+        //
+        // `{ "elem": "ul.Mails" } | html [
+        //   h1 (~/google/drive/cat --account=(account ?.account) Document.gdoc |
+        //     ~/google/drive/gdoc2html | $ '.Title'
+        //   )
+        //   h ?.elem
+        // ] (
+        //     js/tsitc-inject { "mails": url (~/google/mail --account=(account ?.account) | li ?.title), "elem": ?.elem }
+        // ) (js """
+        //  $(document).load(() => {
+        //    xhr.open(tsitc.mails));
+        //    xhr.load = () => {
+        //      JSON.parse(xhr.response).forEach(mail => $(tsitc.elem).appendChild($(<li>).text(mail.title)))
+        //    };
+        //    xhr.send()
+        //  })
+        // """ | /babel)  (js (url /jquery)) > post ~/public/fancy-stuff`,
 
-        `div '#Foo.Bar' [
-            div '.Zoo' 'hello'
-            div 'Test-Class'
-          ]`, //TODO: div 'foo' [][][] works?
-        // // //TOOD: ?? `div .Zoo`
-        // //
-
-        `cat ./foo.json | $.bar`,
-
-        `(cat ./foo.json) | $.bar`,
-
-        `(~/google/mail --sort='name' --account='foo')`,
-
-        `(~/google/mail --sort='name' --account='foo') | li ?.title`,
-
-
-        `html (
-          ul (~/google/mail --account=(account freekh@gmail.com) | li ?.title)
-        )`,
-
-        `~/google/mail --account=(account freekh@gmail.com) > ~/gmail`, //not needed
-
-        `h { "style": { "color": "red" } } 'test'`,
-
-        `html [
-          h1 { "style": { "color": "red" } } (~/google/drive/cat --account=(account freekh@gmail.com) Document.gdoc |
-            ~/google/drive/gdoc2html | $ '.Title'
-          )
-          ul (~/google/mail --account=(account freekh@gmail.com) | li ?.title)
-        ]`,
-        `html [
-          h1 (~/google/drive/cat --account=(account ?.account) Document.gdoc |
-            ~/google/drive/gdoc2html | $ 'h1'
-          )
-          ul (~/google/mail --account=(account ?.account) | li ?.title)
-        ] > post ~/public/stuff`,
-
-        `{ "elem": "ul.Mails" } | html [
-          h1 (~/google/drive/cat --account=(account ?.account) Document.gdoc |
-            ~/google/drive/gdoc2html | $ '.Title'
-          )
-          h ?.elem
-        ] (
-            js/tsitc-inject { "mails": url (~/google/mail --account=(account ?.account) | li ?.title), "elem": ?.elem }
-        ) (js """
-         $(document).load(() => {
-           xhr.open(tsitc.mails));
-           xhr.load = () => {
-             JSON.parse(xhr.response).forEach(mail => $(tsitc.elem).appendChild($(<li>).text(mail.title)))
-           };
-           xhr.send()
-         })
-        """ | /babel)  (js (url /jquery)) > post ~/public/fancy-stuff`
       ]
 
       exprs.forEach(expr => {
@@ -139,9 +142,30 @@ module.exports = {
         console.log(expr)
         console.log('##############################')
 
-        const res = parser.parse(expr)
-        if (true || !res.status) {
-          console.log(JSON.stringify(res, null, 2))
+        const result = parser.parse(expr)
+        if (true || !result.status) {
+          console.log(JSON.stringify(result, null, 2))
+        }
+        if (result.status === false) {
+          let indents = ''
+          let column = 0
+          let line = 1
+          for (let i = 0; i < result.index; i++) {
+            if (input[i] === '\n') {
+              indents = ''
+              column = 0
+              line += 1
+            } else {
+              indents += '~'
+              column += 1
+            }
+          }
+          console.log('\x1b[91m', '\nFAILURE: line: ' + line + ', column: ' + column+ '\n','\x1b[0m')
+          console.log(' ' + input.split('\n').slice(line - 3 > 0 ? line - 3 : 0, line).join('\n '))
+          console.log('\x1b[91m', indents + '^','\x1b[0m')
+          console.log(' ' + input.split('\n').slice(line, line + 3 <= input.length ? line + 3 : input.length).join('\n '))
+          const expected = uniq(result.expected).join(' or ')
+          console.log('\x1b[91m', `Got: '${input[result.index] ? input[result.index].replace('\n', '\\n'): 'EOF'}'. Expected: ${expected}\n`,'\x1b[0m')
         }
       })
 

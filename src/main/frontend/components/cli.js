@@ -42,23 +42,15 @@ let cli = () => {
 }
 
 cli.render = (state) => {
-  // const inputClass = (state.failed ? `.${CssClass}-failed` : '')
-  // return h(`div.${CssClass}`, [
-  //   state.result ? h('div', String(state.result)): h('span'),
-  //   h('input' + inputClass, {
-  //     type: 'text',
-  //     name: InputName,
-  //     'ev-keyup': hg.sendKey(state.channels.keyup, null, {key: ENTER}),
-  //     'ev-input': hg.sendChange(state.channels.parse)
-  //   })
-  // ])
-  return h('div', [
-    h('div', [
-
-    ]),
-    h('div', [
-      
-    ])
+  const inputClass = (state.failed ? `.${CssClass}-failed` : '')
+  return h(`div.${CssClass}`, [
+    state.result ? h('div', String(state.result)): h('span'),
+    h('input' + inputClass, {
+      type: 'text',
+      name: InputName,
+      'ev-keyup': hg.sendKey(state.channels.keyup, null, {key: ENTER}),
+      'ev-input': hg.sendChange(state.channels.parse)
+    })
   ])
 }
 

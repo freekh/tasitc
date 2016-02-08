@@ -1,9 +1,4 @@
-/*--
-Ad crusta per nubes and all that...
-
-In any case, what we hope, 
-
---*/
+'use strict'
 
 const document = require('global/document')
 const hg = require('mercury')
@@ -27,7 +22,3 @@ App.render = (state) => {
 module.exports = () => {
   hg.app(document.body, App(), App.render)
 }
-
-/*--
-Try listening to Niki & The Dove; Mother protect
---*/

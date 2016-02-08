@@ -6,7 +6,7 @@ const env = require('../shared/env')
 module.exports = (stream) => {
   return new Promise((resolve, reject) => {
     sass.render({
-      file: path.resolve(env.appDir + '/src/frontend/main.scss')
+      file: path.resolve(env.appDir + '/src/main/frontend/main.scss')
     }, function(err, result) {
       if (err) {
         reject(err)

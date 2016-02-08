@@ -10,7 +10,7 @@ const path = require('path')
 const env = require('../shared/env')
 
 module.exports = (stream, incremental, options) => {
-  const frontendDir = path.resolve(env.appDir + '/src/frontend')
+  const frontendDir = path.resolve(env.appDir + '/src/main/frontend')
 
   let b = browserify(
     xtend(browserifyInc.args, options || {

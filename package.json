@@ -5,8 +5,8 @@
   "author": "",
   "license": "ISC",
   "scripts": {
-    "test": "./node_modules/nodeunit/bin/nodeunit src/test/index.js",
-    "start": "node node_modules/nodemon/bin/nodemon.js  src/main/backend/app.js | node_modules/bunyan/bin/bunyan"
+    "test": "node --use_strict ./node_modules/nodeunit/bin/nodeunit src/test/index.js",
+    "start": "node --use_strict node_modules/nodemon/bin/nodemon.js  src/main/backend/app.js | node_modules/bunyan/bin/bunyan"
   },
   "dependencies": {
     "babel-core": "^5.8.24",

@@ -8,6 +8,20 @@ const testUtils = (test) => {
   }
 }
 
+const uniq = array => {
+    const seen = {};
+    const out = [];
+    let j = 0;
+    for(let i = 0; i < array.length; i++) {
+         const item = array[i]
+         if(seen[item] !== 1) {
+               seen[item] = 1
+               out[j++] = item
+         }
+    }
+    return out
+}
+
 module.exports = {
     'basic parser eval': (test) => {
 
@@ -53,33 +67,37 @@ module.exports = {
 
 
       const exprs = [
-        `#comment
-          html`,
+        // `;;comment
+        //   html`,
 
-        `ls ~/dir`,
-        `ls '~/my dir'`,
-        `(ls ~/dir)`,
-        `(ls '~/my dir')`,
-        `(ls '~/my dir' 'blah me' 'blah me2')`,
+        ` 
+   ls ~/dir -sort-by name`,
+        `  
 
-        `#comment
-          (h 'div' (h 'div.Foo'))`,
+ (ls ~/dir) -sort-by name` 
+        // `ls '~/my dir'`, //('ls '~/my dir')
+        // `(ls ~/dir)`, //(ls ~/dir)
+        // `(ls '~/my dir')`,
+        // `(ls '~/my dir' 'blah me' 'blah me2')`, //
 
-        `(h 'div' (h 'div.Foo' (string 'blah \\' bah')))`,
+        // `#comment
+        //   (h 'div' (h 'div.Foo'))`,
 
-        `(h 'div' (h "div.Foo" (string "blah '\\"' bah")))`, //I dont think it works if we do a double escape, so fix that...
+        // `(h 'div' (h 'div.Foo' (string 'blah \\' bah')))`,
 
-        `(h)`,
+        // `(h 'div' (h "div.Foo" (string "blah '\\"' bah")))`, //I dont think it works if we do a double escape, so fix that...
 
-        `#comment
-            html (h 'div')`,
+        // `(h)`,
 
-        `#comment
-          html (
-            h 'div'
-          )`,
+        // `#comment
+        //     html (h 'div')`,
+
+        // `#comment
+        //   html (
+        //     h 'div'
+        //   )`,
         //
-        `['test' 'cool']`,
+        // `['test' 'cool']`,
         //
         // `div '#Foo.Bar' [
         //     div '.Zoo' 'hello'
@@ -151,7 +169,7 @@ module.exports = {
           let column = 0
           let line = 1
           for (let i = 0; i < result.index; i++) {
-            if (input[i] === '\n') {
+            if (expr[i] === '\n') {
               indents = ''
               column = 0
               line += 1
@@ -161,11 +179,11 @@ module.exports = {
             }
           }
           console.log('\x1b[91m', '\nFAILURE: line: ' + line + ', column: ' + column+ '\n','\x1b[0m')
-          console.log(' ' + input.split('\n').slice(line - 3 > 0 ? line - 3 : 0, line).join('\n '))
+          console.log(' ' + expr.split('\n').slice(line - 3 > 0 ? line - 3 : 0, line).join('\n '))
           console.log('\x1b[91m', indents + '^','\x1b[0m')
-          console.log(' ' + input.split('\n').slice(line, line + 3 <= input.length ? line + 3 : input.length).join('\n '))
+          console.log(' ' + expr.split('\n').slice(line, line + 3 <= expr.length ? line + 3 : expr.length).join('\n '))
           const expected = uniq(result.expected).join(' or ')
-          console.log('\x1b[91m', `Got: '${input[result.index] ? input[result.index].replace('\n', '\\n'): 'EOF'}'. Expected: ${expected}\n`,'\x1b[0m')
+          console.log('\x1b[91m', `Got: '${expr[result.index] ? expr[result.index].replace('\n', '\\n'): 'EOF'}'. Expected: ${expected}\n`,'\x1b[0m')
         }
       })
 

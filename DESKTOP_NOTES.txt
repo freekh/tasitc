@@ -1,0 +1,49 @@
+
+
+help
+
+tutorial
+
+install google
+
+
+google/mail/list
+
+[
+  {},
+  {},
+  {}
+]
+
+google/mail/list | mail2html
+
+
+html (
+  h 'div' 'hei og haa'
+) > ~/public/hei
+
+https://tsitc.com/freekh/public/hei
+
+
+
+google/mail/list | mail2html > ~/public/mymails
+
+
+
+
+html (
+  h 'ul' (~/google/drive/Spreedsheet1.gsheet | gsheet2json | $.name | h 'li' )
+)
+
+bind (
+  as name (~/google/drive/Spreedsheet1.gsheet | gsheet2json)
+  as email ()
+)
+
+~/psql/heroku/tingeer "select email where name = ?.name" > ~/public/foo
+
+https://tsitc.com/freekh/public/foo?name=fredrik
+
+
+
+

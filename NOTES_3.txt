@@ -1,0 +1,64 @@
+eval, request, >, |, ?, $, listen
+
+every function is translated into eval, request and listen.
+- eval transforms an function to data
+- request does a http request on eval
+- listen waits for a http request and eval and outputs the data
+
+an function used whitespaces to seperate its arguments.
+multi-line functions, are called blocks are defined using ().
+a single line outside of a block, is also a valid function.
+
+the first argument of an function will be transformed into a request. the parameters of the request is defined by the other arguments. E.g. ls dir, is transformed a request that hits the 'ls' service in the current path or using an alias with the parameter dir. (TODO: this is too dense).
+the order of the argument matters, unless the argument is a named-parameter. an example of a named-parameter: -sort=(date).
+
+to create a new function the > character can be used.
+an function can define its arguments using the ? character. 
+
+
+the | character is called a projection? and is used to pipe/transform the output of the left-hand function and puts it as the last argument in the right-hand function. ls | sort will put the output of ls as the first argument to sort.
+it is possible to manipulate the output of a pipe by using the $ character. 
+
+
+objects are defined using the json. to access the values of a json, use the pipe and $ character with a '.' or [], like this: { foo: 1 } | $.foo or { foo: 1 } | $[foo] the values of the json key-pairs may be an function. therefore an object is not an atom, it is an function.
+
+all functions return objects. there is a special rule for html objects, which is that (<selector>) will return the node matching the <selector>. e.g. (html div.Foo blah)('.Foo') returns 'blah'. This is equivalent to html div.Foo blah | $('.Foo')
+
+ordered sequantial collections can by []. we call the vectors. each element of an vector maybe an function therefore an collection is not an atom, it is an function. To access the value of a [1 2 3] | $[2] returns 3.
+
+
+for [
+   :one [1 2 3]
+   :two [4 5 6]
+   -sum=(+ ?one ?two)
+   if > ?sum (+ 3 1)
+] [ (+ ?sum 1) ]
+
+reduce + [1 2] => 3
+reduce + 1 [1 2] => 4
+
+accepts-elem :elem [{foo: 1, bar: 2}, {foo: 3, bar: 4}]
+[{foo: 1, bar: 2}, { foo: 3, bar: 4}] | accepts-elem -elem=$
+[accepts-elem -elem={foo: 1, bar: 2}, accepts-elem -elem={foo: 3, bar: 4}]
+
+for [
+  :elem [{foo: 1, bar: 2} {foo: 3, bar: 4}]
+] [ accepts-elem -elem=?elem ]
+for [
+  :elem [{foo: 1, bar: 2} {foo: 3, bar: 4}]
+] [ accepts-elem ]
+
+for [
+  :path [~/foo ~/bar]
+  :res ls ?path 
+] [ ?res.name ]
+
+[~/foo ~/bar] | ls | $.name
+
+[1 2 3] | -one=$ |
+  [4 5 6] | -two=$ |
+    filter > (+ ?one ?two) | + ?one ?two
+
+strings can be single-quoted (string interpolated) or double-quoted (not string interpolated) or triple-douple quoted (""") for multi-line strings (not string interpolated).
+
+comments can be done like this ;;. multi-line comments starts with ;;; and ends with ;;;.

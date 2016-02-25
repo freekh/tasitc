@@ -1,9 +1,10 @@
 const ast = require('./ast')
+const grammar = require('./grammar')
 
 const parser = () => {
   return {
     parse: (input) => {
-      return ast.parse(input)
+      return grammar.parse(input)
     }
   }
 }

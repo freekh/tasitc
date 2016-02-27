@@ -70,17 +70,17 @@ form = P.lazy('form', () => {
 })
 
 const expr = form.chain(form => {
-  const pipe = P.optWhitespace.then(
+  const save = P.optWhitespace.then(
     P.alt(
       P.eof,
       P.seq(P.string('>').skip(P.optWhitespace), path)
     )
   )
-  return pipe.map(pipe => {
-    if (pipe) {
+  return save.map(save => {
+    if (save) {
       return {
-        pipe: pipe[1],
-        form
+        save: save[1],
+        value: form
       }
     } else {
       return form

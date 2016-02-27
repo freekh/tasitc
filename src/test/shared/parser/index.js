@@ -69,12 +69,15 @@ module.exports = {
       const exprs = [
         // `;;comment
         //   html`,
+        `(html )`,
+        `
+(html
+  (div
+    (str 'hello' 'world')
+  )
+) > ~/hello`,
+`html (div '.Foo' 'hello') '.Foo {  color:red } '`,
 
-        ` 
-   ls ~/dir -sort-by name`,
-        `  
-
- (ls ~/dir) -sort-by name` 
         // `ls '~/my dir'`, //('ls '~/my dir')
         // `(ls ~/dir)`, //(ls ~/dir)
         // `(ls '~/my dir')`,

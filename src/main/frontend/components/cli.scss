@@ -1,10 +1,23 @@
-.tsitc-cli {
+.Tasitc-Cli {
   input {
     font-size: 30px;
     width: 80%;
     margin: 10% 0px 0px calc(50vw - 40%);
-    .failed {
-      color: red;
-    }
+  }
+  &-Failed {
+    color: red;
+  }
+  &-Preview-Html {
+    width: 80%;
+    margin: 0px 0px 0px calc(50vw - 40%);
+
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
   }
 }

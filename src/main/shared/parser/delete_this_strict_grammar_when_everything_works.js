@@ -34,10 +34,10 @@ var form
 
 
 list = P.lazy('list', () => {
-  return P.optWhitespace.then(P.string('(')).then(form).skip(P.string(')'))
+  return P.optWhitespace.then(P.string('(')).then(form).skip(P.string(')').skip(P.optWhitespace))
 })
 
-const path = P.regex(/(?!\')[a-z~\.\/]+/).desc('path')
+const path = P.regex(/(?!\')[a-z~\/]+/).desc('path')
 //const path = P.regex(/html|div|str|~\/hello/)
 const singleQuotedStr = P.regex(/\'.+?\'/).map(str => {
   return {

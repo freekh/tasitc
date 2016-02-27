@@ -8,23 +8,25 @@ every function is translated into eval, request and listen.
 function arguments are seperated by whitespaces.
 multi-line functions, are called blocks are defined using ().
 a single line outside of a block, is also a valid function.
+every function in tasitc is a transformation from a request => result.
+since the c in tasitc is for cloud, the language has syntax sugar to extract the query params, body.
 
 the first argument of an function will be transformed into a request. the parameters of the request is defined by the other arguments. E.g. ls dir, is transformed a request that hits the 'ls' service in the current path or using an alias with the parameter dir. (TODO: this is too dense).
-the order of the argument matters, unless the argument is named. 
+the order of the argument matters, unless the argument is named.
 
-an function can define its parameters, i.e. the arguments it will accept, using the ? character. 
+an function can define its parameters, i.e. the arguments it will accept, using the ? character.
 ?[<number>], e.g. ?[0], for unamed/ordered parameters, ?<name> for named-parameters.
-  html (
-    div (str ?[0] ?name) 
-  ) | 'hello' -name='fred' ;; ?[0] is 'hello', ?name is 'fred'
+  (html (
+    div (str ?[0] ?name)
+  )) 'hello' -name='fred' ;; ?[0] is 'hello', ?name is 'fred'
+
+redirect -name='fred' ;; redirects
 
  { f:1 } | $.f | foo -bar=$
 
-
 the > char persists a function. note that the _function_ is persisted, not its result, this is different from the shells. the reason is that tasitc is made to make it easy to transform data and render/generate web-services results and web-pages at different points in time. tasitc is really just a shell that makes it easy to create _persist_ functions. it is not a programming enviroment, because it is.
 
-
-let's take an example: image we want to create a hello world page at https://tasitc.com/username/hello-page?name=fredrik
+let's take an example: imagine we want to create a hello world page at https://tasitc.com/username/hello-page?name=fredrik
 
 first we create the page function:
  html (
@@ -33,18 +35,18 @@ first we create the page function:
 
 
 by writing the following in the shell, we evaluate the function:
-  ~/hello-page -name='fredrik'
+  ~/hello-page name='fredrik'
 
 we can also do a get request, if our username is 'username': https://tasitc.com/username/hello-page?name=fredrik
 note: this will require username's credentials.
 to expose publically hello-page, do the following: expose ~/hello-page ;;same as expose -public ~/hello-page
 to expose it to your org: expose -org=orgname ~/hello-page ;;persmissions are recursively applied. to avoid recursive behaviour: permissions -recurse=false -org=orgname ~/hellopage
-to make it readable to your org: permissions -org=orgname ~/hello-page 
+to make it readable to your org: permissions -org=orgname ~/hello-page
 
 
 
 the | character is called a projection? and is used to pipe/transform the output of the left-hand function and puts it as the last argument in the right-hand function. ls | sort will put the output of ls as the first argument to sort.
-it is possible to manipulate the output of a pipe by using the $ character. 
+it is possible to manipulate the output of a pipe by using the $ character.
 
 
 objects are defined using the json. to access the values of a json, use the pipe and $ character with a '.' or [], like this: { foo: 1 } | $.foo or { foo: 1 } | $[foo] the values of the json key-pairs may be an function. therefore an object is not an atom, it is an function.
@@ -56,7 +58,6 @@ ordered sequantial collections can by []. we call the vectors. each element of a
 strings can be single-quoted (string interpolated) or double-quoted (not string interpolated) or triple-douple quoted (""") for multi-line strings (not string interpolated).
 
 comments can be done like this ;;. multi-line comments starts with ;;; and ends with ;;;.
-
 
 
 t1 ?name > ~/t2
@@ -109,7 +110,7 @@ for [
 
 for [
   :path [~/foo ~/bar]
-  :res ls ?path 
+  :res ls ?path
 ] [ ?res.name ]
 
 [~/foo ~/bar] | ls | $.name

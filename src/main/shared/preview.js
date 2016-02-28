@@ -1,7 +1,7 @@
 const hg = require('mercury')
 const h = hg.h
 
-const preview = (parent) => {
+const preview = (parent, user) => {
   if (!parent) {
     return null
   }
@@ -32,9 +32,18 @@ const preview = (parent) => {
         css,
         dom
       }
+    } else if (value.save) {
+      return {
+        dom: h('div.Result-Save', [
+          h('span', 'Saving to:'),
+          h('a', {href: value.save.replace(/~/, user)}, value.save)
+        ]),
+        css: '.Result-Save { font-size: 30px; text-align: center; } a { color: #000; }'
+      }
     }
     return null
   }
+  console.log(parent)
   return valueAsJs(parent)
 }
 

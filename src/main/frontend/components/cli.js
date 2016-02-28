@@ -13,46 +13,42 @@ const InputName = 'cli-text'
 
 const ENTER = 13
 
-let cli = () => {
-  return hg.state({
-    result: hg.struct({
-      expr: hg.value(null),
-      failed: hg.value(false)
-    }),
-    channels: {
-      parse: (state, data) => {
-        const input = data[InputName]
-        const expr = parser.parse(input)
-        const failed = !expr.status
-        state.result.set({
-          expr,
-          failed
+const state = hg.state({
+  result: hg.struct({
+    expr: hg.value(null),
+    failed: hg.value(false)
+  }),
+  channels: {
+    parse: (state, data) => {
+      const input = data[InputName]
+      const expr = parser.parse(input)
+      const failed = !expr.status
+      state.result.set({
+        expr,
+        failed
+      })
+    },
+    keyup: (_, expr) => {
+      console.log(expr)
+      if (expr.status && expr.value && expr.value.save) {
+        request({
+          method: 'POST',
+          uri: env.server +sharedRoutes.save,
+          body: expr,
+          json: true
+        }).then(res => {
+          console.log(res)
+        }).catch(err => {
+          console.error(err)
         })
-      },
-      keyup: (_, expr) => {
-        console.log(expr)
-        if (expr.status && expr.value && expr.value.save) {
-          request({
-            method: 'POST',
-            uri: env.server +sharedRoutes.save,
-            body: expr,
-            json: true
-          }).then(res => {
-            console.log(res)
-          }).catch(err => {
-            console.error(err)
-          })
-        }
       }
     }
-  })
-}
+  }
+})
 
-cli.render = (state) => {
+
+const render = (state) => {
   const inputClass = (state.result.failed ? `.Tasitc-Cli-Failed` : '')
-  const previewElems = (!state.result.failed &&
-    state.result.expr && state.result.expr.value
-  ) ? preview(state.result.expr.value) : null
   return h(`div.Tasitc-Cli`, [
     state.failed ?
       h(`div.Tasitc-Cli-Failed`, JSON.stringify(state.result)) :
@@ -61,12 +57,13 @@ cli.render = (state) => {
       name: InputName,
       'ev-keyup': hg.sendKey(state.channels.keyup, state.result.expr, {key: ENTER}),
       'ev-input': hg.sendChange(state.channels.parse)
-    }),
-    previewElems ? h(`div.Tasitc-Cli-Preview-Html`, [
-      h('style', previewElems.css),
-      previewElems.dom
-    ]) : null,
+    })
   ])
 }
 
-module.exports = cli
+module.exports = () => {
+  return {
+    state,
+    render
+  }
+}

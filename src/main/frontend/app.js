@@ -1,24 +1,30 @@
 'use strict'
 
-const document = require('global/document')
 const hg = require('mercury')
-const xtend = require('xtend')
 const h = hg.h
+const xtend = require('xtend')
 
-const cli = require('./components/cli')
+const Cli = require('./components/cli')
+const cli = Cli()
 
-let App = () => {
-  return hg.state({
-    cli: cli()
-  })
-}
+const Preview = require('./components/preview')
 
-App.render = (state) => {
-  return h('div.container', [
+const state = hg.state({
+  cli: cli.state
+})
+
+const render = (state) => {
+  return h('div.Container', [
     cli.render(state.cli)
   ])
 }
 
 module.exports = () => {
-  hg.app(document.body, App(), App.render)
+  hg.app(document.body, state, render)
+
+  const shadowPreview = document.createElement('div')
+  document.body.appendChild(shadowPreview)
+  const shadowRoot = shadowPreview.createShadowRoot()
+  const preview = Preview(state.cli)
+  hg.app(shadowRoot, preview.state, preview.render)
 }

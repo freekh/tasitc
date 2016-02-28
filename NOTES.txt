@@ -76,3 +76,214 @@ link
 permissions grant ~/
 
 read "Get password"
+
+req https://foo/oauth2/token?callback=(url ~/callbacks) && read 'click' > listen ~/callbacks > (account --oauth2 foo/name)
+
+//hello world
+html (
+  h div [hello ?.query.name]
+) (?name 'foo') (?other 'foo')
+
+html (
+  h div [hello (req )] //_ => json
+) {name: foo, other: blah}
+
+html (
+  h div [hello ?.name] //_ => json
+) |  //: (name) => html
+  request --X=get --status=200 ($ --params=?.query.) // []
+
+###
+dir: {routes: [id1, id2, id3], filters: []}
+ls dir | (cons (head (grep -v foo $) (grep foo $))) > dir
+
+mv up dir/foo //mv up in routing table
+mv down dir/foo //(mv (down dir/foo))
+
+filters
+
+###
+id (path, action[req => {res}]) ===> XXX
+
+
+store (req --X=get | query-params (url $) | html (h div ?.name) --name=$.name) ~/test =>
+   get: req --X=get | query-params (url $) | FUNC --X=$.X --Y=$.Y
+
+req --X=post | json $.body |  html (h div ?.name) --name=$.name > ~/test
+req --X=post | url-enc $.body | html (h div ?.name) --name=$.name > ~/test
+req --X=post | [(query-params (url $)) (json $.body)] |  html (h div ?.name) --name=(head $).name > ~/test
+
+ls landing/
+Path: landing/name -> landing/:name
+Path: landing/foo -> landing/foo
+
+VS
+
+Path: landing/foo -> landing/foo
+Path: landing/name -> landing/:name
+
+
+html (
+  h div [hello ?.name]
+) > (post --json ~/test)
+
+
+url (~/test --name 'world') //https://tasitc.com/freekh/test?name='world'
+
+(html (
+  h div [hello ?<1>]
+) > ~/test/:1) 'name'
+
+~/test/myname
+
+(html (
+  h div [hello ?<1>]
+) > ~/test) 'name'
+
+~/test 'name'
+
+echo 'name' | ~/test
+
+[{name: foo}] | html (
+  h div [hello (fst ?).name]
+) > post --json ~/test
+
+Tutorial 1: basics
+1. hello ?name
+2. run cmd -params
+3. expose cmd
+4. ln /tasitc/tutorials/tutorial-data
+5. pipe
+6. pipe with html
+7. alias tutorial-data
+
+html (
+  h div (str hello ?name)
+) > ~/test
+
+test -name=foo
+
+expose ~/test ;; https://tasitc.com/freekh/test?name=foo
+rm ~/test
+
+alias /tasitc/tutorials/tutorial-data  ;;[{name: 'fredrik'}]
+
+tutorial-data | $.name
+
+html (
+  h ul (tutorial-data | $.name | h li)
+) > ~/test2
+
+unalias tutorial-data
+rm ~/test2
+
+Tutorial 2: account
+
+
+Example: github
+1. ln /github gh
+2. gh/issues
+
+Example: google
+1. ln /google/gmail
+2. gmail/search
+
+alias gmail/search mails
+
+expose mails
+
+html (
+  h ul (mails | $.subject | h li)
+) > ~/mymails
+
+expose mymails
+
+
+
+Example: heroku/mongo
+
+
+Example: aws/psql
+
+Tutorial 5+: request/listen
+1. request
+2. listen
+
+[
+  request https://foo/oauth2/callback=~/foo
+  listen ~/foo
+] | account -add foo && ~/foo
+request -H (str 'Foo-Auth: ' (account foo)) https://foo/bar?name=?name&bar=?bar > ~/foo/bar
+
+Tutorial 3: more html
+
+html h div.Foo 'hello' | $('.Foo') # pipe html
+
+#css
+html h div.Foo
+
+html ( ;;js/css
+  h div.container (
+    h div.row (
+      h div.col-md-12 (
+        'hello'
+      )
+    )
+  )
+) [/bootstrap/js] [/bootstrap/css]
+
+
+Tutorial 4: spa
+html (
+  h div#Main
+) [ babel [ ;;server side rendering
+/mercury/js
+(js """
+import hg from 'mercury'
+import { h } from 'mercury'
+
+const state = hg.state({
+  clicks: hg.value(0),
+  channels: {
+    inc: (state) => {
+      state.click.set(state().clicks + 1)
+    }
+  }
+})
+
+const render = (state) => {
+  const clickButton = h('input', {
+    type: submit,
+    'ev-click': hg.sendClick(state.channels.inc)
+  })
+  const clickAmount = h('div.Amount', String('Clicks: ' + state.clicks))
+  return
+}
+hg.app(document.getElementById('Main'), )
+""")] ] [sass-to-css [bootstrap/sass sass """
+.Amount {
+  color: red;
+}
+"""]] > ~/tutorial/tmp/spa-example
+
+# larger spa
+(js-set window.endpoints { ;;sets window.endpoints to be a request object
+  users: (~/heroku/app/psql (sql """select * from users""")),
+  userByName: (~/heroku/app/psql (sql """select * from users where user.name=?name""" ?name)) ;;adds param: -name and translates to js as: userByName('roger'))
+}) > ~/app/endpoints.js
+html
+  h.div#Main
+  (search ~/app/*.js | babel | browserify -uglify -dir ~/app -entry ~/app/main.js)
+  (search ~/app/*.scss | sass-to-css) > ~/app/spa
+
+expose ~/app/**/*.js ~/app/**/*.scss ~/app/spa
+
+# even larger
+github/overwrite master . ;;pull
+github/overwrite . master ;;push
+
+# versions
+alias /github gh
+gh/init
+
+# cached

@@ -16,6 +16,8 @@ const preview = (parent) => {
       } else {
         return h.apply(null, [arg.path, children])
       }
+    } else if (arg && arg.constructor === Array){
+      return arg.map(argAsJs)
     }
     return null
   }

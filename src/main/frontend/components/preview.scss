@@ -1,12 +1,16 @@
 .Tasitc-Cli-Preview {
+  background-color: white; //avoid seeing the result under
+  border-top: 1px solid #ccc; //need because of background color?
+
   position: relative;
   width: 80%;
-  height: 20vh;
-  overflow: auto;
+
+  height: 0px;
+  padding-bottom: calc(100vh - 10%);  overflow: auto;
+
   margin: 0px 0px 0px calc(50vw - 40%);
 
   padding-top: 10px;
-  padding-bottom: 10px;
   padding-left: 2px;
   padding-right: 2px;
 

@@ -6,9 +6,10 @@ const sharedRoutes = require('../shared/routes')
 const preview = require('../shared/preview') //TODO: not right, cus it shouldnt be based of the preview?
 const env = require('../shared/env')
 
-const vdom2html = require('vdom-to-html')
+const toHTML = require('vdom-to-html')
 const hg = require('mercury')
 const h = hg.h
+
 
 const routes = {
   frontend: {
@@ -23,34 +24,34 @@ let DB = {
   'freekh/super': {
       type: 'text/html',
       expr: {
-        "status":true,"value":{
-          "save":"~/test","value":{
-            "path":"html","args":[
-              {"path":"ul","args":[
-                [
-                  {"path":"li","args":[
-                    {"atom":"string","value":"super"}
-                  ],"piped":true},
-                  {"path":"li","args":[
-                    {"atom":"string","value":"hot"}
-                  ],"piped":true},
-                  {"path":"li","args":[
-                    {"atom":"string","value":"hand"}
-                  ],"piped":true},
-                  {"path":"li","args":[
-                    {"atom":"string","value":"over"}
-                  ],"piped":true},
-                  {"path":"li","args":[
-                    {"atom":"string","value":"control"}
-                  ],"piped":true}
-                ]
+        "status":true,
+        "value":{
+          "path":"html",
+          "args":[
+            {"path":"ul","args":[
+              [
+                {"path":"li","args":[
+                  {"atom":"string","value":"super"}
+                ],"piped":true},
+                {"path":"li","args":[
+                  {"atom":"string","value":"hot"}
+                ],"piped":true},
+                {"path":"li","args":[
+                  {"atom":"string","value":"hand"}
+                ],"piped":true},
+                {"path":"li","args":[
+                  {"atom":"string","value":"over"}
+                ],"piped":true},
+                {"path":"li","args":[
+                  {"atom":"string","value":"control"}
+                ],"piped":true}
               ]
-            }
-          ]
-        }
-      },
-      "failed":false
-    }
+            ]
+          }
+        ]
+      }
+    },
+    "failed":false
   }
 }
 
@@ -66,9 +67,9 @@ module.exports = {
         const path = expr.value.save.replace(/~/, user)
         DB[path] = {
           type: 'text/html',
-          expr
+          expr: expr.value
         }
-
+        console.log('DB', path, DB[path])
         res.send({
           failed: false,
           message: 'Stored at ' + env.server + '/' + path
@@ -80,11 +81,11 @@ module.exports = {
 
     app.get('/*', (req, res) => {
       const persisted = DB[req.path.slice(1)]
-      console.log(req.path, DB)
       if (persisted) {
         res.contentType(persisted.type)
-        const previewElems = preview(persisted.expr.value.value, user)
-        res.send(vdom2html(
+        const previewElems = preview(persisted.expr.value, user)
+
+        res.send(toHTML(
            h('html', [
              h('head', h('style', previewElems.css)),
              h('body', previewElems.dom)

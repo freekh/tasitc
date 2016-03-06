@@ -43,7 +43,7 @@ const preview = (parent, user) => {
     }
     return null
   }
-  console.log(parent)
+  console.log('res',  valueAsJs(parent))
   return valueAsJs(parent)
 }
 

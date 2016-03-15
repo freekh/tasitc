@@ -10,7 +10,6 @@ const state = (cli) => {
 }
 
 const render = (state) => {
-  console.log(state)
   const previewElems = (!state.cli.result.failed &&
     state.cli.result.expr && state.cli.result.expr.value
   ) ? preview(state.cli.result.expr.value, user) : null

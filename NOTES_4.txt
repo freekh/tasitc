@@ -1,3 +1,34 @@
+TODO:
+(str 'hello ?name') -name=fredrik
+str 'hello ?name' > ~/hello
+~/hello -name='fredrik'
+url ~/hello ;; request https://tastic.com/tasitc/api/url -post=?[0] > /tasitc/std/url (alias /tasitc/std/*)
+/openweather ;; request "https://api.openweathermap.com/data/2.5/weather\?q=?city"
+/openweather | $.temperature ;;json/filter temperature eq $[temperature] eq $['temperature']
+html div 'foo' | $('div') ;;html/filter 'div'
+
+url.tasitc.js ( (args, env) => {
+  const url = TASITC.config.host + path.resolve(env.cwd, args[0])
+  return url
+})
+
+url.tasitc.highlight ;; TODO
+
+url.tasitc.completion ( (ast, symbol, history) => {
+  return //???history(ast.value.symbol).sortBy(l => l.userUsed).sortBy(l => l.popularity)
+})
+
+url.tasitc.docs ( (ast) => {
+  return TASITC.docs(ast, {
+    summary:
+    examples: [
+      {},
+      {}
+    ]
+  })
+})
+
+SKRIV EN artikkel om hva som lagres og hva som er på klienten. Hva som krever passphrase og hva som 
 
 Busy, busy all the time?
   (screencast)
@@ -30,13 +61,13 @@ Dig in
 
 1.3 docs /openweather
 
-1.3 /openweather -city='stockholm,sweden' -metric | &.temperature
+1.3 /openweather -city='stockholm,sweden' -metric | $.temperature ;;TODO: append | head?
 
 1.3 alias /openweather weather
 
-1.3 weather -city='stockholm,sweden' -metric | &.temperature > ~/tourist-info/stockholm-temperature
+1.3 weather -city='stockholm,sweden' -metric | $.temperature > ~/tourist-info/stockholm-temperature
 
-1.3 weather -metric | &.temperature > ~/tourist-info/temperature
+1.3 weather -metric | $.temperature > ~/tourist-info/temperature
 
 1.3 rm ~/tourist-info/stockholm-temperature
 
@@ -46,7 +77,7 @@ Dig in
 
 1.4 ['stockholm,sweden' 'london,uk'] > ~/tourist-info/cities
 
-1.4 goto ~/tourist-info
+1.4 goto ~/tourist-info ;;or cd ~/tourist-info
 
 1.4 html (ul (./cities | a { href: path (url . -city=$) } | li)) > ./list
 
@@ -57,10 +88,14 @@ Dig in
   ?city => not-found
   true => ./list
 ] > ~/tourist-info
-
+;;
+match [
+  {foo: ?test1, zoo: ?test2} => str ?test1 ?test2
+]
+;;
 1.4 ~/tourist-info -css=('ul { list-style: none; }')  > ~/tourist-info
 
-1.4 ~/tourist-info | &('body') | html/append $ (js "console.log('js', $('body'));")  > ~/tourist-info
+1.4 ~/tourist-info | $('body') | html $ (js "console.log('js', $('body'));")  > ~/tourist-info
 
 1.4 ~/tourist-info -js=/jquery/js > ~/tourist-info
 
@@ -89,14 +124,22 @@ Dig in
 
 1.5 inspect /bootstrap/css
 
+1.5 logs ~/tourist-info
+
+1.5 callback ~/mycb (account 'google' {token: ?token})
+
 1.5 ...
 
 1.6 spa
 
+2: Accounts
 
-2: Examples
+In addition to [request, callback, html, js, css] accounts is core of
 
 2 /github
+/github/get master HEAD freekh/bar/foo
+/github/put master freekh/bar/foo 'foo'
+/github/list master HEAD freekh/bar | str freekh/bar | /github/get | store ~/$.name $.content  > /github/sync ;;TODO: diff first?
 
 2 /google/drive
 
@@ -105,3 +148,9 @@ Dig in
 2 /heroku
 
 2 /aws
+
+2 /markdown
+
+2 /
+
+3 cookies, login

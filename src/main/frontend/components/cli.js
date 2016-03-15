@@ -5,8 +5,9 @@ const request = require('request-promise')
 const sharedRoutes = require('../../shared/routes')
 const env = require('../../shared/env')
 
+
+const apply = require('../../shared/apply')
 const parser = require('../../shared/parser')()
-const preview = require('../../shared/preview')
 
 //
 const InputName = 'cli-text'
@@ -23,6 +24,9 @@ const state = hg.state({
       const input = data[InputName]
       const expr = parser.parse(input)
       const failed = !expr.status
+      if (!failed) {
+        apply(expr)
+      }
       state.result.set({
         expr,
         failed

@@ -1,0 +1,48 @@
+Welcome to The Amazing Shell In The Cloud!
+Checkout the screencast below to get a feeling for what it is about.
+
+What is it?
+tasitc (pronounced tas,like fan-tas-tic, and eee-tee-see, as in fel-icity) tries to make it dirt simple to invoke, transform, render or create new webservices.
+It is the bastard child of lisp and bash that died and went to heaven.
+Now it sits somewhere in the cloud, not only to be buzzword compliant, but to be always available to your fingertips and also your thumbs.
+
+Like many shell scripting languages, tasitc, doesn't try to an all purpose general programming language, but an environment that makes it easy to do webstuff.
+
+tasitc came to be while imagining what would happen if you had a shell without an filesystem that was optimized for webstuff.
+Here, in the cloud, webservices are scripts that you can invoke, transform and expose as new webstuff: html, json.
+
+
+Thus, the smallest undividable units of tasitc are:
+- request (does http requests)
+- callback (that waits for a http request)
+- the pipe, |, which transforms a webservices
+- the named pipe, >, which stores a new webservice
+- expose, which exposes a webservice
+- eval, which evaluates a request
+
+In the cloud you can store many things, but not in tasitc.
+In this beautiful world, the web has been condensed to requests that are transformed to responses.
+Data is not stored stored, but represented as requests.
+
+The currency, up here are evals, because that what costs us the most money (yes, we just wrote the 'm' word)
+You'll get some evals for free, but to keep things running we'll need some money from someone.
+There's money in numbers though. Since contributing and evalangizing saves us the time from doing it, you'll get more evals to make that worth your while.
+My goal is to have enough so we can be a team of 5 so we can respond to issues and discuss then implement improvements as a fulltime job.
+
+
+We don't own your stuff, so you can download what you have created in our cloud with the exception of credentials.
+Our code is open so you could run it yourself as well. However, we want to be able to feed our kids so if you're making money on what you're doing there's a pricing plan for you :).
+
+It is the child of a shellscript and the traits that it got was experimation.
+From it's lispy side of things: scripts are requests and requests are scripts. Its inspectable and modifiable asts are also lispy.
+
+There's nothing you can do with tasitc that you couldn't do yourself.
+Of course, it is not the
+
+
+Admitably this sounds like madness, but, before passing judgement make sure to give it a spin.
+
+Is it for you?
+I have tried to make tasitc for people who like the terminal, shells scripts and/or the web.
+tasitc is functional, however you can use it without caring about that.
+You can use it for free, but, if you're going to use it for something professional, we recommend you pay to avoid running out of evals.

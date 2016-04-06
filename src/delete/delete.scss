@@ -1,0 +1,75 @@
+@font-face {
+  font-family: Menlo;
+  src: url('/assets/fonts/Menlo-Regular.ttf');
+}
+$foreground: #839496;
+$black-bright: #002833;
+$blue: #268bd2;
+$white: #eee8d5;
+$red: #dc322f;
+$green: #859901;
+
+body {
+  background-color: $black-bright;
+}
+
+div {
+  color: $foreground;
+  font-family: Menlo;
+  font-size: 18px;
+}
+
+.line {
+  display: inline-block;
+  .path {
+    background-color: $blue;
+    color: $black-bright;
+  }
+  .path-sep {
+    background-color: $green;
+    color: $blue;
+  }
+  .command {
+    background-color: $black-bright;
+    color: $blue;
+  }
+
+  .branch {
+    background-color: $green;
+    color: $black-bright;
+  }
+  .branch-sep {
+    background-color: $black-bright;
+    color: $green;
+  }
+}
+
+.output {
+  display: table;
+  .dir {
+    color: $blue;
+  }
+  .exec {
+    color: $red;
+  }
+  .output-line {
+    display: table-row;
+    span {
+      display: table-cell;
+      padding-right: 2em;
+    }
+  }
+}
+
+@keyframes blink-animation {
+  from {
+    visibility: visible;
+  }
+  to {
+    visibility: hidden;
+  }
+}
+
+.cursor {
+  animation: blink-animation 1.5s steps(6, start) infinite;
+}

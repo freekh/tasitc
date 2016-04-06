@@ -2,11 +2,12 @@ Welcome to The Amazing Shell In The Cloud!
 Checkout the screencast below to get a feeling for what it is about.
 
 What is it?
-tasitc (pronounced tas,like fan-tas-tic, and eee-tee-see, as in fel-icity) tries to make it dirt simple to invoke, transform, render or create new webservices.
+tasitc (pronounced tas,like fan-tas-tic, and eee-tee-see, as in fel-icity) tries to make it dirt simple to invoke, transform, render or create new web{service,page}s.
 It is the bastard child of lisp and bash that died and went to heaven.
 Now it sits somewhere in the cloud, not only to be buzzword compliant, but to be always available to your fingertips and also your thumbs.
+In addition, it is the amazing shell in the cloud and its used to do cloudy things, though not foggy stuff.
 
-Like many shell scripting languages, tasitc, doesn't try to an all purpose general programming language, but an environment that makes it easy to do webstuff.
+Like many shell scripting languages, tasitc, doesn't try to be an all purpose general programming language, but an environment that makes it easy to do webstuff.
 
 tasitc came to be while imagining what would happen if you had a shell without an filesystem that was optimized for webstuff.
 Here, in the cloud, webservices are scripts that you can invoke, transform and expose as new webstuff: html, json.
@@ -15,7 +16,7 @@ Here, in the cloud, webservices are scripts that you can invoke, transform and e
 Thus, the smallest undividable units of tasitc are:
 - request (does http requests)
 - callback (that waits for a http request)
-- the pipe, |, which transforms a webservices
+- the pipe, |, which transforms webservices
 - the named pipe, >, which stores a new webservice
 - expose, which exposes a webservice
 - eval, which evaluates a request
@@ -34,7 +35,11 @@ We don't own your stuff, so you can download what you have created in our cloud 
 Our code is open so you could run it yourself as well. However, we want to be able to feed our kids so if you're making money on what you're doing there's a pricing plan for you :).
 
 It is the child of a shellscript and the traits that it got was experimation.
-From it's lispy side of things: scripts are requests and requests are scripts. Its inspectable and modifiable asts are also lispy.
+There is no data, only requests. Requests might represent some data though. All scripts are requests.
+The scripts (or the code if you will) are just requests.
+You use scripts to manipulate requests and create new ones. This and the s-exprs in its asts is what makes tasitc lispy.
+Don't let that scare you away though (if you dont like lispy languages); you could use tasitc every day for the rest of your life, without bothering about this.
+From it's lispy side of things: scripts are requests and requests are scripts. tasitc also gets parsed into s-exprs if that makes you feel it is lispy, but there's no macros yet so it is not truly interesting at this point.
 
 There's nothing you can do with tasitc that you couldn't do yourself.
 Of course, it is not the

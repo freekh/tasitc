@@ -6,13 +6,10 @@ const state = hg.state({
   cursor: hg.value(0)
 })
 const render = (state) => {
-  let highlight = state.value.slice(state.cursor, state.cursor + 1)
-  if (!highlight) {
-    highlight = '_'
-  }
+  const highlight = state.value.slice(state.cursor, state.cursor + 1)
   return h('span', [
     h('span', state.value.slice(0, state.cursor) ),
-    h('span.cursor' + (highlight ? '' : '-empty'), highlight),
+    h('span.cursor' + (highlight ? '' : '-empty'), highlight ? highlight : '_'),
     highlight ? h('span', state.value.slice(state.cursor + 1, state.value.length + 1) ) : null
   ])
 }

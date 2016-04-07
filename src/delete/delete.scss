@@ -68,26 +68,26 @@ div {
 
 @keyframes cursor {
   0% {
-    opacity: 0;
+    opacity: 1;
   }
   40% {
-    opacity: 0;
+    opacity: 1;
   }
   50% {
-    opacity: 1;
+    opacity: 0;
   }
   90% {
-    opacity: 1;
+    opacity: 0;
   }
   100% {
-    opacity: 0;
+    opacity: 1;
   }
 }
 
 .cursor {
   &:before {
     content:"_";
-    opacity: 0;
+    opacity: 1;
     position: absolute;
     animation: cursor 1s infinite;
   }

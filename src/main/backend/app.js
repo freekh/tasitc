@@ -17,6 +17,9 @@ app.get('/ui-test', (req, res) => {
 app.get('/ui-test.css', (req, res) => {
   Delete.css(req, res)
 })
+app.get('/ui-test.js', (req, res) => {
+  Delete.js(req, res)
+})
 
 app.use('/assets', express.static('./assets'))
 

@@ -10,9 +10,8 @@ module.exports = () => {
       if (err) {
         reject(err)
       } else {
-        console.log(result.css)
         resolve(result.css)
       }
-    });
+    })
   })
 }

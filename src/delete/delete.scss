@@ -10,6 +10,7 @@ $red: #dc322f;
 $green: #859901;
 
 body {
+  margin: 0;
   background-color: $black-bright;
 }
 
@@ -17,6 +18,10 @@ div {
   color: $foreground;
   font-family: Menlo;
   font-size: 18px;
+}
+
+#input {
+  display: inline-block;
 }
 
 .line {
@@ -61,15 +66,33 @@ div {
   }
 }
 
-@keyframes blink-animation {
-  from {
-    visibility: visible;
+@keyframes cursor {
+  0% {
+    opacity: 0;
   }
-  to {
-    visibility: hidden;
+  40% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
   }
 }
 
 .cursor {
-  animation: blink-animation 1s steps(3, start) infinite;
+  &:before {
+    content:"_";
+    opacity: 0;
+    position: absolute;
+    animation: cursor 1s infinite;
+  }
+}
+
+.cursor-empty {
+  animation: cursor 1s infinite;
 }

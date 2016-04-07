@@ -7,10 +7,10 @@ const aliases = {
 
 
 const paths = {
-  '~/.env': [
-    '.': 'request '
+  '~/.env': {
+    '.': 'request ',
     'config': '{tasitc: "http://localhost:8080/tasitc"}'
-  ],
+  },
   '/html': {
     '.': `request (str (env/config | &.tasitc) 'html')`
   }

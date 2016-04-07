@@ -66,6 +66,10 @@ div {
   }
 }
 
+.input {
+  word-break: break-all;
+}
+
 @keyframes cursor {
   0% {
     opacity: 1;

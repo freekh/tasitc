@@ -7,10 +7,10 @@ const state = hg.state({
 })
 const render = (state) => {
   const highlight = state.value.slice(state.cursor, state.cursor + 1)
-  return h('span', [
-    h('span', state.value.slice(0, state.cursor) ),
+  return h('span.input', [
+    h('span.pre-cursor', state.value.slice(0, state.cursor) ),
     h('span.cursor' + (highlight ? '' : '-empty'), highlight ? highlight : '_'),
-    highlight ? h('span', state.value.slice(state.cursor + 1, state.value.length + 1) ) : null
+    highlight ? h('span.post-cursor', state.value.slice(state.cursor + 1, state.value.length + 1) ) : null
   ])
 }
 const elem = document.getElementById('input')

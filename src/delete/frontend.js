@@ -1,6 +1,8 @@
 const hg = require('mercury') //HACK: remove!
 const h = hg.h
 
+const execute = require('./execute')
+
 //--------------------------- Global vars ------------------------------------//
 const global = {
   value: '',
@@ -153,26 +155,10 @@ const enter = () => {
     h('span.branch-sep', '⮀ '),
     h('span', global.value)
   ])))
-  if (global.value.trim() === 'ls') {
-    elems.history.appendChild(hg.create(h('div.output-line', [
-        h('span', 'mongod.conf'),
-        h('span', 'nginx.conf'),
-        h('span.exec', 'ngrok.sh '),
-        h('span.exec', 'ssh'),
-      ])))
-    elems.history.appendChild(hg.create(h('div.output-line', [
-      h('span.dir', 'namecheap'),
-      h('span', 'ngrok-viewer.sh'),
-      h('span.dir', 'scripts'),
-      h('span.dir', 'ssl')
-    ])))
-  } else if (global.value.trim() === 'help') {
-    const help = hg.create(h('div', 'This is just a hack so only ls works...'))
-    elems.history.appendChild(help)
-  } else {
-    const error = hg.create(h('div', 'Unknown command: ' + global.value))
-    elems.history.appendChild(error)
-  }
+
+  execute(global.value).forEach(elem => {
+    elems.history.appendChild(elem)
+  })
   global.value = ''
   global.cursor = 0
   update()

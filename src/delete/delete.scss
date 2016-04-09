@@ -66,17 +66,17 @@ div {
   display: none;
 }
 
+pre {
+  color: $foreground;
+  font-family: Menlo;
+  font-size: 18px;
+  margin: 0;
+  display: inline-block;
+}
+
 #input {
   display: inline-block;
   word-break: break-all;
-
-  pre {
-    color: $foreground;
-    font-family: Menlo;
-    font-size: 18px;
-    margin: 0;
-    display: inline-block;
-  }
 }
 
 @keyframes cursor {

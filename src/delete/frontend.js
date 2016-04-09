@@ -6,7 +6,9 @@ const execute = require('./execute')
 //--------------------------- Global vars ------------------------------------//
 const global = {
   value: '',
-  cursor: 0
+  cwd: 'freekh/tasitc-test',
+  cursor: 0,
+  block: false //listen guys, I don't like this any more than you do! I am not sure I even need it!
 }
 
 //----------------------------- Config ---------------------------------------//
@@ -148,57 +150,77 @@ const moveWordLeft = () => {
 
 const enter = () => {
   //HACK: :(
-  elems.history.appendChild(hg.create(h('div.line', [
-    h('span.path', '~/P/t/deployments '),
-    h('span.path-sep', '⮀'),
-    h('span.branch', ' ⭠ master '),
-    h('span.branch-sep', '⮀ '),
-    h('span', global.value)
-  ])))
+  const saveLast = () => {
+    elems.history.appendChild(hg.create(h('div.line', [
+      h('span.path', global.cwd + ' '),
+      h('span.path-sep', '⮀'),
+      h('span.branch', ' ⭠ master '),
+      h('span.branch-sep', '⮀ '),
+      h('span', global.value)
+    ])))
+  }
+  const complete = () => {
+    global.block = false
+    global.value = ''
+    global.cursor = 0
+    update()
+    window.scrollTo(0, elems.parent.offsetTop)
+  }
 
-  execute(global.value).forEach(elem => {
-    elems.history.appendChild(elem)
+  global.block = true
+  execute(global.cwd, global.value).then(res => {
+    saveLast()
+    res.forEach(elem => {
+      elems.history.appendChild(elem)
+    })
+    complete()
+  }).catch(err => {
+    saveLast()
+    elems.history.appendChild(hg.create(h('div', 'Unknown command: ' + err)))
+    complete()
+    throw new Error(err)
   })
-  global.value = ''
-  global.cursor = 0
-  update()
-  window.scrollTo(0, elems.parent.offsetTop)
+
 }
 
 //------------------------------ Events --------------------------------------//
 
 window.addEventListener('keypress', ev => {
-  if (!ev.ctrlKey && !ev.altKey && !ev.metaKey) {
-    const char = String.fromCharCode(ev.keyCode)
-    const value = global.value.slice(0, global.cursor) + char + global.value.slice(global.cursor, global.value.length + 1)
-    global.cursor += 1
-    global.value = value
-    update()
+  if (!global.block) {
+    if (!ev.ctrlKey && !ev.altKey && !ev.metaKey) {
+      const char = String.fromCharCode(ev.keyCode)
+      const value = global.value.slice(0, global.cursor) + char + global.value.slice(global.cursor, global.value.length + 1)
+      global.cursor += 1
+      global.value = value
+      update()
+    }
   }
 })
 
 
 window.addEventListener('keydown', ev => {
-  if (ev.ctrlKey) {
-    switch (ev.keyCode) {
-      case 65: moveLineBegin(); ev.preventDefault(); break
-      case 69: moveLineEnd(); ev.preventDefault(); break
-      case 75: killLine(); ev.preventDefault(); break
-    }
-  } else if ((isMac && ev.altKey || !isMac && ev.ctrlKey)) {
-    switch (ev.keyCode) {
-      case 8: deleteWord(); ev.preventDefault(); break
-      case 66: moveWordRight(); ev.preventDefault(); break
-      case 70: moveWordLeft(); ev.preventDefault(); break
-    }
-  } else {
-    switch (ev.keyCode) {
-      case 8: backspace(); ev.preventDefault(); break
-      case 13: enter(); ev.preventDefault(); break
-      case 37: moveCharLeft(); break
-      case 38: historyDown(); break
-      case 39: moveCharRight(); break
-      case 40: historyUp(); break
+  if (!global.block) {
+    if (ev.ctrlKey) {
+      switch (ev.keyCode) {
+        case 65: moveLineBegin(); ev.preventDefault(); break
+        case 69: moveLineEnd(); ev.preventDefault(); break
+        case 75: killLine(); ev.preventDefault(); break
+      }
+    } else if ((isMac && ev.altKey || !isMac && ev.ctrlKey)) {
+      switch (ev.keyCode) {
+        case 8: deleteWord(); ev.preventDefault(); break
+        case 66: moveWordRight(); ev.preventDefault(); break
+        case 70: moveWordLeft(); ev.preventDefault(); break
+      }
+    } else {
+      switch (ev.keyCode) {
+        case 8: backspace(); ev.preventDefault(); break
+        case 13: enter(); ev.preventDefault(); break
+        case 37: moveCharLeft(); break
+        case 38: historyDown(); break
+        case 39: moveCharRight(); break
+        case 40: historyUp(); break
+      }
     }
   }
 })

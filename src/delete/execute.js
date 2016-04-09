@@ -1,30 +1,24 @@
 const hg = require('mercury') //HACK: remove!
 const h = hg.h
 
-const execute = (value) => {
+//hackery
+const fs = require('./fs')
+
+const execute = (cwd, value) => {
   if (value.trim() === 'ls') {
-    return [
-      hg.create(h('div.output-line', [
-        h('span', 'mongod.conf'),
-        h('span', 'nginx.conf'),
-        h('span.exec', 'ngrok.sh '),
-        h('span.exec', 'ssh'),
-      ])),
-      hg.create(h('div.output-line', [
-        h('span.dir', 'namecheap'),
-        h('span', 'ngrok-viewer.sh'),
-        h('span.dir', 'scripts'),
-        h('span.dir', 'ssl')
-      ]))
-    ]
+    return fs.readTree(cwd).then(objects => {
+      return objects.map(object => {
+        return hg.create(h('div.output-line', h('span', (cwd + object.path).replace(cwd + '/', '') )))
+      })
+    })
   } else if (value.trim() === 'help') {
-    return [
+    return Promise.resolve([
       hg.create(h('div', 'This is just a hack so only ls works...'))
-    ]
+    ])
   } else {
-    return [
+    return Promise.resolve([
       hg.create(h('div', 'Unknown command: ' + value))
-    ]
+    ])
   }
 }
 

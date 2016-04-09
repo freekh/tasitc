@@ -20,9 +20,6 @@ div {
   font-size: 18px;
 }
 
-#input {
-  display: inline-block;
-}
 
 .line {
   display: inline-block;
@@ -49,8 +46,7 @@ div {
   }
 }
 
-.output {
-  display: table;
+#history {
   .dir {
     color: $blue;
   }
@@ -66,8 +62,21 @@ div {
   }
 }
 
-.input {
+.hidden {
+  display: none;
+}
+
+#input {
+  display: inline-block;
   word-break: break-all;
+
+  pre {
+    color: $foreground;
+    font-family: Menlo;
+    font-size: 18px;
+    margin: 0;
+    display: inline-block;
+  }
 }
 
 @keyframes cursor {
@@ -88,15 +97,11 @@ div {
   }
 }
 
-.cursor {
+#cursor {
   &:before {
     content:"_";
     opacity: 1;
     position: absolute;
     animation: cursor 1s infinite;
   }
-}
-
-.cursor-empty {
-  animation: cursor 1s infinite;
 }

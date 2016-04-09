@@ -1,102 +1,218 @@
-const hg = require('mercury')
+const hg = require('mercury') //HACK: remove!
 const h = hg.h
 
-const state = hg.state({
-  value: hg.value(''),
-  cursor: hg.value(0)
-})
-const render = (state) => {
-  const highlight = state.value.slice(state.cursor, state.cursor + 1)
-  return h('span.input', [
-    h('span.pre-cursor', state.value.slice(0, state.cursor) ),
-    h('span.cursor' + (highlight ? '' : '-empty'), highlight ? highlight : '_'),
-    highlight ? h('span.post-cursor', state.value.slice(state.cursor + 1, state.value.length + 1) ) : null
-  ])
+//--------------------------- Global vars ------------------------------------//
+const global = {
+  value: '',
+  cursor: 0
 }
-const elem = document.getElementById('input')
-hg.app(elem, state, render)
 
-const delegator = hg.Delegator()
-delegator.listenTo('keypress')
-delegator.addGlobalEventListener('keypress', (ev) => {
-  const char = String.fromCharCode(ev.keyCode)
-  const current = state()
-  const value = current.value.slice(0, current.cursor) + char + current.value.slice(current.cursor, current.value.length + 1)
-  state.cursor.set(current.cursor + 1)
-  state.value.set(value)
-})
+//----------------------------- Config ---------------------------------------//
 
-const histroyUp = () => {
+const config = {
+  cursor: '_'
+}
+
+//----------------------------- Helpers --------------------------------------//
+
+const pre = (clazz) => {
+  const elem = document.createElement('pre')
+  elem.setAttribute('id', clazz)
+  return elem
+}
+
+//                  ----------------------------                              //
+
+const isMac = navigator.platform.indexOf('Mac') > -1
+
+//------------------------------ View ----------------------------------------//
+
+const elems = {
+  parent: document.getElementById('input'),
+  preCursor: pre('pre-cursor'),
+  cursor: pre('cursor'),
+  postCursor: pre('post-cursor'),
+  history: document.getElementById('history')
+}
+
+elems.parent.appendChild(elems.preCursor)
+elems.parent.appendChild(elems.cursor)
+elems.cursor.innerText = ' '
+elems.parent.appendChild(elems.postCursor)
+
+//------------------------------ Update --------------------------------------//
+
+const update = () => {
+  const cursorLetter = global.value.slice(global.cursor, global.cursor + 1)
+  elems.preCursor.innerText = global.value.slice(0, global.cursor)
+  elems.cursor.innerText = cursorLetter
+  if (cursorLetter) {
+    elems.postCursor.innerText = global.value.slice(global.cursor + 1, global.value.length + 1)
+    elems.postCursor.removeAttribute('class')
+  } else {
+    elems.postCursor.innerText = ' '
+    elems.cursor.innerText = ' '
+  }
+}
+
+//----------------------------- Keyboard --------------------------------------//
+
+const moveCharLeft = () => {
+  if (global.cursor > 0) {
+    global.cursor = global.cursor - 1
+    update()
+  }
+}
+
+const moveCharRight = () => {
+  if (global.value.length > global.cursor) {
+    global.cursor = global.cursor + 1
+    update()
+  }
+}
+
+const backspace = () => {
+  const value = global.value.slice(0, global.cursor - 1) +
+          global.value.slice(global.cursor, global.value.length + 1)
+  global.cursor = global.cursor - 1
+  global.value = value
+  update()
+}
+
+const deleteWord = () => {
+  let value = global.value
+  let cursor = global.cursor
+  let char = value[cursor]
+  while (cursor > 0 && (global.cursor === cursor || char !== ' ')) { //TODO: perf!?
+    cursor -= 1
+    char = value[cursor]
+    value = value.slice(0, -1)
+  }
+  global.value = global.value.slice(0, cursor) + global.value.slice(global.cursor, global.value.length)
+  global.cursor = cursor
+  update()
+}
+
+const moveLineEnd = () => {
+  global.cursor = global.value.length + 1
+  update()
+}
+
+const moveLineBegin = () => {
+  global.cursor = 0
+  update()
+}
+
+const killLine = () => {
+  global.value = global.value.slice(0, global.cursor)
+  update()
+}
+
+const historyUp = () => {
   console.log('arrow up')
 }
 const historyDown = () => {
   console.log('arrow down')
 }
-const moveCharRight = () => {
-  const current = state()
-  if (current.value.length > current.cursor) {
-    state.cursor.set(current.cursor + 1)
-  }
-}
-const moveCharLeft = () => {
-  const current = state()
-  if (current.cursor > 0) {
-    state.cursor.set(current.cursor - 1)
-  }
-}
-const backspace = () => {
-  const current = state()
-  const value = current.value.slice(0, current.cursor - 1) +
-          current.value.slice(current.cursor, current.value.length + 1)
-  state.cursor.set(current.cursor - 1)
-  state.value.set(value)
-}
 
-const deleteWord = () => {
-  const current = state()
-  let value = current.value
-  let cursor = current.cursor
-  let char = value[cursor]
-  while (cursor > 0 && (current.cursor === cursor || char !== ' ')) { //TODO: perf!?
+const moveWordRight = () => {
+  let value = global.value
+  let cursor = global.cursor
+  while (cursor > 0 && (
+    !value[cursor] ||
+    value[cursor] === ' ' ||
+    (cursor === global.cursor || value[cursor - 1] !== ' ')
+  )) { //TODO: perf!?
     cursor -= 1
-    char = value[cursor]
-    value = value.slice(0, -1)
   }
-  state.value.set(current.value.slice(0, cursor) + current.value.slice(current.cursor, current.value.length))
-  state.cursor.set(cursor)
+  global.cursor = cursor
+  update()
 }
 
-const moveLineEnd = () => {
-  const current = state()
-  state.cursor.set(current.value.length + 1)
+const moveWordLeft = () => {
+  let value = global.value
+  let cursor = global.cursor
+  while (cursor < value.length && (
+    value[cursor] === ' ' ||
+    (cursor === global.cursor || value[cursor + 1] !== ' ')
+  )) { //TODO: perf!?
+    cursor += 1
+  }
+  global.cursor = cursor
+  elems.input
+  update()
 }
 
-const moveLineBegin = () => {
-  state.cursor.set(0)
+
+const enter = () => {
+  //HACK: :(
+  elems.history.appendChild(hg.create(h('div.line', [
+    h('span.path', '~/P/t/deployments '),
+    h('span.path-sep', '⮀'),
+    h('span.branch', ' ⭠ master '),
+    h('span.branch-sep', '⮀ '),
+    h('span', global.value)
+  ])))
+  if (global.value.trim() === 'ls') {
+    elems.history.appendChild(hg.create(h('div.output-line', [
+        h('span', 'mongod.conf'),
+        h('span', 'nginx.conf'),
+        h('span.exec', 'ngrok.sh '),
+        h('span.exec', 'ssh'),
+      ])))
+    elems.history.appendChild(hg.create(h('div.output-line', [
+      h('span.dir', 'namecheap'),
+      h('span', 'ngrok-viewer.sh'),
+      h('span.dir', 'scripts'),
+      h('span.dir', 'ssl')
+    ])))
+  } else if (global.value.trim() === 'help') {
+    const help = hg.create(h('div', 'This is just a hack so only ls works...'))
+    elems.history.appendChild(help)
+  } else {
+    const error = hg.create(h('div', 'Unknown command: ' + global.value))
+    elems.history.appendChild(error)
+  }
+  global.value = ''
+  global.cursor = 0
+  update()
+  window.scrollTo(0, elems.parent.offsetTop)
 }
 
-const killLine = () => {
-  const current = state()
-  state.value.set(current.value.slice(0, current.cursor))
-}
+//------------------------------ Events --------------------------------------//
 
-delegator.listenTo('keydown')
-delegator.addGlobalEventListener('keydown', (ev) => {
+window.addEventListener('keypress', ev => {
+  if (!ev.ctrlKey && !ev.altKey && !ev.metaKey) {
+    const char = String.fromCharCode(ev.keyCode)
+    const value = global.value.slice(0, global.cursor) + char + global.value.slice(global.cursor, global.value.length + 1)
+    global.cursor += 1
+    global.value = value
+    update()
+  }
+})
+
+
+window.addEventListener('keydown', ev => {
   if (ev.ctrlKey) {
-    //console.log(ev.keyCode)
-    switch(ev.keyCode) {
-    case 8: deleteWord(); ev.preventDefault(); break
-    case 69: moveLineEnd(); ev.preventDefault(); break
-    case 65: moveLineBegin(); ev.preventDefault(); break
-    case 75: killLine(); ev.preventDefault(); break
+    switch (ev.keyCode) {
+      case 65: moveLineBegin(); ev.preventDefault(); break
+      case 69: moveLineEnd(); ev.preventDefault(); break
+      case 75: killLine(); ev.preventDefault(); break
+    }
+  } else if ((isMac && ev.altKey || !isMac && ev.ctrlKey)) {
+    switch (ev.keyCode) {
+      case 8: deleteWord(); ev.preventDefault(); break
+      case 66: moveWordRight(); ev.preventDefault(); break
+      case 70: moveWordLeft(); ev.preventDefault(); break
     }
   } else {
-    switch(ev.keyCode) {
-    case 8: backspace(); ev.preventDefault(); break 
-    case 37: moveCharLeft(); break
-    case 38: historyDown(); break
-    case 39: moveCharRight(); break
-    case 40: histroyUp(); break
+    switch (ev.keyCode) {
+      case 8: backspace(); ev.preventDefault(); break
+      case 13: enter(); ev.preventDefault(); break
+      case 37: moveCharLeft(); break
+      case 38: historyDown(); break
+      case 39: moveCharRight(); break
+      case 40: historyUp(); break
     }
   }
 })

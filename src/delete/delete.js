@@ -7,14 +7,14 @@ const log = require('../main/shared/log')
 
 
 const body = h('body', [
-  h('div.line', [
-    h('span.path', '~/P/t/deployments '),
-    h('span.path-sep', '⮀'),
-    h('span.branch', ' ⭠ master '),
-    h('span.branch-sep', '⮀ '),
-    h('span.command', 'ls')
-  ]),
-  h('div.output', [
+  h('div#history', [
+    h('div.line', [
+      h('span.path', '~/P/t/deployments '),
+      h('span.path-sep', '⮀'),
+      h('span.branch', ' ⭠ master '),
+      h('span.branch-sep', '⮀ '),
+      h('span.command', 'ls')
+    ]),
     h('div.output-line', [
       h('span', 'mongod.conf'),
       h('span', 'nginx.conf'),

@@ -19,6 +19,8 @@
     "bunyan": "^1.5.1",
     "express": "^4.13.3",
     "global": "^4.3.0",
+    "js-git": "^0.7.7",
+    "js-github": "^1.0.0",
     "mercury": "^14.0.0",
     "node-sass": "^3.4.1",
     "nodemon": "^1.8.0",

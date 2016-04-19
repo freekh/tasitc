@@ -180,8 +180,8 @@ const moveWordLeft = () => {
 
 
 const enter = () => {
-  //HACK: :(
   const appendLastToHistory = () => {
+    //HACK: :( remove dependecy on hg, use hyperscript instead?
     elems.history.appendChild(hg.create(h('div.line', [
       h('span.path', global.cwd + ' '),
       h('span.path-sep', '⮀'),

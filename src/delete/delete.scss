@@ -105,3 +105,11 @@ pre {
     animation: cursor 1s infinite;
   }
 }
+
+.tooltip {
+  position: absolute;
+  border: 1px solid;
+  margin-top: 1.5em;
+  background-color: $white;
+  color: $foreground;
+}

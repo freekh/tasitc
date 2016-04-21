@@ -30,6 +30,14 @@ const pre = (clazz) => {
 
 const isMac = navigator.platform.indexOf('Mac') > -1
 
+const insertText = (value, cursor, text) => {
+  return {
+    value: value.slice(0, cursor) + text + value.slice(cursor, value.length + 1),
+    cursor: cursor + text.length
+  }
+}
+      
+
 //------------------------------ View ----------------------------------------//
 
 //---------------------------- Tooltip --------------------------------------///
@@ -220,8 +228,8 @@ window.addEventListener('keypress', ev => {
   if (!global.block) {
     if (!ev.ctrlKey && !ev.altKey && !ev.metaKey) {
       const char = String.fromCharCode(ev.keyCode)
-      const value = global.value.slice(0, global.cursor) + char + global.value.slice(global.cursor, global.value.length + 1)
-      global.cursor += 1
+      const { value, cursor } = insertText(global.value, global.cursor, char)
+      global.cursor = cursor
       global.value = value
       updateView()
     }
@@ -254,4 +262,17 @@ window.addEventListener('keydown', ev => {
       }
     }
   }
+})
+
+window.addEventListener('paste', ev => {
+  let pastedText = ''
+  if (ev.clipboardData && ev.clipboardData.getData) {
+    pastedText = ev.clipboardData.getData('text/plain')
+  } else {
+    console.warn('paste event unrecognized. wat browser is this?', ev)
+  }
+  const { value, cursor } = insertText(global.value, global.cursor, pastedText)
+  global.value = value
+  global.cursor = cursor
+  updateView()
 })

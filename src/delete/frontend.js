@@ -217,7 +217,7 @@ const enter = () => {
     appendLastToHistory()
     elems.history.appendChild(hg.create(h('div', 'Unknown command: ' + err)))
     complete()
-    throw new Error(err)
+    throw err
   })
 
 }

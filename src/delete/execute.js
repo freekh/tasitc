@@ -8,7 +8,7 @@ const execute = (cwd, value) => {
   if (value.trim() === 'ls') {
     return fs.readTree(cwd).then(objects => {
       return objects.map(object => {
-        return hg.create(h('div.output-line', h('span', (cwd + object.path).replace(cwd + '/', '') )))
+        return hg.create(h('div.output-line', h('span', object.filename + (object.dir ? '/' : ''))))
       })
     })
   } else if (value.trim() === 'help') {

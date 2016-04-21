@@ -7,6 +7,7 @@ const memCache = require('js-git/mixins/mem-cache')
 const readCombiner = require('js-git/mixins/read-combiner')
 const formats = require('js-git/mixins/formats')
 const walkers = require('js-git/mixins/walkers')
+const modes = require('js-git/lib/modes')
 
 const setup = (githubName, accessToken) => {
   const repo = {}
@@ -27,9 +28,13 @@ const setup = (githubName, accessToken) => {
 }
 
 module.exports = {
-  readTree: (githubName, accessToken) => {
+  readTree: (cwd) => {
+    const accessToken = null //TODO
+    const cwdSplit = cwd.split('/')
+    const githubName = cwdSplit.slice(0,2).join('/')
+    const paths = cwdSplit.slice(2)
+    const gitPath = '/'+ paths.join('/') + (paths.length > 0 ? '/' : '')
     const repo = setup(githubName, accessToken)
-    console.log('reading', githubName)
     return new Promise((resolve, reject) => {
       repo.readRef('refs/heads/master', (err, headHash) => {
         if (err) { reject(err) }
@@ -39,16 +44,30 @@ module.exports = {
             if (err) { reject(err) }
             repo.treeWalk(commit.tree, (err, treeStream) => {
               if (err) { reject(err) }
-              let res = []
               const next = () => {
-                treeStream.read((err, object) => {
-                  if (object) {
-                    res.push(object)
-                    next()
+                treeStream.read((err, object) => { //O-b-vizzzoly recurse? :/
+                  if (object && object.path === gitPath && object.body) {
+		    const files = Object.keys(object.body).map(filename => {
+		      const mode = object.body[filename].mode
+		      const dir = modes.tree === mode
+		      const file = modes.file === mode
+		      const sym = modes.sym === mode
+		      const exec = modes.exec === mode
+		      return {
+			filename,
+			dir,
+			file,
+			sym,
+			exec,
+			mode
+		      }
+		    })
+                    resolve(files)
+                  } else if (object){
+		    next()
                   } else {
-                    console.log('resovling', res)
-                    resolve(res)
-                  }
+		    resolve(null)
+		  }
                 })
               }
               next()
@@ -59,30 +78,3 @@ module.exports = {
     })
   }
 }
-
-//const accessToken = process.env['GITHUB_ACCESS_TOKEN']
-//
-// const fs = gitTree({
-//   configs: {
-//     '': {},
-//   },
-//   repos: {
-//     '': repo,
-//   },
-//   createRepo: (config) => {
-//     console.log('createRepo', config)
-//   },
-//   getRootHash: () => {
-//     console.log('getRootHash')
-//     return '2f31e5be090dfe999f22cb09d3b7b835ac08c5ba'
-//   },
-//   setRootHash: (rootHash) => {
-//     console.log('setRootHash', rootHash)
-//   },
-//   saveConfig: (config) => {
-//     console.log('saveConfig', config)
-//   }
-// })
-// console.log(fs.readTree('/README.md', (err, tree) => {
-//   console.log('fs tree', err, tree)
-// }))

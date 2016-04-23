@@ -34,6 +34,7 @@ module.exports = {
     const githubName = cwdSplit.slice(0,2).join('/')
     const paths = cwdSplit.slice(2)
     const gitPath = '/'+ paths.join('/') + (paths.length > 0 ? '/' : '')
+    console.log(gitPath)
     const repo = setup(githubName, accessToken)
     return new Promise((resolve, reject) => {
       repo.readRef('refs/heads/master', (err, headHash) => {

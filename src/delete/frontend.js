@@ -3,20 +3,7 @@ const h = hg.h
 
 const execute = require('./execute')
 const tooltips = require('./tooltips')
-
-//--------------------------- Global vars ------------------------------------//
-const global = {
-  value: '',
-  cwd: 'freekh/tasitc-test',
-  cursor: 0,
-  block: false //listen guys, I don't like this any more than you do! I am not sure I even need it!
-}
-
-//----------------------------- Config ---------------------------------------//
-
-const config = {
-  cursor: '_'
-}
+const params = require('./params')
 
 //----------------------------- Helpers --------------------------------------//
 
@@ -36,7 +23,20 @@ const insertText = (value, cursor, text) => {
     cursor: cursor + text.length
   }
 }
-      
+
+//--------------------------- Global vars ------------------------------------//
+const global = {
+  value: '',
+  cwd: params['cwd'],
+  cursor: 0,
+  block: false //listen guys, I don't like this any more than you do! I am not sure I even need it!
+}
+
+//----------------------------- Config ---------------------------------------//
+
+const config = {
+  cursor: '_'
+}
 
 //------------------------------ View ----------------------------------------//
 
@@ -207,7 +207,7 @@ const enter = () => {
   }
 
   global.block = true
-  execute(global.cwd, global.value).then(res => {
+  execute(global).then(res => {
     appendLastToHistory()
     res.forEach(elem => {
       elems.history.appendChild(elem)

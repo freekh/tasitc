@@ -21,7 +21,7 @@ app.get('/ui-test.js', (req, res) => {
   Delete.js(req, res)
 })
 
-app.use('/assets', express.static('./assets'))
+app.use('/assets', express.static(__dirname+'/assets'))
 
 routes.init(app)
 

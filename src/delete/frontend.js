@@ -24,7 +24,7 @@ const insertText = (value, cursor, text) => {
   }
 }
 
-const updatePs1 = (elems) => {
+const updatePs1 = (elems, global) => {
   //HACK: this is just a hack.
   elems.ps1.getElementsByClassName('path')[0].innerText = global.cwd + ' '
 }
@@ -81,7 +81,7 @@ elems.parent.appendChild(elems.preCursor)
 elems.parent.appendChild(elems.cursor)
 elems.cursor.innerText = ' '
 elems.parent.appendChild(elems.postCursor)
-updatePs1(elems)
+updatePs1(elems, global)
 
 //------------------------------ Update --------------------------------------//
 
@@ -210,7 +210,7 @@ const enter = () => {
     global.value = ''
     global.cursor = 0
     updateView()
-    updatePs1(elems)
+    updatePs1(elems, global)
     window.scrollTo(0, elems.parent.offsetTop)
   }
 
@@ -282,4 +282,42 @@ window.addEventListener('paste', ev => {
   global.value = value
   global.cursor = cursor
   updateView()
+})
+
+//HACK: really. redo this!
+let pathSelectElem = null
+window.addEventListener('mouseover', ev => {
+  if (pathSelectElem) { //HACK: ???
+    const isParent = (elem, target) => {
+      if (target === null) {
+        return false
+      } else if (target === elem) {
+        return true
+      } else {
+        return isParent(elem, target.parentElement)
+      }
+    }
+    if (!isParent(pathSelectElem, ev.srcElement)) {
+      pathSelectElem.remove()
+      pathSelectElem = null
+    }
+  } else {
+    const pathElem = ev.target && ev.target.getAttribute('class') === 'path' && ev.target
+    if (pathElem) {
+      const path = pathElem.innerText.trim() //HACK: sigh...
+      pathSelectElem = hg.create(h('div.clux2-path-selector', { style: { position: 'absolute' } }))
+      pathSelectElem.style.top = pathElem.offsetTop
+      pathSelectElem.style.left = pathElem.offsetLeft
+      const lineHeight = pathElem.offsetHeight
+      const listLeft = pathElem.offsetLeft
+      pathSelectElem.appendChild(hg.create(h('ul', { style: { 'min-width': pathElem.offsetWidth+ 'px', 'top': lineHeight + 'px', left: listLeft + 'px' } }, [
+        h('li', '..'),
+        h('li', 'dir')
+      ])))
+      pathSelectElem.style.minHeight = pathElem.offsetHeight
+      pathSelectElem.style.minWidth = pathElem.offsetWidth
+      document.body.appendChild(pathSelectElem)
+      window.scrollTo(0, pathSelectElem.offsetTop + pathSelectElem.offsetHeight)
+    }
+  }
 })

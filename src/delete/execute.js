@@ -10,7 +10,6 @@ const execute = (global) => { //UGLY hack!
   const cmd = valueSplit.length > 0 && valueSplit[0]
   const args = valueSplit.slice(1).map(arg => arg.trim())
   const cwd = global.cwd
-  console.log('execute', cwd, cmd, args)
   if (cmd === 'ls') {
     let hack = null
     if (cwd === 'freekh/tasitc-test') {
@@ -27,7 +26,14 @@ const execute = (global) => { //UGLY hack!
     const tree = Promise.resolve(hack) //fs.readTree(cwd) offline hack
     return tree.then(objects => {
       return objects.map(object => {
-        return hg.create(h('div.output-line', h('span', object.filename + (object.dir ? '/' : ''))))
+        return hg.create(h('div.output-line', [
+          h('span', [
+            object.dir ? h('span.icon', h('i.fa.fa-caret-right')) : null,
+            object.dir ? h('span.icon', h('i.fa.fa-folder')) : null,
+            !object.dir ? h('span.icon.padded', h('i.fa.fa-file')) : null,
+            h('span.filename', object.filename)
+          ])
+        ]))
       })
     })
   } else if (cmd === 'help') {

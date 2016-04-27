@@ -12,7 +12,20 @@ const execute = (global) => { //UGLY hack!
   const cwd = global.cwd
   console.log('execute', cwd, cmd, args)
   if (cmd === 'ls') {
-    return fs.readTree(cwd).then(objects => {
+    let hack = null
+    if (cwd === 'freekh/tasitc-test') {
+      hack = [ //TODO:
+        {filename: 'README.md', dir: false},
+        {filename: 'dir', dir: true},
+        {filename: 'file2.txt', dir: false}
+      ]
+    } else if (cwd === 'freekh/tasitc-test/dir') {
+      hack = [
+        {filename: 'file2.txt', dir: false}
+      ]
+    }
+    const tree = Promise.resolve(hack) //fs.readTree(cwd) offline hack
+    return tree.then(objects => {
       return objects.map(object => {
         return hg.create(h('div.output-line', h('span', object.filename + (object.dir ? '/' : ''))))
       })

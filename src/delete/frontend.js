@@ -24,6 +24,11 @@ const insertText = (value, cursor, text) => {
   }
 }
 
+const updatePs1 = (elems) => {
+  //HACK: this is just a hack.
+  elems.ps1.getElementsByClassName('path')[0].innerText = global.cwd + ' '
+}
+
 //--------------------------- Global vars ------------------------------------//
 const global = {
   value: '',
@@ -62,6 +67,7 @@ const tooltip = () => {
 //------------------------------ Elems ---------------------------------------//
 
 const elems = {
+  ps1: document.getElementById('ps1'),
   parent: document.getElementById('input'),
   preCursor: pre('pre-cursor'),
   cursor: pre('cursor'),
@@ -75,6 +81,7 @@ elems.parent.appendChild(elems.preCursor)
 elems.parent.appendChild(elems.cursor)
 elems.cursor.innerText = ' '
 elems.parent.appendChild(elems.postCursor)
+updatePs1(elems)
 
 //------------------------------ Update --------------------------------------//
 
@@ -203,18 +210,18 @@ const enter = () => {
     global.value = ''
     global.cursor = 0
     updateView()
+    updatePs1(elems)
     window.scrollTo(0, elems.parent.offsetTop)
   }
 
   global.block = true
+  appendLastToHistory()
   execute(global).then(res => {
-    appendLastToHistory()
     res.forEach(elem => {
       elems.history.appendChild(elem)
     })
     complete()
   }).catch(err => {
-    appendLastToHistory()
     elems.history.appendChild(hg.create(h('div', 'Unknown command: ' + err)))
     complete()
     throw err

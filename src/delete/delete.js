@@ -9,7 +9,7 @@ const log = require('../main/shared/log')
 const body = h('body', [
   h('div#history', [
   ]),
-  h('div.line', [
+  h('div#ps1.line', [
     h('span.path', 'freekh/tasitc-test '),
     h('span.path-sep', '⮀'),
     h('span.branch', ' ⭠ master '),

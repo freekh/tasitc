@@ -2,20 +2,8 @@ const hg = require('mercury') //HACK: remove!
 const h = hg.h
 
 const execute = require('./execute')
-
-//--------------------------- Global vars ------------------------------------//
-const global = {
-  value: '',
-  cwd: 'freekh/tasitc-test',
-  cursor: 0,
-  block: false //listen guys, I don't like this any more than you do! I am not sure I even need it!
-}
-
-//----------------------------- Config ---------------------------------------//
-
-const config = {
-  cursor: '_'
-}
+const tooltips = require('./tooltips')
+const params = require('./params')
 
 //----------------------------- Helpers --------------------------------------//
 
@@ -29,16 +17,60 @@ const pre = (clazz) => {
 
 const isMac = navigator.platform.indexOf('Mac') > -1
 
+const insertText = (value, cursor, text) => {
+  return {
+    value: value.slice(0, cursor) + text + value.slice(cursor, value.length + 1),
+    cursor: cursor + text.length
+  }
+}
+
+//--------------------------- Global vars ------------------------------------//
+const global = {
+  value: '',
+  cwd: params['cwd'],
+  cursor: 0,
+  block: false //listen guys, I don't like this any more than you do! I am not sure I even need it!
+}
+
+//----------------------------- Config ---------------------------------------//
+
+const config = {
+  cursor: '_'
+}
+
 //------------------------------ View ----------------------------------------//
+
+//---------------------------- Tooltip --------------------------------------///
+const tooltip = () => {
+  const tooltip = document.createElement('div')
+  tooltip.setAttribute('class', 'tooltip')
+  tooltip.hide = () => {
+    tooltip.setAttribute('style', 'display:none;')
+    return tooltip
+  }
+  tooltip.show = () => {
+    tooltip.removeAttribute('style')
+    return tooltip
+  }
+  tooltip.set = (value) => {
+    tooltip.innerText = value
+    return tooltip
+  }
+  return tooltip
+}
+
+//------------------------------ Elems ---------------------------------------//
 
 const elems = {
   parent: document.getElementById('input'),
   preCursor: pre('pre-cursor'),
   cursor: pre('cursor'),
   postCursor: pre('post-cursor'),
-  history: document.getElementById('history')
+  history: document.getElementById('history'),
+  tooltip: tooltip().hide()
 }
 
+elems.parent.appendChild(elems.tooltip)
 elems.parent.appendChild(elems.preCursor)
 elems.parent.appendChild(elems.cursor)
 elems.cursor.innerText = ' '
@@ -46,7 +78,7 @@ elems.parent.appendChild(elems.postCursor)
 
 //------------------------------ Update --------------------------------------//
 
-const update = () => {
+const updateView = () => {
   const cursorLetter = global.value.slice(global.cursor, global.cursor + 1)
   elems.preCursor.innerText = global.value.slice(0, global.cursor)
   elems.cursor.innerText = cursorLetter
@@ -57,6 +89,13 @@ const update = () => {
     elems.postCursor.innerText = ' '
     elems.cursor.innerText = ' '
   }
+
+  const tooltip = tooltips(global.cwd, global.value)
+  if (tooltip) {
+    elems.tooltip.show().set(tooltip)
+  } else {
+    elems.tooltip.hide()
+  }
 }
 
 //----------------------------- Keyboard --------------------------------------//
@@ -64,14 +103,14 @@ const update = () => {
 const moveCharLeft = () => {
   if (global.cursor > 0) {
     global.cursor = global.cursor - 1
-    update()
+    updateView()
   }
 }
 
 const moveCharRight = () => {
   if (global.value.length > global.cursor) {
     global.cursor = global.cursor + 1
-    update()
+    updateView()
   }
 }
 
@@ -80,7 +119,7 @@ const backspace = () => {
           global.value.slice(global.cursor, global.value.length + 1)
   global.cursor = global.cursor - 1
   global.value = value
-  update()
+  updateView()
 }
 
 const deleteWord = () => {
@@ -94,22 +133,22 @@ const deleteWord = () => {
   }
   global.value = global.value.slice(0, cursor) + global.value.slice(global.cursor, global.value.length)
   global.cursor = cursor
-  update()
+  updateView()
 }
 
 const moveLineEnd = () => {
   global.cursor = global.value.length + 1
-  update()
+  updateView()
 }
 
 const moveLineBegin = () => {
   global.cursor = 0
-  update()
+  updateView()
 }
 
 const killLine = () => {
   global.value = global.value.slice(0, global.cursor)
-  update()
+  updateView()
 }
 
 const historyUp = () => {
@@ -130,7 +169,7 @@ const moveWordRight = () => {
     cursor -= 1
   }
   global.cursor = cursor
-  update()
+  updateView()
 }
 
 const moveWordLeft = () => {
@@ -144,13 +183,13 @@ const moveWordLeft = () => {
   }
   global.cursor = cursor
   elems.input
-  update()
+  updateView()
 }
 
 
 const enter = () => {
-  //HACK: :(
-  const saveLast = () => {
+  const appendLastToHistory = () => {
+    //HACK: :( remove dependecy on hg, use hyperscript instead?
     elems.history.appendChild(hg.create(h('div.line', [
       h('span.path', global.cwd + ' '),
       h('span.path-sep', '⮀'),
@@ -163,22 +202,22 @@ const enter = () => {
     global.block = false
     global.value = ''
     global.cursor = 0
-    update()
+    updateView()
     window.scrollTo(0, elems.parent.offsetTop)
   }
 
   global.block = true
-  execute(global.cwd, global.value).then(res => {
-    saveLast()
+  execute(global).then(res => {
+    appendLastToHistory()
     res.forEach(elem => {
       elems.history.appendChild(elem)
     })
     complete()
   }).catch(err => {
-    saveLast()
+    appendLastToHistory()
     elems.history.appendChild(hg.create(h('div', 'Unknown command: ' + err)))
     complete()
-    throw new Error(err)
+    throw err
   })
 
 }
@@ -189,10 +228,10 @@ window.addEventListener('keypress', ev => {
   if (!global.block) {
     if (!ev.ctrlKey && !ev.altKey && !ev.metaKey) {
       const char = String.fromCharCode(ev.keyCode)
-      const value = global.value.slice(0, global.cursor) + char + global.value.slice(global.cursor, global.value.length + 1)
-      global.cursor += 1
+      const { value, cursor } = insertText(global.value, global.cursor, char)
+      global.cursor = cursor
       global.value = value
-      update()
+      updateView()
     }
   }
 })
@@ -223,4 +262,17 @@ window.addEventListener('keydown', ev => {
       }
     }
   }
+})
+
+window.addEventListener('paste', ev => {
+  let pastedText = ''
+  if (ev.clipboardData && ev.clipboardData.getData) {
+    pastedText = ev.clipboardData.getData('text/plain')
+  } else {
+    console.warn('paste event unrecognized. wat browser is this?', ev)
+  }
+  const { value, cursor } = insertText(global.value, global.cursor, pastedText)
+  global.value = value
+  global.cursor = cursor
+  updateView()
 })

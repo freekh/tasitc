@@ -10,5 +10,10 @@ It is intended to make it easier to transform and produce web-services and web p
 When my experiments are done, the master branch will be removed and new code will come.
 
 ### Why
-Right now, I just want to see if I put my thoughts down on paper so to speak. Many times, I have felt it is too cumbersome to write simple webservices/webpages based on some experimentation. Normally, I would have written this as shell scripts, but shell scripts are neither hosted nor good at capturing the web-ish intent.
+Right now, I just want to put my thoughts down on paper so to speak.
+Still, here are some imaginary use cases:
+ - transforming javascript from some cdn
+ - transforming and aggregating webservices
+ - simple and extensible admin pages or any throw-away webpages (landing pages, etc etc)
+
 There will be more to come :)

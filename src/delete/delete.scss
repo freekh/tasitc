@@ -2,6 +2,8 @@
   font-family: Menlo;
   src: url('/assets/fonts/Menlo-Regular.ttf');
 }
+@import 'font-awesome/font-awesome';
+
 $foreground: #839496;
 $black-bright: #002833;
 $blue: #268bd2;
@@ -57,7 +59,16 @@ div {
     display: table-row;
     span {
       display: table-cell;
-      padding-right: 2em;
+    }
+    .filename {
+      display: inline-block;
+    }
+    .icon {
+      display: inline-block;
+      padding-right: 0.5em;
+    }
+    .padded {
+      padding-left: 0.9em;
     }
   }
 }
@@ -112,4 +123,58 @@ pre {
   margin-top: 1.5em;
   background-color: $white;
   color: $foreground;
+}
+
+@keyframes highlight {
+  0% {
+    opacity: 0;
+    background-color: #F3F3F3;
+    // min-width: 0px;
+    // border-bottom-left-radius: 20px;
+    // border-bottom-right-radius: 20px;
+
+  }
+  100% {
+    opacity: 1;
+    // border-bottom-left-radius: 5px;
+    // border-bottom-right-radius: 5px;
+
+  }
+}
+
+@keyframes highlight-list {
+  0% {
+    height: 0em;
+    overflow-y: hidden;
+  }
+  100% {
+    //opacity: 1;
+    // border-bottom-left-radius: 5px;
+    // border-bottom-right-radius: 5px;
+
+  }
+}
+
+.clux2 { //command line user experience 2
+  &-path-selector {
+    z-index: 1;
+    animation: highlight 0.5s;
+    opacity: 1;
+    // border-bottom-left-radius: 5px;
+    // border-bottom-right-radius: 5px;
+    //border: 2px solid #F3F3F3;
+    box-sizing: border-box;
+    ul {
+      animation: highlight-list 0.5s;
+      box-shadow: 3px 3px 3px 0px rgb(0, 0, 0);
+      position: absolute;
+      background-color: #F3F3F3;
+      padding: 0em;
+      margin: 0;
+      list-style: none;
+      li {
+        color: #525252;
+      }
+    }
+  }
 }

@@ -3,7 +3,7 @@
 This repo is my personal scratchbook for a hobby project of mine: tasitc, an experimental cloud based tool.
 
 ### What
-tasitc (pronounced *tas*, as in fan-tas-tic, then *itc*, as fel-icity) is meant to be a new way of interacting with web-services using a shell-like, lisp-ish, bash-derivative language.
+tasitc (pronounced *tas*, as in fan-tas-tic, then *itc*, as fel-icity) is meant to be a new way of interacting with web-services using a shell-like, bash-ish, lisp-derivative language.
 It is intended to make it easier to transform and produce web-services and web pages.
 
 ### When

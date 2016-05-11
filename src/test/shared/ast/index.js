@@ -1,7 +1,53 @@
+class Expression {
+  constructor(body) {
+    this.body = body
+  }
+}
+
+class Call {
+  constructor(func, args = [], keywords = []) {
+    this.func = func
+    this.args = args
+    this.keywords = keywords
+  }
+}
+
+class Map { //ListComp ???
+  constructor(elt, mappers) {
+
+  }
+}
+
+class Mapper { //comprehension ???
+  constructor(target, iter) {
+
+  }
+}
+
+class Attribute {
+  constructor(value, attr) {
+
+  }
+}
+
+class Name {
+  constructor(id) {
+    this.id = id
+  }
+}
+
+class AnonFun { //Check this
+  constructor(params, expression) {
+
+  }
+}
+
 module.exports = {
   'basic ast test': (test) => {
     //google/drive/Test.gsheet --acount=(account -l freekh) | gsheet2json | html ($.columns[0] | li)
-    //lookup('google/drive/Test.gsheet', { account: lookup('account', {l: 'freekh'})}).then(res => lookup('gsheet2json', res).then(res => lookup('html', res.columns[0].then(lookup('li')))))
+    //call('google/drive/Test.gsheet', { account: call('account', {l: 'freekh'})}).then($ => call('gsheet2json', $).then($ => call('html', $.columns[0].then(call('li')))))
+
+
 
 // >>> print(astunparse.dump(ast.parse("[i.to_bytes(1, 'big') for i in range(10)]", mode='eval')))
 // Expression(body=ListComp(
@@ -123,7 +169,7 @@ module.exports = {
 //           Num(n=5)],
 //         keywords=[]),
 //       ifs=[])]))
-    
+
 // >>> print(astunparse.dump(ast.parse('mult(a = 1, b = 2)', mode='eval')))Expression(body=Call(
 //   func=Name(
 //     id='mult',
@@ -182,7 +228,7 @@ module.exports = {
 //         ops=[Gt()],
 //         comparators=[Num(n=1)])])]))
 
-    
+
     const ast = {
       type: 'Cmd',
       value: 'google/drive/Test.gsheet',
@@ -223,7 +269,7 @@ module.exports = {
               value: {
                 type: 'Dot',
                 value: {
-                  
+
                 }
               }
             }
@@ -234,10 +280,10 @@ module.exports = {
 
     const transpile = (ast) => {
       if (ast.type === 'Cmd') {
-        
+
       } else {
-        
+
       }
-    }    
+    }
   }
 }

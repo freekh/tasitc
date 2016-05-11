@@ -4,6 +4,7 @@
   "description": "",
   "author": "",
   "license": "ISC",
+  "main": "./src/desktop/main.js",
   "scripts": {
     "test": "./node_modules/nodeunit/bin/nodeunit src/test/index.js",
     "start": "node node_modules/nodemon/bin/nodemon.js src/main/backend/app.js | node_modules/bunyan/bin/bunyan",
@@ -38,6 +39,7 @@
     "node": ">=4.2.1"
   },
   "devDependencies": {
+    "electron-prebuilt": "^1.0.1",
     "nodeunit": "^0.9.1"
   }
 }

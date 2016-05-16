@@ -1,6 +1,6 @@
 'use strict'
 
-class Expression {
+class Expression { //TODO: rename to Comprehension(generator, targets)
   constructor(base, comprehensions = []) {
     this.base = base
     this.comprehensions = comprehensions
@@ -149,69 +149,96 @@ module.exports = {
       } else {
         return '!!'+node+'!!'
       }
-      return transpile(node)
     }
 
     console.log(transpile(astEx))
 
-    const call = (id, args, keywords, context) => {
-      if (id === 'google/drive/Test.gsheet') {
-        const keywordPromises = []
-        Object.keys(keywords).forEach(id => {
-          keywordPromises.push(Promise.all(keywords[id]).then(arg => {
-            return {
-              id,
-              arg
-            }
-          }))
-        })
-        return Promise.all([args, keywordPromises]).then(([args, keywords]) => {
-          console.log(args, keywords)
+    const services = {
+      'google/drive/Test.gsheet': (id, args, keywords, context) => {
+        if (keywords.account && keywords.account[0] && keywords.account[0].authenticated) {
           return Promise.resolve({
-            type:'application/json',
             'csv-url': 'https://...'
           })
-        })
-      } else if (id === 'gsheet2json') {
-        console.log('!!',JSON.stringify(context))
+        } else {
+          return Promise.reject({error: 'Could not authenticate'})
+        }
+      },
+      'gsheet2json': (id, args, keywords, context) => {
         return Promise.resolve({
-          type: 'application/json',
-          content: {
-            columns: [
-              {
-                rows: [
-                  'hello',
-                  'world'
-                ]
-              }
-            ]
-          }
+          columns: [
+            {
+              rows: [
+                'hello',
+                'world'
+              ]
+            }
+          ]
         })
-      } else if (id === 'html'){
+      },
+      'html': (id, args, keywords, context) => {
+        const dom = args && args[0] && args[0].join('') || context || []
+        return Promise.resolve('<html>'+dom+'</html>')
+      },
+      'li': (id, args, keywords, context) => {
+        const dom = args && args[0] && args[0].join('') || context || ''
+        return Promise.resolve(
+          '<li>' + dom + '</li>'
+        )
+      },
+      'account': (id, args, keywords, context) => {
         return Promise.resolve({
-          type: 'text/html',
-          content: '<html></html>'
-        })
-      } else if (id === 'account') {
-        return Promise.resolve({
-          type: 'application/json',
-          content: {
-            authenticated: true
-          }
-        })
-      } else if (id === 'li') {
-        return Promise.resolve({
-          type: 'text/html',
-          content: 'li'
+          authenticated: true
         })
       }
     }
 
+    const call = (id, args, keywords, context) => {
+      const service = services[id]
+      if (service) {
+        const keywordPromises = []
+        Object.keys(keywords).forEach(id => {
+          keywordPromises.push(Promise.all(keywords[id]).then(values => {
+            return {
+              id,
+              values
+            }
+          }))
+        })
+        const argsPromises = args.map(a => Promise.all(a))
+        return Promise.all([Promise.all(argsPromises), Promise.all(keywordPromises)]).then(([args, keywordsArray]) => {
+          const keywords = {}
+          keywordsArray.forEach(({id, values}) => keywords[id] = values)
+          return service(id, args, keywords, context)
+        })
+      } else {
+        return Promise.reject({msg: `Unknown service: '${id}'`, id, code: 0})
+      }
+    }
+
     const $ = {}
-    eval(transpile(astEx)).then(a => {
+    const t = call('google/drive/Test.gsheet', [],
+                   {'account':[
+                     call('account', [], {'l':['freekh']}, $)]}, $)
+            .then(function($) {
+              return call('gsheet2json', [], {}, $)
+            })
+            .then(function($) {
+              return call('html', [
+                $.columns[0].rows.map(function($) {
+                  return call('li', [], {}, $)
+                })], {}, $)
+            })
+    t.then(a => {
       console.log('!--->', a)
     }).catch(err => {
-      console.error(err)
+      if (err.stack) {
+        console.error('Fatal error', err)
+        console.error(err.stack)
+      } else if (err.code !== undefined) {
+        console.error(`ERROR (code: ${err.code}): ${err.msg}`)
+      } else {
+        console.error('Unknown error', err)
+      }
     })
     // eval(transpile(astEx)).then(console.log).catch(err => {
     //   console.error(err)

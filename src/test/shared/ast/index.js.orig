@@ -228,6 +228,9 @@ module.exports = {
 //         ops=[Gt()],
 //         comparators=[Num(n=1)])])]))
 
+<<<<<<< Updated upstream
+
+=======
 //https://www.ibm.com/developerworks/library/l-fuse/
 //     struct fuse_operations {
 //     int (*getattr) (const char *, struct stat *);
@@ -256,6 +259,7 @@ module.exports = {
 //     int (*listxattr) (const char *, char *, size_t);
 //     int (*removexattr) (const char *, const char *);
 // };
+>>>>>>> Stashed changes
     const ast = {
       type: 'Cmd',
       value: 'google/drive/Test.gsheet',

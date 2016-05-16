@@ -7,7 +7,7 @@ class Expression { //TODO: rename to Comprehension(generator, targets)
   }
 }
 
-class Call {
+class Call { //TODO: rename to Request?
   constructor(id, args = [], keywords = {}) {
     this.id = id
     this.args = args
@@ -38,14 +38,6 @@ class Subscript { //[1][0]
 class Id {
   constructor(value) {
     this.value = value
-  }
-}
-
-class Html { //TODO: extends Call?
-  constructor(args = [], keywords = {}) {
-    this.id = 'html'
-    this.args = args
-    this.keywords = keywords
   }
 }
 
@@ -114,9 +106,10 @@ module.exports = {
     )
     
     console.log(`google/drive/Test.gsheet --acount=(account -l 'freekh') | gsheet2json | html ($.columns[0].rows | li)`)
+    console.log(`TODO: /google/drive --path=(str ?path '.gsheet') --acount=(account ~/google/freekh) | gsheet2json | html (ul ($.columns[0].rows | li)) /bootstrap/css > ~/test/rows`)
     console.log(JSON.stringify(astEx, null, 2))
 
-    const transpile = (node) => {
+    const transpile = (node) => { //TODO: dont do this... use Function instead!
       const commons = {
         args: (args) => '['+args.map(arg => {
           return `${transpile(arg)}`
@@ -135,6 +128,7 @@ module.exports = {
           return `.${comprehension}(function($) { return ${transpile(n)}})`
         }).join('')
       } else if (node instanceof Call) {
+        //if not alias and is atom, use atom directly
         return `call(${transpile(node.id)}, ${commons.args(node.args)}, ${commons.keywords(node.keywords)}, $)`
       } else if (node instanceof Id) {
         return `'${node.value}'`
@@ -147,7 +141,7 @@ module.exports = {
       } else if (node instanceof Context) {
         return `$`
       } else {
-        return '!!'+node+'!!'
+        throw new Error('Unknown AST node: '+JSON.stringify(node))
       }
     }
 
@@ -155,18 +149,15 @@ module.exports = {
 
     const services = {
       'google/drive/Test.gsheet': (id, args, keywords, context) => {
-        if (keywords.account && keywords.account[0] && keywords.account[0].authenticated) {
-          return Promise.resolve({
-            'csv-url': 'https://...'
-          })
-        } else {
-          return Promise.reject({error: 'Could not authenticate'})
-        }
+        return Promise.resolve({
+          'csv-url': 'https://...'
+        })
       },
       'gsheet2json': (id, args, keywords, context) => {
         return Promise.resolve({
           columns: [
             {
+              num: 0,
               rows: [
                 'hello',
                 'world'
@@ -186,9 +177,19 @@ module.exports = {
         )
       },
       'account': (id, args, keywords, context) => {
-        return Promise.resolve({
-          authenticated: true
-        })
+        const testReject = false
+        if (testReject) {
+          return Promise.reject({
+            msg: 'Could not authenticate',
+            keywords,
+            args,
+            id
+          })
+        } else {
+          return Promise.resolve({
+            user: 'freekh'
+          })
+        }
       }
     }
 
@@ -196,6 +197,7 @@ module.exports = {
       const service = services[id]
       if (service) {
         const keywordPromises = []
+        //TODO: hmm... this flattening is pret-ty ugly!
         Object.keys(keywords).forEach(id => {
           keywordPromises.push(Promise.all(keywords[id]).then(values => {
             return {
@@ -211,7 +213,7 @@ module.exports = {
           return service(id, args, keywords, context)
         })
       } else {
-        return Promise.reject({msg: `Unknown service: '${id}'`, id, code: 0})
+        return Promise.reject({msg: `Unknown service: '${id}'`, id, keywords, args, code: 0})
       }
     }
 
@@ -228,16 +230,16 @@ module.exports = {
                   return call('li', [], {}, $)
                 })], {}, $)
             })
-    t.then(a => {
+    eval(transpile(astEx)).then(a => {
       console.log('!--->', a)
     }).catch(err => {
       if (err.stack) {
         console.error('Fatal error', err)
         console.error(err.stack)
-      } else if (err.code !== undefined) {
-        console.error(`ERROR (code: ${err.code}): ${err.msg}`)
+      } else if (err.msg !== undefined) {
+        console.error(`ERROR (id: '${err.id}'): ${err.msg}`)
       } else {
-        console.error('Unknown error', err)
+        console.error('Fatal unknown error', err)
       }
     })
     // eval(transpile(astEx)).then(console.log).catch(err => {

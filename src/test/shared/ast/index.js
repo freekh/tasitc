@@ -122,7 +122,7 @@ module.exports = {
           return `${transpile(arg)}`
         }).join(',')+']',
         keywords: (keywords) => '{'+Object.keys(keywords).map(id => {
-          return `'${id}':${keywords[id].map(transpile)}`
+          return `'${id}':[${keywords[id].map(transpile).join(',')}]`
         }).join(',')+'}'
       }
       if (node instanceof Expression) {
@@ -155,83 +155,63 @@ module.exports = {
     console.log(transpile(astEx))
 
     const call = (id, args, keywords, context) => {
-      // let res = ''
-      // if (id === 'google/drive/Test.gsheet') {
-      //   res = 'some request response'
-      // } else if (id === 'gsheet2json') {
-      //   res = {
-      //     columns: [{
-      //       rows: [
-      //         'hello',
-      //         'world'
-      //       ]
-      //     }]
-      //   }
-      // } else if (id === 'html') {
-      //   console.log('??', args)
-      //   return Promise.all(args.map(Promise.resolve)).then(args => {
-      //     return '<html>'+args.join('\n')+'</html>'
-      //   })
-      // } else if (id === 'li') {
-      //   console.log('!??', args, args.map)
-      //   return Promise.all(args.map(Promise.resolve)).then(args => {
-      //     return '<li>'+args.join('\n')+'</li>'
-      //   })
-      // } else if (id === 'account') {
-      //   return Promise.resolve('secret stuff')
-      // } else {
-      //   console.log('wtf', id)
-      // }
-      // return Promise.resolve(res)
-      const dummy = {
-        columns: [{
-          rows: [
-            'hello',
-            'world'
-          ]
-        }]
-      }
-
       if (id === 'google/drive/Test.gsheet') {
-        return {
-          then: (context) => {
-            return context({type:'application/json'})
-          }
-        }
+        const keywordPromises = []
+        Object.keys(keywords).forEach(id => {
+          keywordPromises.push(Promise.all(keywords[id]).then(arg => {
+            return {
+              id,
+              arg
+            }
+          }))
+        })
+        return Promise.all([args, keywordPromises]).then(([args, keywords]) => {
+          console.log(args, keywords)
+          return Promise.resolve({
+            type:'application/json',
+            'csv-url': 'https://...'
+          })
+        })
       } else if (id === 'gsheet2json') {
-        console.log(context)
-        return {
-          then: (context) => {
-            return context(dummy)
+        console.log('!!',JSON.stringify(context))
+        return Promise.resolve({
+          type: 'application/json',
+          content: {
+            columns: [
+              {
+                rows: [
+                  'hello',
+                  'world'
+                ]
+              }
+            ]
           }
-        }
+        })
       } else if (id === 'html'){
-        return {
-          then: (context) => {
-            return context('<html>'+args[0].join('')+'</html>')
-          }
-        }
+        return Promise.resolve({
+          type: 'text/html',
+          content: '<html></html>'
+        })
       } else if (id === 'account') {
-        return 'account'
+        return Promise.resolve({
+          type: 'application/json',
+          content: {
+            authenticated: true
+          }
+        })
       } else if (id === 'li') {
-        return '<li>' + context + '</li>'
+        return Promise.resolve({
+          type: 'text/html',
+          content: 'li'
+        })
       }
     }
 
     const $ = {}
-    const t = call('google/drive/Test.gsheet', [], {'account':call('account', [], {'l':'freekh'}, $)}, $)
-      .then(function($) {
-        return call('gsheet2json', [], {}, $)
-      })
-      .then(function($) {
-        return call('html', [
-          $.columns[0].rows.map(function($) {
-            return call('li', [], {}, $)
-          })
-        ], {}, $)
-      })
     eval(transpile(astEx)).then(a => {
       console.log('!--->', a)
+    }).catch(err => {
+      console.error(err)
     })
     // eval(transpile(astEx)).then(console.log).catch(err => {
     //   console.error(err)

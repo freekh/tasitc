@@ -6,9 +6,9 @@
   "license": "ISC",
   "main": "./src/desktop/main.js",
   "scripts": {
-    "test": "./node_modules/nodeunit/bin/nodeunit src/test/index.js",
-    "start": "node node_modules/nodemon/bin/nodemon.js src/main/backend/app.js | node_modules/bunyan/bin/bunyan",
-    "~test": "node node_modules/nodemon/bin/nodemon.js -x 'npm test'"
+    "test": "node --harmony_default_parameters ./node_modules/nodeunit/bin/nodeunit src/test/index.js",
+    "start": "node ./node_modules/nodemon/bin/nodemon.js --harmony_default_parameters  src/main/backend/app.js | node_modules/bunyan/bin/bunyan",
+    "~test": "node ./node_modules/nodemon/bin/nodemon.js --harmony_default_parameters  -x 'npm test'"
   },
   "dependencies": {
     "babel-core": "^5.8.24",

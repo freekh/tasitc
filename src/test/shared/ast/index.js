@@ -1,54 +1,242 @@
+'use strict'
+
 class Expression {
-  constructor(body) {
-    this.body = body
+  constructor(base, comprehensions = []) {
+    this.base = base
+    this.comprehensions = comprehensions
   }
 }
 
 class Call {
-  constructor(func, args = [], keywords = []) {
-    this.func = func
+  constructor(id, args = [], keywords = {}) {
+    this.id = id
     this.args = args
     this.keywords = keywords
   }
 }
 
-class Map { //ListComp ???
-  constructor(elt, mappers) {
-
-  }
-}
-
-class Mapper { //comprehension ???
-  constructor(target, iter) {
-
-  }
-}
-
-class Attribute {
+class Attribute { //foo.column
   constructor(value, attr) {
-
+    this.value = value
+    this.attr = attr
   }
 }
 
-class Name {
-  constructor(id) {
-    this.id = id
+class Context { //$
+  constructor() {
+    this.id = '$'
   }
 }
 
-class AnonFun { //Check this
-  constructor(params, expression) {
-
+class Subscript { //[1][0]
+  constructor(value, index) {
+    this.value = value
+    this.index = index
   }
 }
+
+class Id {
+  constructor(value) {
+    this.value = value
+  }
+}
+
+class Html { //TODO: extends Call?
+  constructor(args = [], keywords = {}) {
+    this.id = 'html'
+    this.args = args
+    this.keywords = keywords
+  }
+}
+
+class Str { //TODO: rename?
+  constructor(value) {
+    this.value = value
+  }
+}
+
+class Num { //TODO: rename?
+  constructor(value) {
+    this.value = value
+  }
+}
+
 
 module.exports = {
   'basic ast test': (test) => {
-    //google/drive/Test.gsheet --acount=(account -l freekh) | gsheet2json | html ($.columns[0] | li)
-    //call('google/drive/Test.gsheet', { account: call('account', {l: 'freekh'})}).then($ => call('gsheet2json', $).then($ => call('html', $.columns[0].then(call('li')))))
+    const astEx = new Expression(
+      new Call(
+        new Id('google/drive/Test.gsheet'),
+        [],
+        {
+          account: [
+            new Call(
+              new Id('account'),
+              [],
+              {
+                l: [
+                  new Str('freekh')
+                ]
+              }
+            )
+          ]
+        }),
+      [
+        new Call(
+          new Id('gsheet2json')
+        ),
+        new Call(
+          new Id('html'),
+          [
+            new Expression(
+              new Attribute(
+                new Subscript(
+                  new Attribute(
+                    new Context(),
+                    'columns'
+                  ),
+                  new Num(
+                    0
+                  )
+                ),
+                'rows'
+            ),
+              [
+              new Call(
+                new Id('li'),
+                [],
+                {})
+              ]
+            )
+          ]
+        )
+      ]
+    )
+    
+    console.log(`google/drive/Test.gsheet --acount=(account -l 'freekh') | gsheet2json | html ($.columns[0].rows | li)`)
+    console.log(JSON.stringify(astEx, null, 2))
 
+    const transpile = (node) => {
+      const commons = {
+        args: (args) => '['+args.map(arg => {
+          return `${transpile(arg)}`
+        }).join(',')+']',
+        keywords: (keywords) => '{'+Object.keys(keywords).map(id => {
+          return `'${id}':${keywords[id].map(transpile)}`
+        }).join(',')+'}'
+      }
+      if (node instanceof Expression) {
+        return transpile(node.base) + node.comprehensions.map((n, i) => {
+          let comprehension = 'map'
+          if (i === 0 && node.base instanceof Call ||
+              i > 0 && node.comprehensions[i - 1] instanceof Call) {
+            comprehension = 'then'
+          }
+          return `.${comprehension}(function($) { return ${transpile(n)}})`
+        }).join('')
+      } else if (node instanceof Call) {
+        return `call(${transpile(node.id)}, ${commons.args(node.args)}, ${commons.keywords(node.keywords)}, $)`
+      } else if (node instanceof Id) {
+        return `'${node.value}'`
+      } else if (node instanceof Str) {
+        return `'${node.value}'`
+      } else if (node instanceof Subscript) {
+        return `${transpile(node.value)}[${node.index.value}]`
+      } else if (node instanceof Attribute) {
+        return `${transpile(node.value)}.${node.attr}`
+      } else if (node instanceof Context) {
+        return `$`
+      } else {
+        return '!!'+node+'!!'
+      }
+      return transpile(node)
+    }
 
+    console.log(transpile(astEx))
 
+    const call = (id, args, keywords, context) => {
+      // let res = ''
+      // if (id === 'google/drive/Test.gsheet') {
+      //   res = 'some request response'
+      // } else if (id === 'gsheet2json') {
+      //   res = {
+      //     columns: [{
+      //       rows: [
+      //         'hello',
+      //         'world'
+      //       ]
+      //     }]
+      //   }
+      // } else if (id === 'html') {
+      //   console.log('??', args)
+      //   return Promise.all(args.map(Promise.resolve)).then(args => {
+      //     return '<html>'+args.join('\n')+'</html>'
+      //   })
+      // } else if (id === 'li') {
+      //   console.log('!??', args, args.map)
+      //   return Promise.all(args.map(Promise.resolve)).then(args => {
+      //     return '<li>'+args.join('\n')+'</li>'
+      //   })
+      // } else if (id === 'account') {
+      //   return Promise.resolve('secret stuff')
+      // } else {
+      //   console.log('wtf', id)
+      // }
+      // return Promise.resolve(res)
+      const dummy = {
+        columns: [{
+          rows: [
+            'hello',
+            'world'
+          ]
+        }]
+      }
+
+      if (id === 'google/drive/Test.gsheet') {
+        return {
+          then: (context) => {
+            return context({type:'application/json'})
+          }
+        }
+      } else if (id === 'gsheet2json') {
+        console.log(context)
+        return {
+          then: (context) => {
+            return context(dummy)
+          }
+        }
+      } else if (id === 'html'){
+        return {
+          then: (context) => {
+            return context('<html>'+args[0].join('')+'</html>')
+          }
+        }
+      } else if (id === 'account') {
+        return 'account'
+      } else if (id === 'li') {
+        return '<li>' + context + '</li>'
+      }
+    }
+
+    const $ = {}
+    const t = call('google/drive/Test.gsheet', [], {'account':call('account', [], {'l':'freekh'}, $)}, $)
+      .then(function($) {
+        return call('gsheet2json', [], {}, $)
+      })
+      .then(function($) {
+        return call('html', [
+          $.columns[0].rows.map(function($) {
+            return call('li', [], {}, $)
+          })
+        ], {}, $)
+      })
+    eval(transpile(astEx)).then(a => {
+      console.log('!--->', a)
+    })
+    // eval(transpile(astEx)).then(console.log).catch(err => {
+    //   console.error(err)
+    // })
+    
 // >>> print(astunparse.dump(ast.parse("[i.to_bytes(1, 'big') for i in range(10)]", mode='eval')))
 // Expression(body=ListComp(
 //   elt=Call(
@@ -228,6 +416,101 @@ module.exports = {
 //         ops=[Gt()],
 //         comparators=[Num(n=1)])])]))
 
+
+
+// >>> print(astunparse.dump(ast.parse('lambda x: x + 1', mode='eval')))
+// Expression(body=Lambda(
+//   args=arguments(
+//     args=[arg(
+//       arg='x',
+//       annotation=None)],
+//     vararg=None,
+//     kwonlyargs=[],
+//     kw_defaults=[],
+//     kwarg=None,
+//     defaults=[]),
+//   body=BinOp(
+//     left=Name(
+//       id='x',
+//       ctx=Load()),
+//     op=Add(),
+//     right=Num(n=1))))
+
+// >>> print(astunparse.dump(ast.parse('g = lambda x: x + 1')))
+// Module(body=[Assign(
+//   targets=[Name(
+//     id='g',
+//     ctx=Store())],
+//   value=Lambda(
+//     args=arguments(
+//       args=[arg(
+//         arg='x',
+//         annotation=None)],
+//       vararg=None,
+//       kwonlyargs=[],
+//       kw_defaults=[],
+//       kwarg=None,
+//       defaults=[]),
+//     body=BinOp(
+//       left=Name(
+//         id='x',
+//         ctx=Load()),
+//       op=Add(),
+//       right=Num(n=1))))])
+
+// >>> print(astunparse.dump(ast.parse('def f(a = 0): a + 1')))
+// Module(body=[FunctionDef(
+//   name='f',
+//   args=arguments(
+//     args=[arg(
+//       arg='a',
+//       annotation=None)],
+//     vararg=None,
+//     kwonlyargs=[],
+//     kw_defaults=[],
+//     kwarg=None,
+//     defaults=[Num(n=0)]),
+//   body=[Expr(value=BinOp(
+//     left=Name(
+//       id='a',
+//       ctx=Load()),
+//     op=Add(),
+//     right=Num(n=1)))],
+//   decorator_list=[],
+//   returns=None)])
+
+// >> print(astunparse.dump(ast.parse('g = 0')))
+// Module(body=[Assign(
+//   targets=[Name(
+//     id='g',
+//     ctx=Store())],
+//   value=Num(n=0))])
+
+// >>> print(astunparse.dump(ast.parse('def f(a = 0): g(a); return 0')))
+// Module(body=[FunctionDef(
+//   name='f',
+//   args=arguments(
+//     args=[arg(
+//       arg='a',
+//       annotation=None)],
+//     vararg=None,
+//     kwonlyargs=[],
+//     kw_defaults=[],
+//     kwarg=None,
+//     defaults=[Num(n=0)]),
+//   body=[
+//     Expr(value=Call(
+//       func=Name(
+//         id='g',
+//         ctx=Load()),
+//       args=[Name(
+//         id='a',
+//         ctx=Load())],
+//       keywords=[])),
+//     Return(value=Num(n=0))],
+//   decorator_list=[],
+//   returns=None)])
+
 //https://www.ibm.com/developerworks/library/l-fuse/
 //     struct fuse_operations {
 //     int (*getattr) (const char *, struct stat *);
@@ -256,61 +539,7 @@ module.exports = {
 //     int (*listxattr) (const char *, char *, size_t);
 //     int (*removexattr) (const char *, const char *);
 // };
-    const ast = {
-      type: 'Cmd',
-      value: 'google/drive/Test.gsheet',
-      args: [
-        {
-          type: 'Obj',
-          value: {
-            account: {
-              type: 'Cmd',
-              value: 'account',
-              args: [
-                {
-                  type: 'Obj',
-                  value: {
-                    l: {
-                      type: 'String',
-                      value: 'freekh'
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        }
-      ],
-      then: {
-        type: 'Cmd',
-        value: 'gsheet2json',
-        args: [
-          { type: 'Res', value: 0 }
-        ],
-        then: {
-          type: 'Cmd',
-          value: 'html',
-          args: [
-            {
-              type: 'Res',
-              value: {
-                type: 'Dot',
-                value: {
+    
 
-                }
-              }
-            }
-          ]
-        }
-      }
-    }
-
-    const transpile = (ast) => {
-      if (ast.type === 'Cmd') {
-
-      } else {
-
-      }
-    }
   }
 }

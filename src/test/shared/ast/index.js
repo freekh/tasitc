@@ -1,5 +1,12 @@
 'use strict'
 
+class Sink {
+  constructor(expression, path) {
+    this.expression = expression
+    this.path = path
+  }
+}
+
 class Expression { //TODO: rename to Comprehension(generator, targets)
   constructor(base, comprehensions = []) {
     this.base = base
@@ -19,6 +26,12 @@ class Attribute { //foo.column
   constructor(value, attr) {
     this.value = value
     this.attr = attr
+  }
+}
+
+class Parameter {
+  constructor(id) {
+    this.id = id
   }
 }
 
@@ -104,10 +117,79 @@ module.exports = {
         )
       ]
     )
-    
-    console.log(`google/drive/Test.gsheet --acount=(account -l 'freekh') | gsheet2json | html ($.columns[0].rows | li)`)
+
+    // console.log(`google/drive/Test.gsheet --acount=(account -l 'freekh') | gsheet2json | html ($.columns[0].rows | li)`)
+
+    const astEx2 = new Sink(
+      new Expression(
+        new Call(
+          new Id('/google/drive'),
+          [],
+          {
+            path: [
+              new Call(
+                new Id('str'),
+                [
+                  new Parameter(
+                    new Id('path')
+                  ),
+                  new Str('.gsheet')
+                ],
+                {}
+              )
+            ],
+            account: [
+              new Call(
+                new Id('account'),
+                [],
+                {
+                  l: [
+                    new Str('freekh')
+                  ]
+                }
+              )
+            ]
+          }),
+        [
+          new Call(
+            new Id('gsheet2json')
+          ),
+          new Call(
+            new Id('html'),
+            [
+              new Expression(
+                new Attribute(
+                  new Subscript(
+                    new Attribute(
+                      new Context(),
+                      'columns'
+                    ),
+                    new Num(
+                      0
+                    )
+                  ),
+                  'rows'
+                ),
+                [
+                  new Call(
+                    new Id('li'),
+                    [],
+                    {})
+                ]
+              ),
+              new Call(
+                new Id('/bootstrap/css'),
+                [],
+                {}
+              )
+            ]
+          )
+        ]
+      ),
+      new Id('~/test/rows')
+    )
     console.log(`TODO: /google/drive --path=(str ?path '.gsheet') --acount=(account ~/google/freekh) | gsheet2json | html (ul ($.columns[0].rows | li)) /bootstrap/css > ~/test/rows`)
-    console.log(JSON.stringify(astEx, null, 2))
+    console.log(JSON.stringify(astEx2, null, 2))
 
     const transpile = (node) => { //TODO: dont do this... use Function instead!
       const commons = {
@@ -138,6 +220,10 @@ module.exports = {
         return `${transpile(node.value)}[${node.index.value}]`
       } else if (node instanceof Attribute) {
         return `${transpile(node.value)}.${node.attr}`
+      } else if (node instanceof Parameter) {
+        return `parameter('${node.id.value}')`
+      } else if (node instanceof Sink) {
+        return `sink(${transpile(node.expression)}, '${node.path.value}')`
       } else if (node instanceof Context) {
         return `$`
       } else {
@@ -145,9 +231,35 @@ module.exports = {
       }
     }
 
-    console.log(transpile(astEx))
+    console.log(transpile(astEx2))
 
+    const containsOne = (array, value) => {
+      let found = null
+      let i = 0
+      while (!found && array[i]) {
+        if (array[i] === value) {
+          found = array[i][0]
+        } else {
+          i++
+        }
+      }
+      return found
+    }
+    
     const services = {
+      '/google/drive': (id, args, keywords, context) => {
+        if (containsOne(keywords.path, 'Test.gsheet')) {
+          return Promise.resolve({
+            'csv-url': 'https://...'
+          })
+        } else {
+          if (keywords.path) {
+            return Promise.reject({msg: `No document at path: '${keywords.path}'`})
+          } else {
+            return Promise.reject({msg: `Missing path`, id, args, keywords})
+          }
+        }
+      },
       'google/drive/Test.gsheet': (id, args, keywords, context) => {
         return Promise.resolve({
           'csv-url': 'https://...'
@@ -167,8 +279,9 @@ module.exports = {
         })
       },
       'html': (id, args, keywords, context) => {
-        const dom = args && args[0] && args[0].join('') || context || []
-        return Promise.resolve('<html>'+dom+'</html>')
+        const dom = args && args[0] && args[0].join('') || context || ''
+        const style = args[1] ? '<header><style>'+args[1]+'</style></header>' : ''
+        return Promise.resolve('<html>'+style+'<body>'+dom+'</body></html>')
       },
       'li': (id, args, keywords, context) => {
         const dom = args && args[0] && args[0].join('') || context || ''
@@ -190,7 +303,22 @@ module.exports = {
             user: 'freekh'
           })
         }
+      },
+      '/bootstrap/css': (id, args, keywords, context) => {
+        return Promise.resolve('li { color: red; }')
+      },
+      'str': (id, args, keywords, context) => {
+        return Promise.resolve(args.join(''))
       }
+    }
+
+    const sink = (expression, id) => {
+      console.log('sink', id)
+      return Promise.resolve(expression)
+    }
+
+    const parameter = (id) => {
+      return Promise.resolve('Test')
     }
 
     const call = (id, args, keywords, context) => {
@@ -198,6 +326,7 @@ module.exports = {
       if (service) {
         const keywordPromises = []
         //TODO: hmm... this flattening is pret-ty ugly!
+        //FIXME: keywords and args WILL break unless it only flattens things that are supposed to be flattened (Promises)
         Object.keys(keywords).forEach(id => {
           keywordPromises.push(Promise.all(keywords[id]).then(values => {
             return {
@@ -206,7 +335,15 @@ module.exports = {
             }
           }))
         })
-        const argsPromises = args.map(a => Promise.all(a))
+        const argsPromises = args.map(a => {
+          if (a instanceof Array) {
+            return Promise.all(a)
+          } else if (a instanceof Promise) {
+            return a
+          } else {
+            return Promise.resolve(a)
+          }
+        })
         return Promise.all([Promise.all(argsPromises), Promise.all(keywordPromises)]).then(([args, keywordsArray]) => {
           const keywords = {}
           keywordsArray.forEach(({id, values}) => keywords[id] = values)
@@ -230,7 +367,7 @@ module.exports = {
                   return call('li', [], {}, $)
                 })], {}, $)
             })
-    eval(transpile(astEx)).then(a => {
+    eval(transpile(astEx2)).then(a => {
       console.log('!--->', a)
     }).catch(err => {
       if (err.stack) {

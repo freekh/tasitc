@@ -8,7 +8,9 @@ tux2, the terminal user experience 2.0, is the "terminal" in which tasitc will r
 
 ### What?!?
 Ah, you want an example? Here's an example (as it is now) where a Google spreadsheet is downloaded based on a path http request saved to ~/test/rows:
-`/google/drive --path=(str ?path '.gsheet') --acount=(account ~/google/freekh) | gsheet2json | html (ul ($.columns[0].rows | li)) /bootstrap/css > ~/test/rows`
+
+```/google/drive --path=(str ?path '.gsheet') --acount=(account ~/google/freekh) | gsheet2json | html (ul ($.columns[0].rows | li)) /bootstrap/css > ~/test/rows```
+
 Calling: `https://tasitc.com/freekh/test/rows?path=Test` will thus transform the contents of an imaginary google spreadsheet, Test from freekh's google account, and create a html list css'ed by bootstrap.
 
 ### When

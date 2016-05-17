@@ -17,7 +17,8 @@ Ah, you want an example? Here's an example (as it is now) where the rows of the 
      $.columns[0].rows | li
     )
   ) /bootstrap/css > 
-  ~/test/rows```
+  ~/test/rows
+```
 
 It can then be called from the CLI `~/test/rows --path='Test'` or by hitting the endpoint: `https://tasitc.com/freekh/test/rows?path=Test` .
 

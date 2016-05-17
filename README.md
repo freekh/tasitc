@@ -14,11 +14,7 @@ Ah, you want an example? Here's an example (as it is now) where the rows of the 
 ```
 /google/drive --path=(str ?path '.gsheet') --acount=(account ~/google/freekh) | 
   gsheet2json | 
-  html (
-    ul (
-     $.columns[0].rows | li
-    )
-  ) /bootstrap/css > 
+  html (ul ($.columns[0].rows | li)) /bootstrap/css > 
   ~/test/rows
 ```
 

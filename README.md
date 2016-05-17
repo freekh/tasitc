@@ -7,7 +7,7 @@ tasitc (pronounced *tas*, as in fan-tas-tic, then *itc*, as fel-icity) is meant 
 tux2, the terminal user experience 2.0, is the "terminal" in which tasitc will run (at least intially). It is a reimagining of the ye olde terminal maintaining all its qualities, augmenting it subtly but substantialy. More to come.
 
 ### What?!?
-Ah, you want an example? Here's an example (as it is now) where the rows of the first column of a Google spreadsheet is downloaded, based on a path http request assigned to ~/test/rows, then rendered in bootstrapped html:
+Ah, you want an example? Here's an example (as it is now) where the rows of the first column of a Google spreadsheet is downloaded, based on a path http request assigned to `~/test/rows`, then rendered in bootstrapped html:
 
 ```
 /google/drive --path=(str ?path '.gsheet') --acount=(account ~/google/freekh) | 

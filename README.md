@@ -34,4 +34,4 @@ Still, here are some imaginary use cases:
  - transforming and aggregating webservices
  - simple and extensible admin pages and other 'throw-away' webpages (landing pages, etc etc)
 
-Again, more to come in the next weeks or so... :)
+Again, more to come... :)

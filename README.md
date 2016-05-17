@@ -25,7 +25,7 @@ Ah, you want an example? Here's an example (as it is now) where the rows of the 
 It can then be called from the CLI `~/test/rows --path='Test'` or by hitting the endpoint: `https://tasitc.com/freekh/test/rows?path=Test` .
 
 ### When
-When my experiments are done! Oh, you meant when in time? Well, 
+When my experiments are done! Oh, you meant when in time? Well, that is not up to me really :) Maybe in 2 weeks or maybe never :)
 
 ### Why
 Right now, I just want to put my thoughts down on paper so to speak.

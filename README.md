@@ -4,7 +4,7 @@ This repo is my personal scratchbook for a hobby project of mine: tasitc, an exp
 
 ### What
 tasitc (pronounced *tas*, as in fan-tas-tic, then *eeteesee*, as in fel-icity) is meant to be a new way of interacting with web-services using a shell-like, bash-ish, lisp-derivative language. It is intended to make it easier to transform and produce web-services and web pages. 
-tux2, the terminal user experience 2.0, is the "terminal" in which tasitc will run (at least intially). It is a reimagining of the ye olde terminal in a browser maintaining all the qualities of a terminal, augmenting it subtly but substantialy.
+tux2, the terminal user experience 2.0, is the "terminal" in which tasitc will run (at least intially). It is a reimagining of the ye olde terminal in a browser maintaining the feeling and qualities of a terminal, augmenting it subtly but substantialy.
 Note: the structure and code will be built properly, when I get the parser and AST are more stable (+ you would be mad to fork this - there's not even a single star here :)).
 More to come.
 

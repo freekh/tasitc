@@ -22,7 +22,7 @@ Ah, you want an example? Here's an example (as it is now) where the rows of the 
   ~/test/rows
 ```
 
-It can then be called from the CLI `~/test/rows --path='Test'` or by hitting the endpoint: `https://tasitc.com/freekh/test/rows?path=Test` .
+It can then be called from the tux2 (on-line command line interface)   `~/test/rows --path='Test'` or by hitting the endpoint: `https://tasitc.com/freekh/test/rows?path=Test` .
 
 ### When
 When my experiments are done! Oh, you meant when in time? Well, that is not up to me really :) Maybe in 2 weeks or maybe never :)

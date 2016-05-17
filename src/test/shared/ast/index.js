@@ -279,12 +279,12 @@ module.exports = {
         })
       },
       'html': (id, args, keywords, context) => {
-        const dom = args && args[0] && args[0].join('') || context || ''
+        const dom = args && args[0] && (args[0] instanceof Array && args[0].join('') || args[0]) || context || ''
         const style = args[1] ? '<header><style>'+args[1]+'</style></header>' : ''
         return Promise.resolve('<html>'+style+'<body>'+dom+'</body></html>')
       },
       'li': (id, args, keywords, context) => {
-        const dom = args && args[0] && args[0].join('') || context || ''
+        const dom = args && args[0] && (args[0] instanceof Array && args[0].join('') || args[0]) || context || ''
         return Promise.resolve(
           '<li>' + dom + '</li>'
         )

@@ -7,7 +7,7 @@
   "main": "./src/desktop/main.js",
   "scripts": {
     "test": "node  --harmony_destructuring --harmony_default_parameters ./node_modules/nodeunit/bin/nodeunit src/test/index.js",
-    "start": "node ./node_modules/nodemon/bin/nodemon.js --harmony_destructuring --harmony_default_parameters  src/main/backend/app.js | node_modules/bunyan/bin/bunyan",
+    "start": "node ./node_modules/nodemon/bin/nodemon.js src/main/backend/app.js | node_modules/bunyan/bin/bunyan",
     "~test": "node ./node_modules/nodemon/bin/nodemon.js --harmony_destructuring --harmony_default_parameters  -x 'npm test'"
   },
   "dependencies": {
@@ -27,13 +27,12 @@
     "jon-parse": "git://github.com/creationix/jon-parse.git",
     "js-git": "git://github.com/freekh/js-git.git",
     "js-github": "git://github.com/freekh/js-github.git",
-    "mercury": "^14.0.0",
+    "mercury": "^14.1.0",
     "node-sass": "^3.4.1",
     "nodemon": "^1.8.0",
-    "parsimmon": "^0.7.0",
+    "parsimmon": "git+https://github.com/freekh/parsimmon.git",
     "request-promise": "^1.0.2",
-    "vdom-to-html": "^2.2.0",
-    "xtend": "^4.0.1"
+    "vdom-to-html": "^2.2.0"
   },
   "engines": {
     "node": ">=4.2.1"

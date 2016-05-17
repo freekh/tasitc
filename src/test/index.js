@@ -1,7 +1,7 @@
 const tests = {
   shared: {
-    //parser: require('./shared/parser')
-    ast: require('./shared/ast')
+    parser: require('./shared/parser')
+    //ast: require('./shared/ast')
   }
 }
 

@@ -1,8 +1,4 @@
-const hg = require('mercury') //HACK: remove!
-const h = hg.h
 
-//hackery
-const fs = require('./fs')
 
 const execute = (global) => { //UGLY hack!
   const value = global.value.trim()

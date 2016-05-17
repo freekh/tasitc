@@ -1,5 +1,5 @@
-const ast = require('./ast')
-const grammar = require('./grammar')
+//const ast = require('./ast')
+const grammar = require('./grammar2')
 
 const parser = () => {
   return {

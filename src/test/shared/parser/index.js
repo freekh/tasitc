@@ -1,6 +1,6 @@
 'use strict'
 
-const Parser = require('src/main/shared/parser')
+const Parser = require('../../../main/shared/parser')
 
 const testUtils = (test) => {
   return {
@@ -69,12 +69,13 @@ module.exports = {
       const exprs = [
         // `;;comment
         //   html`,
+        `/google/drive --path=(str ?path '.gsheet') --acount=(account ~/google/freekh) | gsheet2json | html (ul ($.columns[0].rows | li)) /bootstrap/css > ~/test/rows`,
+        `/google/drive --path=(str ?path '.gsheet')`,
+        // `html (div '.Foo' 'Hello World') 'div { color: red; }'`,
+        // `html (div '.Foo' 'Hello World') 'div { color: red; }' > ~/test`,
+        // `html ul ['super' 'hot' (li '.Foo' 'hand') 'over' 'control']`,
 
-        `html (div '.Foo' 'Hello World') 'div { color: red; }'`,
-        `html (div '.Foo' 'Hello World') 'div { color: red; }' > ~/test`,
-        `html ul ['super' 'hot' (li '.Foo' 'hand') 'over' 'control']`,
-
-        `html (ul '.Foo' (['super' 'hot' 'hand' 'over' 'control'] | str | li))`,
+        // `html (ul '.Foo' (['super' 'hot' 'hand' 'over' 'control'] | str | li))`,
         // `ls '~/my dir'`, //('ls '~/my dir')
         // `(ls ~/dir)`, //(ls ~/dir)
         // `(ls '~/my dir')`,

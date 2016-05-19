@@ -1,209 +1,16 @@
 'use strict'
 
-const {ast, parser} = require('../../../main/shared/grammar2')
+const {ast, parse, error} = require('../../../main/shared/parser/grammar2')
 
 module.exports = {
   'basic ast test': (test) => {
-    // const astEx = new Expression(
-    //   new Call(
-    //     new Id('google/drive/Test.gsheet'),
-    //     [],
-    //     {
-    //       account: [
-    //         new Call(
-    //           new Id('account'),
-    //           [],
-    //           {
-    //             l: [
-    //               new Str('freekh')
-    //             ]
-    //           }
-    //         )
-    //       ]
-    //     }),
-    //   [
-    //     new Call(
-    //       new Id('gsheet2json')
-    //     ),
-    //     new Call(
-    //       new Id('html'),
-    //       [
-    //         new Expression(
-    //           new Attribute(
-    //             new Subscript(
-    //               new Attribute(
-    //                 new Context(),
-    //                 'columns'
-    //               ),
-    //               new Num(
-    //                 0
-    //               )
-    //             ),
-    //             'rows'
-    //         ),
-    //           [
-    //           new Call(
-    //             new Id('li'),
-    //             [],
-    //             {})
-    //           ]
-    //         )
-    //       ]
-    //     )
-    //   ]
-    // )
-
-    // console.log(`google/drive/Test.gsheet --acount=(account -l 'freekh') | gsheet2json | html ($.columns[0].rows | li)`)
-
-    // const astEx2 = new Sink(
-    //   new Expression(
-    //     new Call(
-    //       new Id('/google/drive'),
-    //       [],
-    //       {
-    //         path: [
-    //           new Call(
-    //             new Id('str'),
-    //             [
-    //               new Parameter(
-    //                 new Id('path')
-    //               ),
-    //               new Str('.gsheet')
-    //             ],
-    //             {}
-    //           )
-    //         ],
-    //         account: [
-    //           new Call(
-    //             new Id('account'),
-    //             [],
-    //             {
-    //               l: [
-    //                 new Str('freekh')
-    //               ]
-    //             }
-    //           )
-    //         ]
-    //       }),
-    //     [
-    //       new Call(
-    //         new Id('gsheet2json')
-    //       ),
-    //       new Call(
-    //         new Id('html'),
-    //         [
-    //           new Expression(
-    //             new Attribute(
-    //               new Subscript(
-    //                 new Attribute(
-    //                   new Context(),
-    //                   'columns'
-    //                 ),
-    //                 new Num(
-    //                   0
-    //                 )
-    //               ),
-    //               'rows'
-    //             ),
-    //             [
-    //               new Call(
-    //                 new Id('li'),
-    //                 [],
-    //                 {})
-    //             ]
-    //           ),
-    //           new Call(
-    //             new Id('/bootstrap/css'),
-    //             [],
-    //             {}
-    //           )
-    //         ]
-    //       )
-    //     ]
-    //   ),
-    //   new Id('~/test/rows')
-    // )
-    
-    
-    // console.log(JSON.stringify(astEx2, null, 2))
-
-    const transpile = (node) => { //TODO: dont do this... use Function instead!
-      const commons = {
-        args: (args) => '['+args.map(arg => {
-          return `${transpile(arg)}`
-        }).join(',')+']',
-        keywords: (keywords) => '{'+Object.keys(keywords).map(id => {
-          return `'${id}':[${keywords[id].map(transpile).join(',')}]`
-        }).join(',')+'}'
-      }
-      if (node instanceof Comprehension) {
-        return transpile(node.expression) + node.targets.map((n, i) => {
-          let comprehension = 'map'
-          if (i === 0 && node.base instanceof Call ||
-              i > 0 && node.comprehensions[i - 1] instanceof Call) {
-            comprehension = 'then'
-          }
-          return `.${comprehension}(function($) { return ${transpile(n)}})`
-        }).join('')
-      } else if (node instanceof Call) {
-        //if not alias and is atom, use atom directly
-        return `call(${transpile(node.id)}, ${commons.args(node.args)}, ${commons.keywords(node.keywords)}, $)`
-      } else if (node instanceof Id) {
-        return `'${node.value}'`
-      } else if (node instanceof Str) {
-        return `'${node.value}'`
-      } else if (node instanceof Parameter) {
-        return `parameter('${node.id.value}')`
-      } else if (node instanceof Sink) {
-        return `sink(${transpile(node.expression)}, '${node.path.value}')`
-      } else if (node instanceof Context) {
-        //TODO: 
-        // } else if (node instanceof Subscript) {
-        //   return `${transpile(node.value)}[${node.index.value}]`
-        // } else if (node instanceof Attribute) {
-        //   return `${transpile(node.value)}.${node.attr}`
-        
-        return `$`
-      } else {
-        throw new Error('Unknown AST node: '+JSON.stringify(node))
-      }
-    }
-
-    console.log(transpile(astEx2))
-
-    const containsOne = (array, value) => {
-      let found = null
-      let i = 0
-      while (!found && array[i]) {
-        if (array[i] === value) {
-          found = array[i][0]
-        } else {
-          i++
-        }
-      }
-      return found
-    }
-    
     const services = {
-      '/google/drive': (id, args, keywords, context) => {
-        if (containsOne(keywords.path, 'Test.gsheet')) {
-          return Promise.resolve({
-            'csv-url': 'https://...'
-          })
-        } else {
-          if (keywords.path) {
-            return Promise.reject({msg: `No document at path: '${keywords.path}'`})
-          } else {
-            return Promise.reject({msg: `Missing path`, id, args, keywords})
-          }
-        }
-      },
-      'google/drive/Test.gsheet': (id, args, keywords, context) => {
+      '/google/drive': (id, args, context) => {
         return Promise.resolve({
           'csv-url': 'https://...'
         })
       },
-      'gsheet2json': (id, args, keywords, context) => {
+      'gsheet2json': (id, args, context) => {
         return Promise.resolve({
           columns: [
             {
@@ -216,23 +23,28 @@ module.exports = {
           ]
         })
       },
-      'html': (id, args, keywords, context) => {
+      'html': (id, args, context) => {
         const dom = args && args[0] && (args[0] instanceof Array && args[0].join('') || args[0]) || context || ''
         const style = args[1] ? '<header><style>'+args[1]+'</style></header>' : ''
         return Promise.resolve('<html>'+style+'<body>'+dom+'</body></html>')
       },
-      'li': (id, args, keywords, context) => {
+      'li': (id, args, context) => {
         const dom = args && args[0] && (args[0] instanceof Array && args[0].join('') || args[0]) || context || ''
         return Promise.resolve(
           '<li>' + dom + '</li>'
         )
       },
-      'account': (id, args, keywords, context) => {
+      'ul': (id, args, context) => {
+        const dom = args && args[0] && (args[0] instanceof Array && args[0].join('') || args[0]) || context || ''
+        return Promise.resolve(
+          '<ul>' + dom + '</ul>'
+        )
+      },
+      'account': (id, args, context) => {
         const testReject = false
         if (testReject) {
           return Promise.reject({
             msg: 'Could not authenticate',
-            keywords,
             args,
             id
           })
@@ -242,13 +54,58 @@ module.exports = {
           })
         }
       },
-      '/bootstrap/css': (id, args, keywords, context) => {
+      '/bootstrap/css': (id, args, context) => {
         return Promise.resolve('li { color: red; }')
       },
-      'str': (id, args, keywords, context) => {
+      'str': (id, args, context) => {
         return Promise.resolve(args.join(''))
       }
     }
+
+    const transpile = (node) => { //TODO: dont do this... use Function instead!
+      const commons = {
+        args: (args) => '['+args.map(arg => {
+          return `${transpile(arg)}`
+        }).join(',')+']'
+      }
+
+      if (node instanceof ast.Comprehension) {
+        return transpile(node.expression) + node.targets.map((n, i) => {
+          let comprehension = 'map'
+          if (i === 0 && node.expression instanceof ast.Call ||
+              i > 0 && node.targets[i - 1] instanceof ast.Call) {
+            comprehension = 'then'
+          }
+          return `.${comprehension}(function($) { return ${transpile(n)}})`
+        }).join('')
+      } else if (node instanceof ast.Call) {
+        //if not alias and is atom, use atom directly
+        return `call('${node.id.value}', ${commons.args(node.args)}, $)`
+      } else if (node instanceof ast.Id) {
+        return `callOrString('${node.value}', [], $)`
+      } else if (node instanceof ast.Str) {
+        return `'${node.value}'`
+      } else if (node instanceof ast.Parameter) {
+        return `parameter('${node.id}')`
+      } else if (node instanceof ast.Sink) {
+        return `sink(${transpile(node.expression)}, '${node.path.value}')`
+      } else if (node instanceof ast.Keyword) {
+        return `{'${node.id}': ${transpile(node.value)}}`
+      } else if (node instanceof ast.Context) {
+        return `$`+node.path.map(pathElem => {
+          if (pathElem instanceof ast.Subscript) {
+            return '['+pathElem.index.value+']'
+          } else if (pathElem instanceof ast.Attribute) {
+            return '.'+pathElem.attr.value
+          } else {
+            throw new Error(`Unknown AST path node: ${JSON.stringify(pathElem)}`)
+          }
+        }).join('')
+      } else {
+        throw new Error(`Unknown AST node : ${JSON.stringify(node)}}`)
+      }
+    }
+
 
     const sink = (expression, id) => {
       console.log('sink', id)
@@ -259,64 +116,74 @@ module.exports = {
       return Promise.resolve('Test')
     }
 
-    const call = (id, args, keywords, context) => {
+
+    const exec = (id, args, context) => {
+      const service = services[id]
+      const argsPromises = args && args.map(a => {
+        if (a instanceof Array) {
+          return Promise.all(a)
+        } else if (a instanceof Promise) {
+          return a
+        } else if (a instanceof Object) {
+          const id = Object.keys(a)[0] //FIXME: this is a keyword so this might be right? still smells bad
+          return a[id].then(value => {
+            let ret = {}
+            ret[id] = value
+            return ret
+          })
+        } else {
+          return Promise.resolve(a)
+        }
+      }) || []
+      return Promise.all(argsPromises).then(args => {
+        return service(id, args, context)
+      })
+    }
+
+    const callOrString = (id, args, context) => {
+      if (services[id]) {
+        return exec(id, args, context)
+      } else {
+        return Promise.resolve(id)
+      }
+    }
+
+    const call = (id, args, context) => {
       const service = services[id]
       if (service) {
-        const keywordPromises = []
         //TODO: hmm... this flattening is pret-ty ugly!
         //FIXME: keywords and args WILL break unless it only flattens things that are supposed to be flattened (Promises)
-        Object.keys(keywords).forEach(id => {
-          keywordPromises.push(Promise.all(keywords[id]).then(values => {
-            return {
-              id,
-              values
-            }
-          }))
-        })
-        const argsPromises = args.map(a => {
-          if (a instanceof Array) {
-            return Promise.all(a)
-          } else if (a instanceof Promise) {
-            return a
-          } else {
-            return Promise.resolve(a)
-          }
-        })
-        return Promise.all([Promise.all(argsPromises), Promise.all(keywordPromises)]).then(([args, keywordsArray]) => {
-          const keywords = {}
-          keywordsArray.forEach(({id, values}) => keywords[id] = values)
-          return service(id, args, keywords, context)
-        })
+        return exec(id, args, context)
       } else {
-        return Promise.reject({msg: `Unknown service: '${id}'`, id, keywords, args, code: 0})
+        return Promise.reject({msg: `Unknown service: '${id}'`, id, args, code: 0})
       }
     }
 
     const $ = {}
-    const t = call('google/drive/Test.gsheet', [],
-                   {'account':[
-                     call('account', [], {'l':['freekh']}, $)]}, $)
-            .then(function($) {
-              return call('gsheet2json', [], {}, $)
-            })
-            .then(function($) {
-              return call('html', [
-                $.columns[0].rows.map(function($) {
-                  return call('li', [], {}, $)
-                })], {}, $)
-            })
-    eval(transpile(astEx2)).then(a => {
-      console.log('!--->', a)
-    }).catch(err => {
-      if (err.stack) {
-        console.error('Fatal error', err)
-        console.error(err.stack)
-      } else if (err.msg !== undefined) {
-        console.error(`ERROR (id: '${err.id}'): ${err.msg}`)
-      } else {
-        console.error('Fatal unknown error', err)
-      }
-    })
+    //const ast1 = parse(`/google/drive --path=(str ?path '.gsheet') --acount=(account ~/google/freekh) | gsheet2json | html (ul ($.columns[0].rows | li)) /bootstrap/css > ~/test/rows`).value
+    const input = `/google/drive --path=(str ?path '.gsheet') --acount=(account ~/google/freekh) | gsheet2json | html (ul ($.columns[0].rows | li)) /bootstrap/css > ~/test/rows`
+    console.log(input)
+    const parsed = parse(input)
+    if (parsed.status) {
+      const ast1 = parsed.value
+      const transpiled = transpile(ast1)
+      console.log(transpiled)
+
+      eval(transpiled).then(a => {
+        console.log('!--->', a)
+      }).catch(err => {
+        if (err.stack) {
+          console.error('Fatal error', err)
+          console.error(err.stack)
+        } else if (err.msg !== undefined) {
+          console.error(`ERROR (id: '${err.id}'): ${err.msg}`)
+        } else {
+          console.error('Fatal unknown error', err)
+        }
+      })
+    } else {
+      error(input, parsed)
+    }
     // eval(transpile(astEx)).then(console.log).catch(err => {
     //   console.error(err)
     // })

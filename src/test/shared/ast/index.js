@@ -6,6 +6,7 @@ module.exports = {
   'basic ast test': (test) => {
     const services = {
       '/google/drive': (id, args, context) => {
+        console.log(args)
         return Promise.resolve({
           'csv-url': 'https://...'
         })
@@ -66,7 +67,7 @@ module.exports = {
       const commons = {
         args: (args) => '['+args.map(arg => {
           return `${transpile(arg)}`
-        }).join(',')+']'
+        }).join(', ')+']'
       }
 
       if (node instanceof ast.Comprehension) {
@@ -98,7 +99,7 @@ module.exports = {
           } else if (pathElem instanceof ast.Attribute) {
             return '.'+pathElem.attr.value
           } else {
-            throw new Error(`Unknown AST path node: ${JSON.stringify(pathElem)}`)
+            throw new Error(`Unknown AST path element: ${JSON.stringify(pathElem)}`)
           }
         }).join('')
       } else {
@@ -162,16 +163,17 @@ module.exports = {
     const $ = {}
     //const ast1 = parse(`/google/drive --path=(str ?path '.gsheet') --acount=(account ~/google/freekh) | gsheet2json | html (ul ($.columns[0].rows | li)) /bootstrap/css > ~/test/rows`).value
     const input = `/google/drive --path=(str ?path '.gsheet') --acount=(account ~/google/freekh) | gsheet2json | html (ul ($.columns[0].rows | li)) /bootstrap/css > ~/test/rows`
-    console.log(input)
+    const expected = '<html><header><style>li { color: red; }</style></header><body><ul><li>hello</li><li>world</li></ul></body></html>'
     const parsed = parse(input)
     if (parsed.status) {
       const ast1 = parsed.value
       const transpiled = transpile(ast1)
       console.log(transpiled)
 
-      eval(transpiled).then(a => {
-        console.log('!--->', a)
+      eval(transpiled).then(res => {
+        test.equal(res, expected)
       }).catch(err => {
+        test.ok(false, err)
         if (err.stack) {
           console.error('Fatal error', err)
           console.error(err.stack)
@@ -182,315 +184,9 @@ module.exports = {
         }
       })
     } else {
-      error(input, parsed)
+      test.ok(false, error(input, parsed).join('\n'))
     }
-    // eval(transpile(astEx)).then(console.log).catch(err => {
-    //   console.error(err)
-    // })
-    
-// >>> print(astunparse.dump(ast.parse("[i.to_bytes(1, 'big') for i in range(10)]", mode='eval')))
-// Expression(body=ListComp(
-//   elt=Call(
-//     func=Attribute(
-//       value=Name(
-//         id='i',
-//         ctx=Load()),
-//       attr='to_bytes',
-//       ctx=Load()),
-//     args=[
-//       Num(n=1),
-//       Str(s='big')],
-//     keywords=[]),
-//   generators=[comprehension(
-//     target=Name(
-//       id='i',
-//       ctx=Store()),
-//     iter=Call(
-//       func=Name(
-//         id='range',
-//         ctx=Load()),
-//       args=[Num(n=10)],
-//       keywords=[]),
-//     ifs=[])]))
-
-// >>> print(astunparse.dump(ast.parse('[i**2 for i in range(10)]', mode='eval')))
-// Expression(body=ListComp(
-//   elt=BinOp(
-//     left=Name(
-//       id='i',
-//       ctx=Load()),
-//     op=Pow(),
-//     right=Num(n=2)),
-//   generators=[comprehension(
-//     target=Name(
-//       id='i',
-//       ctx=Store()),
-//     iter=Call(
-//       func=Name(
-//         id='range',
-//         ctx=Load()),
-//       args=[Num(n=10)],
-//       keywords=[]),
-//     ifs=[])]))
-
-// >>> print(astunparse.dump(ast.parse('[i*j for i in range(2) for j in range(3,5)]', mode='eval')))
-// Expression(body=ListComp(
-//   elt=BinOp(
-//     left=Name(
-//       id='i',
-//       ctx=Load()),
-//     op=Mult(),
-//     right=Name(
-//       id='j',
-//       ctx=Load())),
-//   generators=[
-//     comprehension(
-//       target=Name(
-//         id='i',
-//         ctx=Store()),
-//       iter=Call(
-//         func=Name(
-//           id='range',
-//           ctx=Load()),
-//         args=[Num(n=2)],
-//         keywords=[]),
-//       ifs=[]),
-//     comprehension(
-//       target=Name(
-//         id='j',
-//         ctx=Store()),
-//       iter=Call(
-//         func=Name(
-//           id='range',
-//           ctx=Load()),
-//         args=[
-//           Num(n=3),
-//           Num(n=5)],
-//         keywords=[]),
-//       ifs=[])]))
-
-// >>> print(astunparse.dump(ast.parse('[mult(i,j) for i in range(2) for j in range(3,5)]', mode='eval')))
-// Expression(body=ListComp(
-//   elt=Call(
-//     func=Name(
-//       id='mult',
-//       ctx=Load()),
-//     args=[
-//       Name(
-//         id='i',
-//         ctx=Load()),
-//       Name(
-//         id='j',
-//         ctx=Load())],
-//     keywords=[]),
-//   generators=[
-//     comprehension(
-//       target=Name(
-//         id='i',
-//         ctx=Store()),
-//       iter=Call(
-//         func=Name(
-//           id='range',
-//           ctx=Load()),
-//         args=[Num(n=2)],
-//         keywords=[]),
-//       ifs=[]),
-//     comprehension(
-//       target=Name(
-//         id='j',
-//         ctx=Store()),
-//       iter=Call(
-//         func=Name(
-//           id='range',
-//           ctx=Load()),
-//         args=[
-//           Num(n=3),
-//           Num(n=5)],
-//         keywords=[]),
-//       ifs=[])]))
-
-// >>> print(astunparse.dump(ast.parse('mult(a = 1, b = 2)', mode='eval')))Expression(body=Call(
-//   func=Name(
-//     id='mult',
-//     ctx=Load()),
-//   args=[],
-//   keywords=[
-//     keyword(
-//       arg='a',
-//       value=Num(n=1)),
-//     keyword(
-//       arg='b',
-//       value=Num(n=2))]))
-
-// >>> print(astunparse.dump(ast.parse('[mult(i,j) for i in range(2) for j in range(3,5) if j > 1]', mode='eval')))
-// Expression(body=ListComp(
-//   elt=Call(
-//     func=Name(
-//       id='mult',
-//       ctx=Load()),
-//     args=[
-//       Name(
-//         id='i',
-//         ctx=Load()),
-//       Name(
-//         id='j',
-//         ctx=Load())],
-//     keywords=[]),
-//   generators=[
-//     comprehension(
-//       target=Name(
-//         id='i',
-//         ctx=Store()),
-//       iter=Call(
-//         func=Name(
-//           id='range',
-//           ctx=Load()),
-//         args=[Num(n=2)],
-//         keywords=[]),
-//       ifs=[]),
-//     comprehension(
-//       target=Name(
-//         id='j',
-//         ctx=Store()),
-//       iter=Call(
-//         func=Name(
-//           id='range',
-//           ctx=Load()),
-//         args=[
-//           Num(n=3),
-//           Num(n=5)],
-//         keywords=[]),
-//       ifs=[Compare(
-//         left=Name(
-//           id='j',
-//           ctx=Load()),
-//         ops=[Gt()],
-//         comparators=[Num(n=1)])])]))
-
-
-
-// >>> print(astunparse.dump(ast.parse('lambda x: x + 1', mode='eval')))
-// Expression(body=Lambda(
-//   args=arguments(
-//     args=[arg(
-//       arg='x',
-//       annotation=None)],
-//     vararg=None,
-//     kwonlyargs=[],
-//     kw_defaults=[],
-//     kwarg=None,
-//     defaults=[]),
-//   body=BinOp(
-//     left=Name(
-//       id='x',
-//       ctx=Load()),
-//     op=Add(),
-//     right=Num(n=1))))
-
-// >>> print(astunparse.dump(ast.parse('g = lambda x: x + 1')))
-// Module(body=[Assign(
-//   targets=[Name(
-//     id='g',
-//     ctx=Store())],
-//   value=Lambda(
-//     args=arguments(
-//       args=[arg(
-//         arg='x',
-//         annotation=None)],
-//       vararg=None,
-//       kwonlyargs=[],
-//       kw_defaults=[],
-//       kwarg=None,
-//       defaults=[]),
-//     body=BinOp(
-//       left=Name(
-//         id='x',
-//         ctx=Load()),
-//       op=Add(),
-//       right=Num(n=1))))])
-
-// >>> print(astunparse.dump(ast.parse('def f(a = 0): a + 1')))
-// Module(body=[FunctionDef(
-//   name='f',
-//   args=arguments(
-//     args=[arg(
-//       arg='a',
-//       annotation=None)],
-//     vararg=None,
-//     kwonlyargs=[],
-//     kw_defaults=[],
-//     kwarg=None,
-//     defaults=[Num(n=0)]),
-//   body=[Expr(value=BinOp(
-//     left=Name(
-//       id='a',
-//       ctx=Load()),
-//     op=Add(),
-//     right=Num(n=1)))],
-//   decorator_list=[],
-//   returns=None)])
-
-// >> print(astunparse.dump(ast.parse('g = 0')))
-// Module(body=[Assign(
-//   targets=[Name(
-//     id='g',
-//     ctx=Store())],
-//   value=Num(n=0))])
-
-// >>> print(astunparse.dump(ast.parse('def f(a = 0): g(a); return 0')))
-// Module(body=[FunctionDef(
-//   name='f',
-//   args=arguments(
-//     args=[arg(
-//       arg='a',
-//       annotation=None)],
-//     vararg=None,
-//     kwonlyargs=[],
-//     kw_defaults=[],
-//     kwarg=None,
-//     defaults=[Num(n=0)]),
-//   body=[
-//     Expr(value=Call(
-//       func=Name(
-//         id='g',
-//         ctx=Load()),
-//       args=[Name(
-//         id='a',
-//         ctx=Load())],
-//       keywords=[])),
-//     Return(value=Num(n=0))],
-//   decorator_list=[],
-//   returns=None)])
-
-//https://www.ibm.com/developerworks/library/l-fuse/
-//     struct fuse_operations {
-//     int (*getattr) (const char *, struct stat *);
-//     int (*readlink) (const char *, char *, size_t);
-//     int (*getdir) (const char *, fuse_dirh_t, fuse_dirfil_t);
-//     int (*mknod) (const char *, mode_t, dev_t);
-//     int (*mkdir) (const char *, mode_t);
-//     int (*unlink) (const char *);
-//     int (*rmdir) (const char *);
-//     int (*symlink) (const char *, const char *);
-//     int (*rename) (const char *, const char *);
-//     int (*link) (const char *, const char *);
-//     int (*chmod) (const char *, mode_t);
-//     int (*chown) (const char *, uid_t, gid_t);
-//     int (*truncate) (const char *, off_t);
-//     int (*utime) (const char *, struct utimbuf *);
-//     int (*open) (const char *, struct fuse_file_info *);
-//     int (*read) (const char *, char *, size_t, off_t, struct fuse_file_info *);
-//     int (*write) (const char *, const char *, size_t, off_t,struct fuse_file_info *);
-//     int (*statfs) (const char *, struct statfs *);
-//     int (*flush) (const char *, struct fuse_file_info *);
-//     int (*release) (const char *, struct fuse_file_info *);
-//     int (*fsync) (const char *, int, struct fuse_file_info *);
-//     int (*setxattr) (const char *, const char *, const char *, size_t, int);
-//     int (*getxattr) (const char *, const char *, char *, size_t);
-//     int (*listxattr) (const char *, char *, size_t);
-//     int (*removexattr) (const char *, const char *);
-// };
-    
-
+    test.ok(parsed.status, 'Could not parse')
+    test.done()
   }
 }

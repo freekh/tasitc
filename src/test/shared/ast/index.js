@@ -1,195 +1,131 @@
 'use strict'
 
-class Sink {
-  constructor(expression, path) {
-    this.expression = expression
-    this.path = path
-  }
-}
-
-class Expression { //TODO: rename to Comprehension(generator, targets)
-  constructor(base, comprehensions = []) {
-    this.base = base
-    this.comprehensions = comprehensions
-  }
-}
-
-class Call { //TODO: rename to Request?
-  constructor(id, args = [], keywords = {}) {
-    this.id = id
-    this.args = args
-    this.keywords = keywords
-  }
-}
-
-class Attribute { //foo.column
-  constructor(value, attr) {
-    this.value = value
-    this.attr = attr
-  }
-}
-
-class Parameter {
-  constructor(id) {
-    this.id = id
-  }
-}
-
-class Context { //$
-  constructor() {
-    this.id = '$'
-  }
-}
-
-class Subscript { //[1][0]
-  constructor(value, index) {
-    this.value = value
-    this.index = index
-  }
-}
-
-class Id {
-  constructor(value) {
-    this.value = value
-  }
-}
-
-class Str { //TODO: rename?
-  constructor(value) {
-    this.value = value
-  }
-}
-
-class Num { //TODO: rename?
-  constructor(value) {
-    this.value = value
-  }
-}
-
+const {ast, parser} = require('../../../main/shared/grammar2')
 
 module.exports = {
   'basic ast test': (test) => {
-    const astEx = new Expression(
-      new Call(
-        new Id('google/drive/Test.gsheet'),
-        [],
-        {
-          account: [
-            new Call(
-              new Id('account'),
-              [],
-              {
-                l: [
-                  new Str('freekh')
-                ]
-              }
-            )
-          ]
-        }),
-      [
-        new Call(
-          new Id('gsheet2json')
-        ),
-        new Call(
-          new Id('html'),
-          [
-            new Expression(
-              new Attribute(
-                new Subscript(
-                  new Attribute(
-                    new Context(),
-                    'columns'
-                  ),
-                  new Num(
-                    0
-                  )
-                ),
-                'rows'
-            ),
-              [
-              new Call(
-                new Id('li'),
-                [],
-                {})
-              ]
-            )
-          ]
-        )
-      ]
-    )
+    // const astEx = new Expression(
+    //   new Call(
+    //     new Id('google/drive/Test.gsheet'),
+    //     [],
+    //     {
+    //       account: [
+    //         new Call(
+    //           new Id('account'),
+    //           [],
+    //           {
+    //             l: [
+    //               new Str('freekh')
+    //             ]
+    //           }
+    //         )
+    //       ]
+    //     }),
+    //   [
+    //     new Call(
+    //       new Id('gsheet2json')
+    //     ),
+    //     new Call(
+    //       new Id('html'),
+    //       [
+    //         new Expression(
+    //           new Attribute(
+    //             new Subscript(
+    //               new Attribute(
+    //                 new Context(),
+    //                 'columns'
+    //               ),
+    //               new Num(
+    //                 0
+    //               )
+    //             ),
+    //             'rows'
+    //         ),
+    //           [
+    //           new Call(
+    //             new Id('li'),
+    //             [],
+    //             {})
+    //           ]
+    //         )
+    //       ]
+    //     )
+    //   ]
+    // )
 
     // console.log(`google/drive/Test.gsheet --acount=(account -l 'freekh') | gsheet2json | html ($.columns[0].rows | li)`)
 
-    const astEx2 = new Sink(
-      new Expression(
-        new Call(
-          new Id('/google/drive'),
-          [],
-          {
-            path: [
-              new Call(
-                new Id('str'),
-                [
-                  new Parameter(
-                    new Id('path')
-                  ),
-                  new Str('.gsheet')
-                ],
-                {}
-              )
-            ],
-            account: [
-              new Call(
-                new Id('account'),
-                [],
-                {
-                  l: [
-                    new Str('freekh')
-                  ]
-                }
-              )
-            ]
-          }),
-        [
-          new Call(
-            new Id('gsheet2json')
-          ),
-          new Call(
-            new Id('html'),
-            [
-              new Expression(
-                new Attribute(
-                  new Subscript(
-                    new Attribute(
-                      new Context(),
-                      'columns'
-                    ),
-                    new Num(
-                      0
-                    )
-                  ),
-                  'rows'
-                ),
-                [
-                  new Call(
-                    new Id('li'),
-                    [],
-                    {})
-                ]
-              ),
-              new Call(
-                new Id('/bootstrap/css'),
-                [],
-                {}
-              )
-            ]
-          )
-        ]
-      ),
-      new Id('~/test/rows')
-    )
-    console.log(`TODO: /google/drive --path=(str ?path '.gsheet') --acount=(account ~/google/freekh) | gsheet2json | html (ul ($.columns[0].rows | li)) /bootstrap/css > ~/test/rows`)
-    console.log(JSON.stringify(astEx2, null, 2))
+    // const astEx2 = new Sink(
+    //   new Expression(
+    //     new Call(
+    //       new Id('/google/drive'),
+    //       [],
+    //       {
+    //         path: [
+    //           new Call(
+    //             new Id('str'),
+    //             [
+    //               new Parameter(
+    //                 new Id('path')
+    //               ),
+    //               new Str('.gsheet')
+    //             ],
+    //             {}
+    //           )
+    //         ],
+    //         account: [
+    //           new Call(
+    //             new Id('account'),
+    //             [],
+    //             {
+    //               l: [
+    //                 new Str('freekh')
+    //               ]
+    //             }
+    //           )
+    //         ]
+    //       }),
+    //     [
+    //       new Call(
+    //         new Id('gsheet2json')
+    //       ),
+    //       new Call(
+    //         new Id('html'),
+    //         [
+    //           new Expression(
+    //             new Attribute(
+    //               new Subscript(
+    //                 new Attribute(
+    //                   new Context(),
+    //                   'columns'
+    //                 ),
+    //                 new Num(
+    //                   0
+    //                 )
+    //               ),
+    //               'rows'
+    //             ),
+    //             [
+    //               new Call(
+    //                 new Id('li'),
+    //                 [],
+    //                 {})
+    //             ]
+    //           ),
+    //           new Call(
+    //             new Id('/bootstrap/css'),
+    //             [],
+    //             {}
+    //           )
+    //         ]
+    //       )
+    //     ]
+    //   ),
+    //   new Id('~/test/rows')
+    // )
+    
+    
+    // console.log(JSON.stringify(astEx2, null, 2))
 
     const transpile = (node) => { //TODO: dont do this... use Function instead!
       const commons = {
@@ -200,8 +136,8 @@ module.exports = {
           return `'${id}':[${keywords[id].map(transpile).join(',')}]`
         }).join(',')+'}'
       }
-      if (node instanceof Expression) {
-        return transpile(node.base) + node.comprehensions.map((n, i) => {
+      if (node instanceof Comprehension) {
+        return transpile(node.expression) + node.targets.map((n, i) => {
           let comprehension = 'map'
           if (i === 0 && node.base instanceof Call ||
               i > 0 && node.comprehensions[i - 1] instanceof Call) {
@@ -216,15 +152,17 @@ module.exports = {
         return `'${node.value}'`
       } else if (node instanceof Str) {
         return `'${node.value}'`
-      } else if (node instanceof Subscript) {
-        return `${transpile(node.value)}[${node.index.value}]`
-      } else if (node instanceof Attribute) {
-        return `${transpile(node.value)}.${node.attr}`
       } else if (node instanceof Parameter) {
         return `parameter('${node.id.value}')`
       } else if (node instanceof Sink) {
         return `sink(${transpile(node.expression)}, '${node.path.value}')`
       } else if (node instanceof Context) {
+        //TODO: 
+        // } else if (node instanceof Subscript) {
+        //   return `${transpile(node.value)}[${node.index.value}]`
+        // } else if (node instanceof Attribute) {
+        //   return `${transpile(node.value)}.${node.attr}`
+        
         return `$`
       } else {
         throw new Error('Unknown AST node: '+JSON.stringify(node))

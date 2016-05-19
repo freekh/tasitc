@@ -69,11 +69,14 @@ module.exports = {
       const exprs = [
         // `;;comment
         //   html`,
-        `/google/drive --path=(str ?path '.gsheet') --acount=(account ~/google/freekh) | gsheet2json | html (ul ($.columns[0].rows | li)) /bootstrap/css > ~/test/rows`, 
+        `/google/drive --path=(str ?path '.gsheet') --acount=(account ~/google/freekh) | gsheet2json | html (ul ($.columns[0].rows | li)) /bootstrap/css > ~/test/rows`,
         `/google/drive --path=(str ?path '.gsheet') --acount=(account ~/google/freekh) | gsheet2json | html (ul ($ | li)) /bootstrap/css > ~/test/rows`,
         `html (ul ($.columns[0].rows | li)) /bootstrap/css > ~/test/rows`,
+
         `/google/drive --path=(str ?path '.gsheet')`,
         `(str ?path '.gsheet')`,
+        `ul ($.columns[0].rows | li)`,
+
         // `html (div '.Foo' 'Hello World') 'div { color: red; }'`,
         // `html (div '.Foo' 'Hello World') 'div { color: red; }' > ~/test`,
         // `html ul ['super' 'hot' (li '.Foo' 'hand') 'over' 'control']`,

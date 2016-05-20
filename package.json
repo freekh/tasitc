@@ -32,6 +32,8 @@
     "nodemon": "^1.8.0",
     "parsimmon": "git+https://github.com/freekh/parsimmon.git",
     "request-promise": "^1.0.2",
+    "source-map": "^0.5.6",
+    "source-map-support": "^0.4.0",
     "vdom-to-html": "^2.2.0"
   },
   "engines": {

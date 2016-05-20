@@ -8,60 +8,84 @@ const form = (expr) => {
   return P.string('(').then(expr).skip(P.string(')'))
 }
 
-class Sink {
+class Marked {
+  withMark(mark) {
+    this.start = mark.start
+    this.end = mark.end
+    return this
+  }
+}
+
+class Sink extends Marked {
   constructor(expression, path) {
+    super()
     this.expression = expression
     this.path = path
   }
 }
 Sink.parser = P.lazy('Sink', () => {
   return Comprehension.parser.skip(P.optWhitespace).chain(expression => {
-    const reify = (path) => {
-      return new Sink(expression, path)
+    const reify = (mark) => {
+      const path = mark.value
+      return new Sink(expression, path).withMark(mark)
     }
-    return ignore(P.string('>')).then(Id.parser).map(reify)
+    return ignore(P.string('>')).then(Id.parser).mark().map(reify)
   })
 })
 
-class Comprehension {
+class Comprehension extends Marked {
   constructor(expression, targets = []) {
+    super()
     this.expression = expression
     this.targets = targets
   }
 }
 Comprehension.parser = P.lazy('Comprehension', () => {
-  const reify = (expressions) => {
+  const reify = (mark) => {
+    const expressions = mark.value
     if (expressions.length === 1) {
       return expressions[0]
     } else {
-      return new Comprehension(expressions[0], expressions.slice(1))
+      return new Comprehension(expressions[0], expressions.slice(1)).withMark(mark)
     }
   }
   return ignore(P.sepBy1(P.alt(
     Context.parser,
     Call.parser
-  ), ignore(P.string('|')))).map(reify)
+  ), ignore(P.string('|')))).mark().map(reify)
 })
 
 
-class Call { //TODO: rename to Request?
+class Call extends Marked { //TODO: rename to Request?
   constructor(id, args = []) {
+    super()
     this.id = id
     this.args = args
   }
 }
 Call.parser = P.lazy('Call', () => {
   const expr = Id.parser.chain(id => {
-    const reify = args => {
-      return new Call(id, args || [])
+    const reify = mark => {
+      const args = mark.value
+      return new Call(id, args || []).withMark(mark)
     }
+    const argument = P.alt(
+      form(Comprehension.parser),
+      form(Str.parser),
+      form(Id.parser),
+      Keyword.parser,
+      Parameter.parser,
+      Str.parser,
+      Id.parser
+    )
+
     return P.alt(
       P.whitespace
         .then(
-          P.sepBy(Argument.parser, P.whitespace)
+          P.sepBy(argument, P.whitespace)
         ).skip(P.optWhitespace),
       P.optWhitespace
-    ).map(reify)
+    ).mark().map(reify)
   })
   return P.alt(
     form(ignore(expr)),
@@ -69,127 +93,127 @@ Call.parser = P.lazy('Call', () => {
   )
 })
 
-
-class Argument { //TODO:?
-}
-Argument.parser = P.lazy('Argument', () => {
-  return P.alt(
-    form(Comprehension.parser),
-    form(Str.parser),
-    form(Id.parser),
-    Keyword.parser,
-    Parameter.parser,
-    Str.parser,
-    Id.parser
-  )
-})
-
-class Keyword {
+class Keyword extends Marked {
   constructor(id, value) {
+    super()
     this.id = id
     this.value = value
   }
 }
 Keyword.parser = P.lazy('Keyword', () => {
   return P.string('--').then(P.letters.chain(id => {
-    const reify = (value) => {
-      return new Keyword(id, value)
+    const reify = (mark) => {
+      const value = mark.value
+      return new Keyword(id, value).withMark(mark)
     }
-    return P.string('=').then(Call.parser).map(reify)
+    return P.string('=').then(Call.parser).mark().map(reify)
   }))
 })
 
-class Parameter {
+class Parameter extends Marked {
   constructor(id) {
+    super()
     this.id = id
   }
 }
 Parameter.parser = P.lazy('Parameter', () => {
-  const reify = (id) => {
-    return new Parameter(id)
+  const reify = (mark) => {
+    const id = mark.value
+    return new Parameter(id).withMark(mark)
   }
   const parameterId = P.regex(/[a-z_]*/i)
-  return P.string('?').then(parameterId).map(reify)
+  return P.string('?').then(parameterId).mark().map(reify)
 })
 
-class Context { //$
+class Context extends Marked { //$
   constructor(path = []) {
+    super()
     this.id = '$'
     this.path = path
   }
 }
 Context.parser = P.lazy('Context', () => {
-  const reify = (path) => {
-    return new Context(path)
+  const reify = (mark) => {
+    const path = mark.value
+    return new Context(path).withMark(mark)
   }
   return P.string('$').then(P.alt(
     Subscript.parser,
     Attribute.parser
-  ).many()).map(reify)
+  ).many()).mark().map(reify)
 })
 
-class Attribute { //foo.column
+class Attribute extends Marked { //foo.column
   constructor(attr) {
+    super()
     this.attr = attr
   }
 }
 Attribute.parser = P.lazy('Attribute', () => {
-  const reify = (id) => {
-    return new Attribute(id)
+  const reify = (mark) => {
+    const id = mark.value
+    return new Attribute(id).withMark(mark)
   }
-  return P.string('.').then(Id.parser).map(reify)
+  return P.string('.').then(Id.parser).mark().map(reify)
 })
 
 
-class Subscript { //[1][0]
+class Subscript extends Marked { //[1][0]
   constructor(index) {
+    super()
     this.index = index
   }
 }
 Subscript.parser = P.lazy('Subscript', () => {
-  const reify = (num) => {
-    return new Subscript(num)
+  const reify = (mark) => {
+    const num = mark.value
+    return new Subscript(num).withMark(mark)
   }
-  return P.string('[').then(Num.parser).skip(P.string(']')).map(reify)
+  return P.string('[').then(Num.parser).skip(P.string(']')).mark().map(reify)
 })
 
-class Id { //TODO: rename to Path?
+class Id extends Marked { //TODO: rename to Path?
   constructor(value) {
+    super()
     this.value = value
   }
 }
 Id.parser = P.lazy('Id', () => {
-  const reify = id => {
-    return new Id(id)
+  const reify = mark => {
+    const id = mark.value
+    return new Id(id).withMark(mark)
   }
-  return P.regex(/[\~\/a-zA-Z\-0-9_]+/i).map(reify)
+  return P.regex(/[\~\/a-zA-Z\-0-9_]+/i).mark().map(reify)
 })
 
-class Str { //TODO: rename?
+class Str extends Marked { //TODO: rename?
   constructor(value) {
+    super()
     this.value = value
   }
 }
 Str.parser = P.lazy('Str', () => {
-  const reify = (str) => {
-    return new Str(str)
+  const reify = (mark) => {
+    const str = mark.value
+    return new Str(str).withMark(mark)
   }
   //FIXME:
-  return P.string('\'').then(P.regex(/[\.a-zA-Z0-9]*/i)).skip(P.string('\'')).map(reify)
+  return P.string('\'').then(P.regex(/[\.a-zA-Z0-9]*/i)).skip(P.string('\'')).mark().map(reify)
 })
 
-class Num { //TODO: rename?
+class Num extends Marked { //TODO: rename?
   constructor(value) {
+    super()
     this.value = value
   }
 }
 Num.parser = P.lazy('Num', () => {
-  const reify = (num) => {
-    return new Num(parseInt(num))
+  const reify = (mark) => {
+    const num = mark.value
+    return new Num(parseInt(num)).withMark(mark)
   }
-  return P.regex(/[0-9]*/i).map(reify)
+  return P.regex(/[0-9]*/i).mark().map(reify)
 })
-
 
 //
 
@@ -200,23 +224,23 @@ const parse = (input) => {
   ).parse(input)
 }
 
-const uniq = array => {
-    const seen = {};
-    const out = [];
-    let j = 0;
-    for(let i = 0; i < array.length; i++) {
-         const item = array[i]
-         if(seen[item] !== 1) {
-               seen[item] = 1
-               out[j++] = item
-         }
+const uniq = array => { //TODO: go through this, its pasted in from somewhere (dumbass)
+  const seen = {}
+  const out = []
+  let j = 0
+  for(let i = 0; i < array.length; i++) {
+    const item = array[i]
+    if(seen[item] !== 1) {
+      seen[item] = 1
+      out[j++] = item
     }
-    return out
+  }
+  return out
 }
 
 module.exports = {
   ast: {
-    Sink, Comprehension, Call, Argument, Keyword, Parameter, Context, Attribute, Subscript, Id, Str, Num
+    Sink, Comprehension, Call, Keyword, Parameter, Context, Attribute, Subscript, Id, Str, Num
   },
   parse,
   error: (expr, result) => {

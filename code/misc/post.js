@@ -5,6 +5,6 @@ module.exports = (url, body) => {
     req.onload = resolve;
     req.onerror = reject;
   });
-  req.send();
+  req.send(body);
   return promise;
 };

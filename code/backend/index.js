@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const h = require('hyperscript');
+const bodyParser = require('body-parser');
 
 const log = require('../misc/log');
 const browserify = require('../build/browserify');
@@ -58,5 +59,15 @@ app.get(tux.css.path, (req, res) => {
   });
 });
 
+// FIXME: move out of here
+app.post('/tasitc/sink/:id', bodyParser.text(), (req, res) => {
+  const path = req.params.id.replace('~', '/freekh');
+  const data = req.body;
+  console.log('created path', path);
+  app.get(path, (req, res) => {
+    res.send(data);
+  });
+  res.sendStatus(200);
+});
 
 app.listen(8080);

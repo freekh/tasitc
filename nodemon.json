@@ -2,6 +2,6 @@
   "ext": "js json scss",
   "ignore": [".tmp"],
   "execMap": {
-    "js": "node --harmony"
+    "js": "node --harmony --use_strict"
   }
 }

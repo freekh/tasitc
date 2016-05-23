@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "babelify": "^7.3.0",
+    "body-parser": "^1.15.1",
     "browserify": "^13.0.1",
     "browserify-incremental": "^3.1.1",
     "bunyan": "^1.8.1",

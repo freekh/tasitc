@@ -1,7 +1,9 @@
+const h = require('hyperscript');
 const { ast, parse } = require('../lang/grammar');
 const renderParseError = require('./render-parse-error');
 const render = require('./render');
 const services = require('./services');
+const post = require('../misc/post');
 
 const transpile = (node) => { // TODO: dont do this... use Function instead!
   const commons = {
@@ -45,11 +47,17 @@ const transpile = (node) => { // TODO: dont do this... use Function instead!
 };
 
 const sink = (expression, id) => { // eslint-disable-line no-unused-vars
-  console.log('sink', id);
-  return expression.then(result => {
-    console.log('--->', result);
-    return result
-  });
+  return expression.then(
+    result => {
+      const data = h('html', [
+        result[0],
+        result[1] ? h('body', result[1]) : null,
+      ]).outerHTML;
+      console.log('!!', data);
+      return post(`/tasitc/sink/${encodeURIComponent(id)}`, data)
+        .then(() => result);
+    }
+  );
 };
 
 const parameter = (id) => { // eslint-disable-line no-unused-vars

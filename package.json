@@ -24,6 +24,8 @@
     "git-sha1": "^0.1.2",
     "git-tree": "git://github.com/freekh/git-tree.git",
     "global": "^4.3.0",
+    "google-auth-library": "^0.9.8",
+    "googleapis": "^7.0.0",
     "jon-parse": "git://github.com/creationix/jon-parse.git",
     "js-git": "git://github.com/freekh/js-git.git",
     "js-github": "git://github.com/freekh/js-github.git",

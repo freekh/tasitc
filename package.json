@@ -1,0 +1,26 @@
+{
+  "name": "tasitc",
+  "version": "0.0.1",
+  "description": "The Amazing Shell In The Cloud",
+  "scripts": {
+    "start": "node ./node_modules/nodemon/bin/nodemon.js ./code/backend/index.js | node ./node_modules/bunyan/bin/bunyan"
+  },
+  "author": "Fredrik Ekholdt",
+  "devDependencies": {
+    "nodemon": "^1.9.2"
+  },
+  "dependencies": {
+    "babelify": "^7.3.0",
+    "browserify": "^13.0.1",
+    "browserify-incremental": "^3.1.1",
+    "bunyan": "^1.8.1",
+    "express": "^4.13.4",
+    "hyperscript": "git+https://github.com/freekh/hyperscript.git",
+    "node-sass": "^3.7.0",
+    "parsimmon": "git+https://github.com/freekh/parsimmon.git",
+    "uglifyify": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=6.2"
+  }
+}

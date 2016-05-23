@@ -1,0 +1,7 @@
+{
+  "ext": "js json scss",
+  "ignore": [".tmp"],
+  "execMap": {
+    "js": "node --harmony"
+  }
+}

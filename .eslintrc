@@ -1,0 +1,10 @@
+{
+  "globals": {
+    "require": true,
+    "module": true,
+  },
+  "extends": "airbnb",
+  "rules": {
+    "no-shadow": 0,
+  }
+}

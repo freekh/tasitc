@@ -15,7 +15,7 @@ module.exports = (dir, file, stream, options) => {
   const b = browserify(
     xtend(browserifyInc.args, options || {
       fullPaths: !compress,
-      sourcemaps: true, //!compress,
+      sourcemaps: !compress,
       debug,
       paths: [dir],
     })

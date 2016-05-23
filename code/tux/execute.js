@@ -5,7 +5,7 @@ const services = require('./services');
 
 const transpile = (node) => { // TODO: dont do this... use Function instead!
   const commons = {
-    args: (args) => `[${args.map(arg => `${transpile(arg)}`).join(', ')}]`
+    args: (args) => `[${args.map(arg => `${transpile(arg)}`).join(', ')}]`,
   };
 
   if (node instanceof ast.Comprehension) {
@@ -15,6 +15,7 @@ const transpile = (node) => { // TODO: dont do this... use Function instead!
           i > 0 && node.targets[i - 1] instanceof ast.Call) {
         comprehension = 'then';
       }
+
       return `.${comprehension}(function($) { return ${transpile(n)} })`;
     }).join('');
   } else if (node instanceof ast.Call) {
@@ -43,10 +44,12 @@ const transpile = (node) => { // TODO: dont do this... use Function instead!
   throw new Error(`Unknown AST node : ${JSON.stringify(node)}}`);
 };
 
-
 const sink = (expression, id) => { // eslint-disable-line no-unused-vars
   console.log('sink', id);
-  return Promise.resolve(expression);
+  return expression.then(result => {
+    console.log('--->', result);
+    return result
+  });
 };
 
 const parameter = (id) => { // eslint-disable-line no-unused-vars
@@ -87,7 +90,6 @@ const callOrString = (id, args, context) => { // eslint-disable-line no-unused-v
 const call = (id, args, context) => { // eslint-disable-line no-unused-vars
   const service = services[id];
   if (service) {
-    console.log(context)
     // TODO: hmm... this flattening is pret-ty ugly!
     // FIXME: keywords and args WILL break unless it only flattens things
     //        that are supposed to be flattened (Promises)
@@ -106,7 +108,6 @@ module.exports = (cwd, value) => {
   if (parsed.status) {
     const ast = parsed.value;
     const transpiled = transpile(ast);
-    console.log(transpiled);
     // FIXME: !!
     return eval(transpiled) // eslint-disable-line no-eval
       .then(value => render(value, null))

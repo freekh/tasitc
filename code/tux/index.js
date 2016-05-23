@@ -29,7 +29,7 @@ const clear = (elem) => {
 // --------------------------- Global vars ------------------------------------//
 const global = {
   value: '',
-  cwd: '/freekh',
+  cwd: '~',
   cursor: 0,
   // listen guys, I don't like this any more than you do! I am not sure I even need it!
   block: false,
@@ -59,7 +59,8 @@ const insertText = (value, cursor, text) => {
 // ------------------------------ PS 1 ----------------------------------------//
 
 const ps1 = (cwd, value) => h('div#ps1.line', [
-  h('span.path', `${cwd} `),
+  h('pre', ' '),
+  h('span.path', ` ${cwd} `),
   h('span.path-sep', '⮀'),
   h('span.branch', ' ⭠ master '),
   h('span.branch-sep', '⮀ '),
@@ -283,7 +284,7 @@ const enter = () => {
     global.value = '';
     global.cursor = 0;
     updateView();
-    window.scrollTo(0, elems.parent.offsetTop);
+    window.scrollTo(0, elems.parent.offsetTop + elems.parent.offsetHeight);
   };
 
   global.block = true;
@@ -335,8 +336,8 @@ window.addEventListener('keydown', ev => {
       switch (ev.keyCode) {
         case 13: escape(); enter(); ev.preventDefault(); break;
         case 27: escape(); ev.preventDefault(); break;
-        case 38: tabUp(); break;
-        case 40: tabDown(); break;
+        case 38: tabUp(); ev.preventDefault(); break;
+        case 40: tabDown(); ev.preventDefault(); break;
         default: break;
       }
     } else {
@@ -344,10 +345,10 @@ window.addEventListener('keydown', ev => {
         case 8: backspace(); ev.preventDefault(); break;
         case 9: tab(); ev.preventDefault(); break;
         case 13: enter(); ev.preventDefault(); break;
-        case 37: moveCharLeft(); break;
-        case 38: historyUp(); break;
-        case 39: moveCharRight(); break;
-        case 40: historyDown(); break;
+        case 37: moveCharLeft(); ev.preventDefault(); break;
+        case 38: historyUp(); ev.preventDefault(); break;
+        case 39: moveCharRight(); ev.preventDefault(); break;
+        case 40: historyDown(); ev.preventDefault(); break;
         default: break;
       }
     }

@@ -57,6 +57,21 @@ module.exports = { // DUMMY
       ],
     });
   },
+  json: (id, args, context) => {
+    // FIXME: NO!!! This is not right ;) ofc
+    log.debug(id, args, context);
+    console.log(id, args, context);
+    const dom = args[0] || context || '';
+    const style = args[1] ? args[1] : null;
+    return Promise.resolve({
+      status: 200,
+      mime: 'tasitc/html',
+      content: [
+        style ? h('style', style) : null,
+        dom,
+      ],
+    });
+  },
   li: (id, args, context) => {
     log.debug(id, args, context);
     const content = args[0] || context || '';
@@ -119,7 +134,7 @@ module.exports = { // DUMMY
     return Promise.resolve({
       status: 200,
       mime: 'text/plain',
-      content: args.join(''),
+      content: args.length > 0 ? args.join('') : JSON.stringify(context),
     });
   },
 };

@@ -55,20 +55,22 @@ div {
   .exec {
     color: $red;
   }
-  .output-line {
-    display: table-row;
-    span {
-      display: table-cell;
-    }
-    .filename {
-      display: inline-block;
-    }
-    .icon {
-      display: inline-block;
-      padding-right: 0.5em;
-    }
-    .padded {
-      padding-left: 0.9em;
+  div { // FIXME: hack
+    .output-line {
+      display: table-row;
+      span {
+        display: table-cell;
+      }
+      .filename {
+        display: inline-block;
+      }
+      .icon {
+        display: inline-block;
+        padding-right: 0.5em;
+      }
+      .padded {
+        padding-left: 0.9em;
+      }
     }
   }
 }

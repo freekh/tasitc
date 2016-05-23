@@ -4,6 +4,7 @@ const renderParseError = require('./render-parse-error');
 const render = require('./render');
 const services = require('./services');
 const post = require('../misc/post');
+const log = require('../misc/log');
 
 const transpile = (node) => { // TODO: dont do this... use Function instead!
   const commons = {
@@ -33,6 +34,8 @@ const transpile = (node) => { // TODO: dont do this... use Function instead!
     return `sink(${transpile(node.expression)}, '${node.path.value}')`;
   } else if (node instanceof ast.Keyword) {
     return `{'${node.id}': ${transpile(node.value)}}`;
+  } else if (node instanceof ast.Num) {
+    return `${node.value}`;
   } else if (node instanceof ast.Context) {
     return `\$${node.path.map(pathElem => {
       if (pathElem instanceof ast.Subscript) {
@@ -49,11 +52,14 @@ const transpile = (node) => { // TODO: dont do this... use Function instead!
 const sink = (expression, id) => { // eslint-disable-line no-unused-vars
   return expression.then(
     result => {
-      const data = h('html', [
-        result[0],
-        result[1] ? h('body', result[1]) : null,
-      ]).outerHTML;
-      console.log('!!', data);
+      let data = result;
+      // FIXME: UGLY hack!!
+      if (result instanceof Array && result.length === 2) {
+        data = h('html', [
+          result[0],
+          result[1] ? h('body', result[1]) : null,
+        ]).outerHTML;
+      }
       return post(`/tasitc/sink/${encodeURIComponent(id)}`, data)
         .then(() => result);
     }
@@ -76,11 +82,14 @@ const exec = (id, args, context) => {
     } else if (a instanceof Object) {
       // FIXME: this is a keyword so this might be right? still smells bad:
       const id = Object.keys(a)[0];
-      return a[id].then(value => {
-        const ret = {};
-        ret[id] = value;
-        return ret;
-      });
+      if (a[id] instanceof Promise) {
+        return a[id].then(value => {
+          const ret = {};
+          ret[id] = value;
+          return ret;
+        });
+      }
+      return Promise.resolve(a[id]);
     }
     return Promise.resolve(a);
   }) || [];
@@ -116,7 +125,8 @@ module.exports = (cwd, value) => {
   if (parsed.status) {
     const ast = parsed.value;
     const transpiled = transpile(ast);
-    // FIXME: !!
+    console.log('Transpiled', transpiled, ast); // FIXME: log.debug?
+    // FIXME: eval?
     return eval(transpiled) // eslint-disable-line no-eval
       .then(value => render(value, null))
       .catch(err => render(null, err));

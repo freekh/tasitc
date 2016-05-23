@@ -291,7 +291,9 @@ const enter = () => {
   appendLastToHistory();
   execute(global.cwd, global.value).then(res => {
     res.forEach(elem => {
-      elems.history.appendChild(elem);
+      if (elem) {
+        elems.history.appendChild(elem);
+      }
     });
     complete();
   }).catch(err => {

@@ -1,6 +1,7 @@
 const h = require('hyperscript');
 
 const render = (result, error) => {
+  let hack = null;
   const root = h('div');
   const shadowRoot = root.createShadowRoot();
   if (error && error.msg) {
@@ -13,7 +14,18 @@ const render = (result, error) => {
         if (elem instanceof HTMLElement) {
           shadowRoot.appendChild(elem);
         } else {
-          shadowRoot.appendChild(h('div', JSON.stringify(elem)));
+          if (elem.file !== undefined && elem.path && elem.dir !== undefined) { // FIXME: ugly hack to render ls
+            // FIXME: OMG, this is ugly
+            if (!hack) hack = h('div');
+            hack.appendChild(h('div.output-line', [
+              elem.dir ? h('span.icon', h('i.fa.fa-caret-right')) : null,
+              elem.dir ? h('span.icon', h('i.fa.fa-folder')) : null,
+              !elem.dir ? h('span.icon.padded', h('i.fa.fa-file')) : null,
+              h('span.filename', elem.path),
+            ]));
+          } else {
+            shadowRoot.appendChild(h('div', JSON.stringify(elem)));
+          }
         }
       }
     });
@@ -26,6 +38,7 @@ const render = (result, error) => {
   }
   return [
     root,
+    hack,
   ];
 };
 

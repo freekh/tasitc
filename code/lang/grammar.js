@@ -45,7 +45,7 @@ Num.parser = P.lazy('Num', () => {
     const num = mark.value;
     return new Num(parseInt(num, 10)).withMark(mark);
   };
-  return P.regex(/[0-9]*/i).mark().map(reify);
+  return P.regex(/[0-9]+/i).mark().map(reify);
 });
 
 //
@@ -193,7 +193,13 @@ Keyword.parser = P.lazy(
         const value = mark.value;
         return new Keyword(id, value).withMark(mark);
       };
-      return P.string('=').then(Call.parser).mark()
+      return P.string('=')
+        .then(P.alt(
+          Context.parser,
+          Num.parser,
+          Str.parser,
+          Call.parser
+        )).mark()
         .map(reify);
     }))
 );

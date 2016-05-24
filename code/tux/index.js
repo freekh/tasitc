@@ -342,6 +342,12 @@ window.addEventListener('keydown', ev => {
         case 40: tabDown(); ev.preventDefault(); break;
         default: break;
       }
+    } else if (ev.shiftKey) {
+      switch (ev.keyCode) {
+        case 8: ev.preventDefault(); break; // avoid chrome nav
+        case 32: ev.preventDefault(); break; // avoid chrome scroll
+        default: break;
+      }
     } else {
       switch (ev.keyCode) {
         case 8: backspace(); ev.preventDefault(); break;

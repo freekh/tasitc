@@ -3,8 +3,8 @@
 This repo is my personal scratchbook for a hobby project of mine: tasitc, an experimental cloud based tool.
 
 ### What
-tasitc (pronounced *tas*, as in fan-tas-tic, then *eeteesee*, as in fel-icity) is meant to be a new way of interacting with web-services using a shell-like, bash-ish, lisp-derivative language. It is intended to make it easier to transform and produce web-services and web pages. 
-tux2, the terminal user experience 2.0, is the "terminal" in which tasitc will run (at least intially). It is a reimagining of the ye olde terminal in a browser maintaining the feeling and qualities of a terminal, augmenting it subtly but substantialy.
+tasitc (pronounced *tas*, as in fan-tas-tic, then *eeteesee*, as in fel-icity or like *tacit*-*ity* choose whatever mnemonic you like) is meant to be a new way of interacting with web-services using a shell-like, bash-ish, lisp-derivative language. It is intended to make it easier to transform and produce web-services and web pages. 
+tux, the next gen Terminal User eXperience (an homage (or wink?) to the 'other' (https://en.wikipedia.org/wiki/Tux)[tux]), is the "terminal" in which tasitc will run (at least intially). It is a reimagining of the ye olde terminal in a browser maintaining the feeling and qualities of a terminal, augmenting it subtly but substantialy.
 Note: the structure and code will be built properly, when I get the parser and AST are more stable (+ you would be mad to fork this - there's not even a single star here :)).
 More to come.
 
@@ -18,7 +18,7 @@ Ah, you want an example? Here's an example (as it is now) where the rows of the 
   ~/test/rows
 ```
 
-It can then be called from the tux2 (on-line command line interface)   `~/test/rows --path='Test'` or by hitting the endpoint: `https://tasitc.com/freekh/test/rows?path=Test` .
+It can then be called from the tux (the next gen Terminal User Experience, aka an on-line command line interface) `~/test/rows --path='Test'` or by hitting the endpoint: `https://tasitc.com/freekh/test/rows?path=Test` .
 
 ### When
 When my experiments are done! Oh, you meant when in time? Well, that is not up to me really :) Maybe in 2 weeks or maybe never :)

@@ -17,8 +17,10 @@
     "bunyan": "^1.8.1",
     "express": "^4.13.4",
     "hyperscript": "git+https://github.com/freekh/hyperscript.git",
+    "multer": "^1.1.0",
     "node-sass": "^3.7.0",
     "parsimmon": "git+https://github.com/freekh/parsimmon.git",
+    "pg": "^4.5.5",
     "uglifyify": "^3.0.1"
   },
   "engines": {

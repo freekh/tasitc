@@ -4,34 +4,6 @@ const log = require('../misc/log');
 const h = require('hyperscript');
 
 module.exports = { // DUMMY
-  '/google/drive': (id, args, context) => {
-    log.debug(id, args, context);
-    return Promise.resolve({
-      status: 200,
-      mime: 'application/json',
-      content: {
-        'csv-url': 'https://...',
-      },
-    });
-  },
-  gsheet2json: (id, args, context) => {
-    log.debug(id, args, context);
-    return Promise.resolve({
-      status: 200,
-      mime: 'application/json',
-      content: {
-        columns: [
-          {
-            num: 0,
-            rows: [
-              'hello',
-              'world',
-            ],
-          },
-        ],
-      },
-    });
-  },
   ls: (id, args, context) => {
     log.debug(id, args, context);
     return Promise.resolve({
@@ -97,36 +69,6 @@ module.exports = { // DUMMY
       status: 200,
       mime: 'tasitc/html/div',
       content: h('div', content),
-    });
-  },
-  account: (id, args, context) => {
-    log.debug(id, args, context);
-    const testReject = false;
-    if (testReject) {
-      return Promise.reject({
-        status: 403,
-        mime: 'application/json',
-        content: {
-          msg: 'Could not authenticate',
-          args,
-          id,
-        },
-      });
-    }
-    return Promise.resolve({
-      status: 200,
-      mime: '/application/json',
-      content: {
-        user: 'freekh',
-      },
-    });
-  },
-  '/bootstrap/css': (id, args, context) => {
-    log.debug(id, args, context);
-    return Promise.resolve({
-      status: 200,
-      mime: 'text/css',
-      content: 'li { color: red; }',
     });
   },
   str: (id, args, context) => {

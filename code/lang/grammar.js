@@ -18,6 +18,7 @@ class Marked {
 class Str extends Marked { // TODO: rename?
   constructor(value) {
     super();
+    this.type = 'Str';
     this.value = value;
   }
 }
@@ -37,6 +38,7 @@ Str.parser = P.lazy('Str', () => {
 class Num extends Marked { // TODO: rename?
   constructor(value) {
     super();
+    this.type = 'Num';
     this.value = value;
   }
 }
@@ -52,6 +54,7 @@ Num.parser = P.lazy('Num', () => {
 class Id extends Marked { // TODO: rename to Path?
   constructor(value) {
     super();
+    this.type = 'Id';
     this.value = value;
   }
 }
@@ -67,6 +70,7 @@ Id.parser = P.lazy('Id', () => {
 class Subscript extends Marked { // [1][0]
   constructor(index) {
     super();
+    this.type = 'Subscript';
     this.index = index;
   }
 }
@@ -84,6 +88,7 @@ Subscript.parser = P.lazy('Subscript', () => {
 class Attribute extends Marked { // foo.column
   constructor(attr) {
     super();
+    this.type = 'Attribute';
     this.attr = attr;
   }
 }
@@ -101,6 +106,7 @@ Attribute.parser = P.lazy('Attribute', () => {
 class Context extends Marked { // $
   constructor(path = []) {
     super();
+    this.type = 'Context';
     this.id = '$';
     this.path = path;
   }
@@ -122,6 +128,7 @@ Context.parser = P.lazy('Context', () => {
 class Comprehension extends Marked {
   constructor(expression, targets = []) {
     super();
+    this.type = 'Comprehension';
     this.expression = expression;
     this.targets = targets;
   }
@@ -144,6 +151,7 @@ Comprehension.parser = P.lazy('Comprehension', () => {
 class Call extends Marked { // TODO: rename to Request?
   constructor(id, args = []) {
     super();
+    this.type = 'Call';
     this.id = id;
     this.args = args;
   }
@@ -158,6 +166,7 @@ Call.parser = P.lazy('Call', () => {
       form(Comprehension.parser),
       form(Str.parser),
       form(Id.parser),
+      Context.parser,
       Keyword.parser, // eslint-disable-line no-use-before-define
       Parameter.parser, // eslint-disable-line no-use-before-define
       Str.parser,
@@ -178,10 +187,11 @@ Call.parser = P.lazy('Call', () => {
   );
 });
 
-
+//
 class Keyword extends Marked {
   constructor(id, value) {
     super();
+    this.type = 'Keyword';
     this.id = id;
     this.value = value;
   }
@@ -204,10 +214,11 @@ Keyword.parser = P.lazy(
     }))
 );
 
-
+//
 class Parameter extends Marked {
   constructor(id) {
     super();
+    this.type = 'Parameter';
     this.id = id;
   }
 }
@@ -222,10 +233,11 @@ Parameter.parser = P.lazy('Parameter', () => {
     .map(reify);
 });
 
-
-class Sink extends Marked {
+//
+class Sink extends Marked { // TODO: rename to Write? or something else?
   constructor(expression, path) {
     super();
+    this.type = 'Sink';
     this.expression = expression;
     this.path = path;
   }
@@ -243,7 +255,6 @@ Sink.parser = P.lazy(
         map(reify);
     })
 );
-
 
 //
 

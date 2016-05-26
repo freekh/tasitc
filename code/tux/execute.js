@@ -3,23 +3,23 @@ const { ast, parse } = require('../lang/grammar');
 const renderParseError = require('./render-parse-error');
 const render = require('./render');
 const services = require('./services');
-const post = require('../misc/post');
 const log = require('../misc/log');
+const post = require('../misc/post');
 
-const transpile = (node) => { // TODO: dont do this... use Function instead!
+const transpile = (node, input) => { // TODO: dont. do. this... use Function instead!
   const commons = {
-    args: (args) => `[${args.map(arg => `${transpile(arg)}`).join(', ')}]`,
+    args: (args) => `[${args.map(arg => `${transpile(arg, input)}`).join(', ')}]`,
   };
 
   if (node instanceof ast.Comprehension) {
-    return transpile(node.expression) + node.targets.map((n, i) => {
+    return transpile(node.expression, input) + node.targets.map((n, i) => {
       let comprehension = 'map';
       if (i === 0 && node.expression instanceof ast.Call ||
           i > 0 && node.targets[i - 1] instanceof ast.Call) {
         comprehension = 'then';
       }
 
-      return `.${comprehension}(function($) { return ${transpile(n)} })`;
+      return `.${comprehension}(function($) { return ${transpile(n, input)} })`;
     }).join('');
   } else if (node instanceof ast.Call) {
     // if not alias and is atom, use atom directly
@@ -31,9 +31,10 @@ const transpile = (node) => { // TODO: dont do this... use Function instead!
   } else if (node instanceof ast.Parameter) {
     return `parameter('${node.id}')`;
   } else if (node instanceof ast.Sink) {
-    return `sink(${transpile(node.expression)}, '${node.path.value}')`;
+    return `write(${transpile(node.expression, input)}, ` +
+      `'${JSON.stringify(node.expression)}', '${JSON.stringify(input)}', '${node.path.value}')`;
   } else if (node instanceof ast.Keyword) {
-    return `{'${node.id}': ${transpile(node.value)}}`;
+    return `{'${node.id}': ${transpile(node.value, input)}}`;
   } else if (node instanceof ast.Num) {
     return `${node.value}`;
   } else if (node instanceof ast.Context) {
@@ -49,28 +50,21 @@ const transpile = (node) => { // TODO: dont do this... use Function instead!
   throw new Error(`Unknown AST node : ${JSON.stringify(node)}}`);
 };
 
-const sink = (expression, id) => { // eslint-disable-line no-unused-vars
+const write = (expression, ast, input, path) => { // eslint-disable-line no-unused-vars
+  log.debug('Writing to:', path);
   return expression.then(
-    result => {
-      let data = result;
-      // FIXME: UGLY hack!!
-      if (result instanceof Array && result.length === 2) {
-        data = h('html', [
-          result[0],
-          result[1] ? h('body', result[1]) : null,
-        ]).outerHTML;
-      }
-      return post(`/tasitc/sink/${encodeURIComponent(id)}`, data)
-        .then(() => result);
-    }
+    () => post('/tasitc/fs/write', {
+      path,
+      ast,
+      input,
+    }).then(() => expression)
   );
 };
 
 const parameter = (id) => { // eslint-disable-line no-unused-vars
-  console.log('parameter', id);
+  log.debug('parameter', id);
   return Promise.resolve('Test');
 };
-
 
 const exec = (id, args, context) => {
   const service = services[id];
@@ -117,19 +111,19 @@ const call = (id, args, context) => { // eslint-disable-line no-unused-vars
 
 const $ = {}; // eslint-disable-line no-unused-vars
 
-module.exports = (cwd, value) => {
-  if (!value) {
+module.exports = (cwd, input) => {
+  if (!input) {
     return Promise.resolve(render(null, ''));
   }
-  const parsed = parse(value);
+  const parsed = parse(input);
   if (parsed.status) {
-    const ast = parsed.value;
-    const transpiled = transpile(ast);
-    console.log('Transpiled', transpiled, ast); // FIXME: log.debug?
-    // FIXME: eval?
+    const ast = parsed.input;
+    const transpiled = transpile(ast, input);
+    log.debug('Transpiled', transpiled, ast, input);
+    // FIXME: eval? REAAAAAALY?
     return eval(transpiled) // eslint-disable-line no-eval
-      .then(value => render(value, null))
+      .then(input => render(input, null))
       .catch(err => render(null, err));
   }
-  return Promise.resolve(renderParseError(value, parsed));
+  return Promise.resolve(renderParseError(input, parsed));
 };

@@ -5,7 +5,7 @@ const browserify = require('browserify');
 const xtend = require('xtend');
 const path = require('path');
 
-const env = require('../misc/env');
+const env = require('./env');
 
 module.exports = (dir, file, stream, options) => {
   // inc compile doesnt work on my macs ... set to true if this stops being the case

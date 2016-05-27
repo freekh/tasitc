@@ -303,6 +303,14 @@ const enter = () => {
   });
 };
 
+const space = () => {
+  const char = ' ';
+  const { value, cursor } = insertText(global.value, global.cursor, char);
+  global.cursor = cursor;
+  global.value = value;
+  updateView();
+};
+
 // ------------------------------ Events --------------------------------------//
 
 window.addEventListener('keypress', ev => {
@@ -320,18 +328,29 @@ window.addEventListener('keypress', ev => {
 
 window.addEventListener('keydown', ev => {
   if (!global.block) {
-    if (ev.ctrlKey) {
+    if (ev.altKey) {
+      if (isMac) {
+        switch (ev.keyCode) {
+          case 8: deleteWord(); ev.preventDefault(); break;
+          default: break;
+        }
+      }
+      switch (ev.keyCode) {
+        case 66: moveWordRight(); ev.preventDefault(); break;
+        case 70: moveWordLeft(); ev.preventDefault(); break;
+        default: break;
+      }
+    } else if (ev.ctrlKey) {
+      if (!isMac) {
+        switch (ev.keyCode) {
+          case 8: deleteWord(); ev.preventDefault(); break;
+          default: break;
+        }
+      }
       switch (ev.keyCode) {
         case 65: moveLineBegin(); ev.preventDefault(); break;
         case 69: moveLineEnd(); ev.preventDefault(); break;
         case 75: killLine(); ev.preventDefault(); break;
-        default: break;
-      }
-    } else if ((isMac && ev.altKey || !isMac && ev.ctrlKey)) {
-      switch (ev.keyCode) {
-        case 8: deleteWord(); ev.preventDefault(); break;
-        case 66: moveWordRight(); ev.preventDefault(); break;
-        case 70: moveWordLeft(); ev.preventDefault(); break;
         default: break;
       }
     } else if (completionDialog) {
@@ -345,7 +364,7 @@ window.addEventListener('keydown', ev => {
     } else if (ev.shiftKey) {
       switch (ev.keyCode) {
         case 8: ev.preventDefault(); break; // avoid chrome nav
-        case 32: ev.preventDefault(); break; // avoid chrome scroll
+        case 32: space(); ev.preventDefault(); break; // avoid chrome scroll
         default: break;
       }
     } else {

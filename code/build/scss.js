@@ -1,7 +1,7 @@
 const sass = require('node-sass');
 
-module.exports = (file) =>
-  new Promise((resolve, reject) => {
+module.exports = (file) => {
+  return new Promise((resolve, reject) => {
     sass.render({
       file,
     }, (err, result) => {
@@ -12,3 +12,4 @@ module.exports = (file) =>
       }
     });
   });
+};

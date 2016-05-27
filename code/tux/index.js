@@ -2,10 +2,7 @@ const h = require('hyperscript');
 
 const log = require('../misc/log');
 
-// TODO: move execute out of tux dir
-const execute = require('./execute');
-// TODO: move services out of tux dir
-const services = require('./services');
+const execute = require('../lang/execute');
 
 const tooltips = (cwd, value) => {
   const elem = value === 'ls' ? h('span', 'ls: bla bla') : null;
@@ -289,7 +286,7 @@ const enter = () => {
 
   global.block = true;
   appendLastToHistory();
-  execute(global.cwd, global.value).then(res => {
+  execute(global.value).then(res => {
     res.forEach(elem => {
       if (elem) {
         elems.history.appendChild(elem);

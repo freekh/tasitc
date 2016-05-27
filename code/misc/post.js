@@ -1,5 +1,5 @@
 module.exports = (url, data) => {
-  const formData = new FormData(); //http://caniuse.com/#feat=xhr2
+  const formData = new FormData(); // http://caniuse.com/#feat=xhr2
   Object.keys(data).forEach(key => {
     formData.append(key, data[key]);
   });

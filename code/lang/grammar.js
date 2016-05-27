@@ -1,8 +1,12 @@
 const P = require('parsimmon');
 
-const ignore = (parser) => P.optWhitespace.then(parser).skip(P.optWhitespace);
+const ignore = (parser) => {
+  return P.optWhitespace.then(parser).skip(P.optWhitespace);
+};
 
-const form = (expr) => P.string('(').then(expr).skip(P.string(')'));
+const form = (expr) => {
+  return P.string('(').then(expr).skip(P.string(')'));
+};
 
 class Marked {
   withMark(mark) {
@@ -196,23 +200,22 @@ class Keyword extends Marked {
     this.value = value;
   }
 }
-Keyword.parser = P.lazy(
-  'Keyword', () =>
-    P.string('--').then(P.letters.chain(id => {
-      const reify = (mark) => {
-        const value = mark.value;
-        return new Keyword(id, value).withMark(mark);
-      };
-      return P.string('=')
-        .then(P.alt(
-          Context.parser,
-          Num.parser,
-          Str.parser,
-          Call.parser
-        )).mark()
-        .map(reify);
-    }))
-);
+Keyword.parser = P.lazy('Keyword', () => {
+  return P.string('--').then(P.letters.chain(id => {
+    const reify = (mark) => {
+      const value = mark.value;
+      return new Keyword(id, value).withMark(mark);
+    };
+    return P.string('=')
+      .then(P.alt(
+        Context.parser,
+        Num.parser,
+        Str.parser,
+        Call.parser
+      )).mark()
+      .map(reify);
+  }));
+});
 
 //
 class Parameter extends Marked {
@@ -242,26 +245,29 @@ class Sink extends Marked { // TODO: rename to Write? or something else?
     this.path = path;
   }
 }
-Sink.parser = P.lazy(
-  'Sink', () =>
-    Comprehension.parser.skip(P.optWhitespace).chain(expression => {
-      const reify = (mark) => {
-        const path = mark.value;
-        return new Sink(expression, path).withMark(mark);
-      };
-      return ignore(P.string('>')).
-        then(Id.parser).
-        mark().
-        map(reify);
-    })
-);
+Sink.parser = P.lazy('Sink', () => {
+  return Comprehension.parser.skip(P.optWhitespace).chain(expression => {
+    const reify = (mark) => {
+      const path = mark.value;
+      return new Sink(expression, path).withMark(mark);
+    };
+    return ignore(P.string('>')).
+      then(Id.parser).
+      mark().
+      map(reify);
+  });
+});
 
 //
 
-const parse = (input) => P.alt(
-  Sink.parser,
-  Comprehension.parser
-).parse(input);
+const parse = (text) => {
+  const result = P.alt(
+    Sink.parser,
+    Comprehension.parser
+  ).parse(text);
+  result.text = text;
+  return result;
+};
 
 const uniq = array => { // TODO: go through this, its pasted in from somewhere (dumbass)
   const seen = {};
@@ -291,6 +297,7 @@ const ast = {
   Num,
 };
 
+// TODO: move:
 const error = (expr, result) => {
   const lines = [];
   lines.push('##############################');

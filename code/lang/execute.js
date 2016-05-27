@@ -55,6 +55,14 @@ const callOrString = (path, args, context) => { // eslint-disable-line no-unused
   // return Promise.resolve(path);
 };
 
+const pipe = (result) => {
+  return {
+    pipe: (f) => {
+      
+    }
+  };
+};
+
 const call = (path, args, context) => { // eslint-disable-line no-unused-vars
   // const service = services[path];
   // if (service) {
@@ -64,7 +72,8 @@ const call = (path, args, context) => { // eslint-disable-line no-unused-vars
   //   return exec(path, args, context);
   // }
   // return Promise.reject({ msg: `Unknown service: '${path}'`, path, args, code: 0 });
-  return Promise.reject('TODO');
+  const result = ['TODO'];
+  return 
 };
 
 const $ = {}; // eslint-disable-line no-unused-vars
@@ -74,7 +83,7 @@ module.exports = (parseTree) => {
     const ast = parseTree.value;
     const input = parseTree.input;
     const transpiled = transpile(ast, input);
-    log.info({ transpiled, ast, input });
+    log.info({ transpiled, input });
     // FIXME: eval? REAAAAAALY?
     return eval(transpiled); // eslint-disable-line no-eval
   }

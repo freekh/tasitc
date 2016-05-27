@@ -12,19 +12,14 @@ const transpile = (node, text) => { // TODO: dont. do. this... use Function inst
   };
 
   if (node.type === 'Comprehension') {
-    return transpile(node.expression, text) + node.targets.map((n, i) => {
-      let comprehension = 'map';
-      if (i === 0 && node.expression instanceof ast.Call ||
-          i > 0 && node.targets[i - 1] instanceof ast.Call) {
-        comprehension = 'then';
-      }
-      return `.${comprehension}(function($) { return ${transpile(n, text)} })`;
+    return transpile(node.expression, text) + node.targets.map((n) => {
+      return `.pipe(function($) { return ${transpile(n, text)} })`;
     }).join('');
   } else if (node.type === 'Call') {
     // if not alias and is atom, use atom directly
-    return `call('${node.id.value}', ${commons.args(node.args)}, $).then(e => e.content)`;
+    return `call('${node.id.value}', ${commons.args(node.args)}, $)`;
   } else if (node.type === 'Id') {
-    return `callOrString('${node.value}', [], $).then(e => e.content)`;
+    return `callOrString('${node.value}', [], $)`;
   } else if (node.type === 'Str') {
     return `'${node.value}'`;
   } else if (node.type === 'Parameter') {

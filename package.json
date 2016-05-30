@@ -25,6 +25,7 @@
     "parsimmon": "git+https://github.com/freekh/parsimmon.git",
     "pg": "^4.5.5",
     "pg-native": "^1.10.0",
+    "transducers-js": "^0.4.174",
     "uglifyify": "^3.0.1"
   },
   "engines": {

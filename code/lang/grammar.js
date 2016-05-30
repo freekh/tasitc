@@ -10,8 +10,9 @@ const form = (expr) => {
 
 class Marked {
   withMark(mark) {
-    this.start = mark.start;
-    this.end = mark.end;
+    // TODO: reenable this
+    //this.start = mark.start;
+    //this.end = mark.end;
     return this;
   }
 }
@@ -107,18 +108,18 @@ Attribute.parser = P.lazy('Attribute', () => {
 });
 
 //
-class Context extends Marked { // $
+class Stack extends Marked { // $
   constructor(path = []) {
     super();
-    this.type = 'Context';
+    this.type = 'Stack';
     this.id = '$';
     this.path = path;
   }
 }
-Context.parser = P.lazy('Context', () => {
+Stack.parser = P.lazy('Stack', () => {
   const reify = (mark) => {
     const path = mark.value;
-    return new Context(path).withMark(mark);
+    return new Stack(path).withMark(mark);
   };
   return P.string('$').then(P.alt(
     Subscript.parser,
@@ -129,30 +130,52 @@ Context.parser = P.lazy('Context', () => {
 });
 
 //
-class Comprehension extends Marked {
-  constructor(expression, targets = []) {
+class Composition extends Marked {
+  constructor(elements) {
     super();
-    this.type = 'Comprehension';
-    this.expression = expression;
-    this.targets = targets;
+    this.type = 'Composition';
+    this.elements = elements;
   }
 }
-Comprehension.parser = P.lazy('Comprehension', () => {
+Composition.parser = P.lazy('Composition', () => {
   const reify = (mark) => {
-    const expressions = mark.value;
-    if (expressions.length === 1) {
-      return expressions[0];
-    }
-    return new Comprehension(expressions[0], expressions.slice(1)).withMark(mark);
+    const elements = mark.value;
+    return new Composition(elements).withMark(mark);
   };
   return ignore(P.sepBy1(P.alt(
-    Context.parser,
+    Stack.parser,
+    Instance.parser, // eslint-disable-line no-use-before-define
+    List.parser, // eslint-disable-line no-use-before-define
     Call.parser // eslint-disable-line no-use-before-define
   ), ignore(P.string('|')))).mark().map(reify);
 });
 
 //
-class Call extends Marked { // TODO: rename to Request?
+class List extends Marked {
+  constructor(elements) {
+    super();
+    this.type = 'List';
+    this.elements = elements;
+  }
+}
+List.parser = P.lazy('List', () => {
+  const reify = mark => {
+    const elements = mark.value;
+    return new List(elements).withMark(mark);
+  };
+  return P.string('[')
+    .then(ignore(
+      P.sepBy(
+        Composition.parser,
+        P.whitespace
+      )))
+    .skip(P.string(']'))
+    .mark()
+    .map(reify);
+});
+
+//
+class Call extends Marked { // TODO: rename to Request? or Fn?
   constructor(id, args = []) {
     super();
     this.type = 'Call';
@@ -167,10 +190,10 @@ Call.parser = P.lazy('Call', () => {
       return new Call(id, args || []).withMark(mark);
     };
     const argument = P.alt(
-      form(Comprehension.parser),
+      form(Composition.parser),
       form(Str.parser),
       form(Id.parser),
-      Context.parser,
+      Stack.parser,
       Keyword.parser, // eslint-disable-line no-use-before-define
       Parameter.parser, // eslint-disable-line no-use-before-define
       Str.parser,
@@ -192,6 +215,36 @@ Call.parser = P.lazy('Call', () => {
 });
 
 //
+class Instance extends Marked {
+  constructor(data) {
+    super();
+    this.type = 'Instance';
+    this.data = data;
+  }
+}
+Instance.parser = P.lazy('Instance', () => {
+  const reify = mark => {
+    const data = mark.value;
+    return new Instance(data).withMark(mark);
+  };
+  return P.string('{')
+    .then(P.seq(
+      ignore(Str.parser).chain(key => {
+        return ignore(P.string(':'))
+          .then(Composition.parser)
+          .map(call => {
+            const value = {};
+            value[key.value] = call;
+            return value;
+          });
+      })
+    ))
+    .skip(P.string('}'))
+    .mark()
+    .map(reify);
+});
+
+//
 class Keyword extends Marked {
   constructor(id, value) {
     super();
@@ -208,7 +261,7 @@ Keyword.parser = P.lazy('Keyword', () => {
     };
     return P.string('=')
       .then(P.alt(
-        Context.parser,
+        Stack.parser,
         Num.parser,
         Str.parser,
         Call.parser
@@ -246,7 +299,7 @@ class Sink extends Marked { // TODO: rename to Write? or something else?
   }
 }
 Sink.parser = P.lazy('Sink', () => {
-  return Comprehension.parser.skip(P.optWhitespace).chain(expression => {
+  return Composition.parser.skip(P.optWhitespace).chain(expression => {
     const reify = (mark) => {
       const path = mark.value;
       return new Sink(expression, path).withMark(mark);
@@ -263,7 +316,7 @@ Sink.parser = P.lazy('Sink', () => {
 const parse = (text) => {
   const result = P.alt(
     Sink.parser,
-    Comprehension.parser
+    Composition.parser
   ).parse(text);
   result.text = text;
   return result;
@@ -285,11 +338,11 @@ const uniq = array => { // TODO: go through this, its pasted in from somewhere (
 
 const ast = {
   Sink,
-  Comprehension,
+  Composition,
   Call,
   Keyword,
   Parameter,
-  Context,
+  Stack,
   Attribute,
   Subscript,
   Id,
@@ -298,21 +351,21 @@ const ast = {
 };
 
 // TODO: move:
-const error = (expr, result) => {
+const error = (parseTree, text) => {
   const lines = [];
   lines.push('##############################');
-  lines.push(expr);
+  lines.push(text);
   lines.push('##############################');
 
-  if (!result.status) {
-    lines.push(JSON.stringify(result, null, 2));
+  if (!parseTree.status) {
+    lines.push(JSON.stringify(parseTree, null, 2));
   }
-  if (result.status === false) {
+  if (parseTree.status === false) {
     let indents = '';
     let column = 0;
     let line = 1;
-    for (let i = 0; i < result.index; i++) {
-      if (expr[i] === '\n') {
+    for (let i = 0; i < parseTree.index; i++) {
+      if (text[i] === '\n') {
         indents = '';
         column = 0;
         line += 1;
@@ -322,15 +375,15 @@ const error = (expr, result) => {
       }
     }
     lines.push('\x1b[91m', `\nFAILURE: line: ${line}, column: ${column}\n`, '\x1b[0m');
-    lines.push(` ${expr.split('\n').slice(line - 3 > 0 ? line - 3 : 0, line).join('\n ')}`);
+    lines.push(` ${text.split('\n').slice(line - 3 > 0 ? line - 3 : 0, line).join('\n ')}`);
     lines.push('\x1b[91m', `${indents}^`, '\x1b[0m');
-    const context = expr
+    const context = text
             .split('\n')
-            .slice(line, line + 3 <= expr.length ? line + 3 : expr.length)
+            .slice(line, line + 3 <= text.length ? line + 3 : text.length)
             .join('\n');
     lines.push(`${context}`);
-    const expected = uniq(result.expected).join(' or ');
-    const actual = expr[result.index] ? expr[result.index].replace('\n', '\\n') : 'EOF';
+    const expected = uniq(parseTree.expected).join(' or ');
+    const actual = text[parseTree.index] ? text[parseTree.index].replace('\n', '\\n') : 'EOF';
     lines.push('\x1b[91m', `Got: '${actual}'. Expected: ${expected}\n`, '\x1b[0m');
     return lines;
   }

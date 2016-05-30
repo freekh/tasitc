@@ -83,6 +83,18 @@ module.exports = (parseTree) => {
     const ast = parseTree.value;
     const input = parseTree.input;
     const transpiled = transpile(ast, input);
+    console.log(JSON.stringify(transpiled), transpiled.toString());
+
+    // TODO: remove
+    const { into, comp, map, mapcat } = require('transducers-js');
+    // console.log('?', into([], comp( 
+    //   mapcat(($) => [{ p: 'a.txt' }, { p: 'b.txt' }]),
+    //   map(($) => '<li>'+$.p+'</li>')
+    // ), [{ request: 'get'}]));
+    // console.log('?', into([], 
+    //   map(($) => '<li>foo</li>')
+    //, { request: 'get'}));
+    console.log(into([], transpiled, { request: 'get' }));
     log.info({ transpiled, input });
     // FIXME: eval? REAAAAAALY?
     return eval(transpiled); // eslint-disable-line no-eval

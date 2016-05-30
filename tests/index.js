@@ -19,7 +19,7 @@ module.exports = {
     text = 'html (ul (ls | li $.path))';
 
     text = `[ls | li $.path] | { 'test': $ }`;
-    text = `ls | $ | li $.path`;
+    //text = `ls | $ | li $.path`;
     //text = `html (ul (ls | li $.path))`;
     //text = `ls | ul $.path`;
     //text = `li foo`;  

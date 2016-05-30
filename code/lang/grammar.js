@@ -216,16 +216,16 @@ Call.parser = P.lazy('Call', () => {
 
 //
 class Instance extends Marked {
-  constructor(data) {
+  constructor(value) {
     super();
     this.type = 'Instance';
-    this.data = data;
+    this.value = value;
   }
 }
 Instance.parser = P.lazy('Instance', () => {
   const reify = mark => {
-    const data = mark.value;
-    return new Instance(data).withMark(mark);
+    const value = mark.value;
+    return new Instance(value).withMark(mark);
   };
   return P.string('{')
     .then(P.seq(

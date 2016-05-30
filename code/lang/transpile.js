@@ -14,7 +14,8 @@ const transpile = (node, text) => {
         return mapcat(transpile(elem, text));
       }));
     } else if (length === 1) {
-      return mapcat(transpile(node.elements[0], text));
+      const elem = node.elements[0];
+      return map(transpile(elem, text));
     }
     throw new Error(`Mal-formed composition node: ${JSON.stringify(node)}`);
 
@@ -70,6 +71,24 @@ const transpile = (node, text) => {
         }
       });
       return [ret];
+    };
+  } else if (node.type === 'Instance') {
+    return ($) => {
+      const ret = {};
+      node.value.forEach(keyValue => {
+        Object.keys(keyValue).forEach(key => {
+          console.log('?', $)
+          ret[key] = into([], transpile(keyValue[key], text), $);
+        });
+      })
+      return [ret];
+    };
+  } else if (node.type === 'List') {
+    return ($) => {
+      return node.elements.map(elem => {
+        console.log(elem)
+        return into([], transpile(elem, text), [$]);
+      })
     };
   } else {
     console.warn('???', node.type);

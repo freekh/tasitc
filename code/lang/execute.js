@@ -58,7 +58,7 @@ const callOrString = (path, args, context) => { // eslint-disable-line no-unused
 const pipe = (result) => {
   return {
     pipe: (f) => {
-      
+
     }
   };
 };
@@ -73,7 +73,7 @@ const call = (path, args, context) => { // eslint-disable-line no-unused-vars
   // }
   // return Promise.reject({ msg: `Unknown service: '${path}'`, path, args, code: 0 });
   const result = ['TODO'];
-  return 
+  return
 };
 
 const $ = {}; // eslint-disable-line no-unused-vars
@@ -82,22 +82,23 @@ module.exports = (parseTree) => {
   if (parseTree.status) {
     const ast = parseTree.value;
     const input = parseTree.input;
+    console.log(JSON.stringify(parseTree))
     const transpiled = transpile(ast, input);
-    console.log(JSON.stringify(transpiled), transpiled.toString());
+    //console.log(JSON.stringify(transpiled), transpiled.toString());
 
     // TODO: remove
-    const { into, comp, map, mapcat } = require('transducers-js');
-    // console.log('?', into([], comp( 
+    const { into, comp, identity, map, mapcat } = require('transducers-js');
+    // console.log('?', into([], comp(
     //   mapcat(($) => [{ p: 'a.txt' }, { p: 'b.txt' }]),
     //   map(($) => '<li>'+$.p+'</li>')
     // ), [{ request: 'get'}]));
-    // console.log('?', into([], 
-    //   map(($) => '<li>foo</li>')
-    //, { request: 'get'}));
-    console.log(into([], transpiled, { request: 'get' }));
-    log.info({ transpiled, input });
+    console.log('?', into({},
+      identity($ => $)
+    , { a: 1 }));
+    console.log(JSON.stringify(into([], transpiled, { request: 'get' })));
+    //log.info({ transpiled, input });
     // FIXME: eval? REAAAAAALY?
-    return eval(transpiled); // eslint-disable-line no-eval
+    //return eval(transpiled); // eslint-disable-line no-eval
   }
   return Promise.reject(parseTree);
 };

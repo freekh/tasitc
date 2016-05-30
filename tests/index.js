@@ -18,16 +18,18 @@ module.exports = {
     text = 'ls | li $.path';
     text = 'html (ul (ls | li $.path))';
 
-    text = `[ls | li $.path] | { 'test': $ }`;
+    //text = `[ls | li $.path] | { 'test': $ }`;
+    //text = `[ls]`
+    text = `{ 'test': $ }`
     //text = `ls | $ | li $.path`;
     //text = `html (ul (ls | li $.path))`;
     //text = `ls | ul $.path`;
-    //text = `li foo`;  
-    //text = `ls`; 
+    //text = `li foo`;
+    //text = `ls`;
     console.log(text);
     const parseTree = parse(text);
     if (parseTree.status) {
-      console.log(JSON.stringify(parseTree, null, 2));
+      //console.log(JSON.stringify(parseTree, null, 2));
       execute(parseTree);
       test.done();
     } else {

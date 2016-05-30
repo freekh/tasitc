@@ -30,8 +30,13 @@ module.exports = {
     const parseTree = parse(text);
     if (parseTree.status) {
       //console.log(JSON.stringify(parseTree, null, 2));
-      execute(parseTree);
-      test.done();
+      execute(parseTree).then(resolved => {
+        console.log('resolved', resolved)
+        test.done();
+      }).catch(err => {
+        console.error(err)
+        test.done()
+      });
     } else {
       console.error(error(parseTree, text).join('\n'));
       test.done();

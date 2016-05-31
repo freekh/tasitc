@@ -4,6 +4,9 @@ const { testable } = require('../code/backend/routers/fs');
 const { parse, error } = require('../code/lang/grammar');
 const execute = require('../code/lang/execute');
 
+const reduce = require('../code/misc/reduce');
+
+
 const pg = require('pg').native;
 
 
@@ -20,27 +23,75 @@ module.exports = {
 
     //text = `[ls | li $.path] | { 'test': $ }`;
     //text = `[ls]`
-    text = `{ 'test': $ }`
+    //text = `{ 'test': $ }`
     //text = `ls | $ | li $.path`;
     //text = `html (ul (ls | li $.path))`;
     //text = `ls | ul $.path`;
     //text = `li foo`;
     //text = `ls`;
-    console.log(text);
-    const parseTree = parse(text);
-    if (parseTree.status) {
-      //console.log(JSON.stringify(parseTree, null, 2));
-      execute(parseTree).then(resolved => {
-        console.log('resolved', resolved)
-        test.done();
-      }).catch(err => {
-        console.error(err)
-        test.done()
-      });
-    } else {
-      console.error(error(parseTree, text).join('\n'));
+    // const parseTree = parse(text);
+    // if (parseTree.status) {
+    //   //console.log(JSON.stringify(parseTree, null, 2));
+    //   execute(parseTree).then(resolved => {
+    //     test.done();
+    //   }).catch(err => {
+    //     test.done();
+    //   });
+    // } else {
+    //   console.error(error(parseTree, text).join('\n'));
+    //   test.done();
+    // }
+
+    const a = reduce([
+      ($$) => {
+        return Promise.resolve({
+          response: {
+            status: 200,
+            content: $$.response.content.map && $$.response.content.map($ => [
+              { path: 'a.txt' },
+              { path: 'b.txt' },
+              { path: 'c.txt' },
+            ]) || [
+              { path: 'a.txt' },
+              { path: 'b.txt' },
+              { path: 'c.txt' },
+            ],
+          },
+        });
+      },
+      ($$) => {
+        return $$.response.content.map($ => {
+          const promise = reduce([$ => {
+            return Promise.resolve({
+              response: {
+                status: 200,
+                content: $.response.content.map($ => {
+                  return $.path;
+                }),
+              },
+            });
+          }], $$);
+          return promise.then(arg => {
+            console.log(arg);
+            return {
+              response: {
+                status: 200,
+                content: arg.response.content.map(res => {
+                  return `<li>${res}</li>`;
+                }),
+              },
+            };
+          });
+        });
+      },
+    ], Promise.resolve({ request: { type: 'post' }, response: { status: 200, content: '' } }));
+    a.then(res => {
+      console.log('reduced to', JSON.stringify(res, null, 2));
       test.done();
-    }
+    }).catch(err => {
+      console.error(err);
+      console.error(err.stack);
+    });
 
     // into({ mime: 'text/plain', content: ''}, comp(
     // ), { mime: 'text/plain', content: ''});

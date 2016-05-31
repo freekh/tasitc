@@ -1,50 +1,18 @@
-const t = require('transducers-js');
-const { map, mapcat, filter, comp, into } = t;
-
 const { ast } = require('../lang/grammar');
 
 const transpile = (node, text) => {
   if (node.type === 'Composition') {
-    const length = node.elements.length;
-    if (length > 1) {
-      return comp(...node.elements.map((elem, i) => {
-        if (i === length) {
-          return map(transpile(elem, text));
-        }
-        return mapcat(transpile(elem, text));
-      }));
-    } else if (length === 1) {
-      const elem = node.elements[0];
-      return map(transpile(elem, text));
-    }
-    throw new Error(`Mal-formed composition node: ${JSON.stringify(node)}`);
-
-    // return comp(...node.elements.map(elem => {
-    //   return transpile(elem, text);
-    // }));
   } else if (node.type === 'Call') {
     if (node.id.value === 'ls') {
       return ($) => {
-        return [{ path: 'a.txt' }, { path: 'b.txt' }, { path: 'c.txt' }];
+        return $;
       };
     } else if (node.id.value === 'li') {
       return ($) => {
-        const args = node.args.map(arg => {
-          if (arg.type === 'Composition') {
-            return into([], transpile(arg, text), [[]]).join('');
-          }
-          return transpile(arg, text)($);
-        });
-        return [`<li>${args.join('')}</li>`];
+        return $;
       };
     } else if (node.id.value === 'ul') {
       return ($) => {
-        const args = node.args.map(arg => {
-          if (arg.type === 'Composition') {
-            return into([], transpile(arg, text), [[]]).join('');
-          }
-          return transpile(arg, text)($);
-        });
         return [`<ul>${args.join('')}</ul>`];
       };
     } else if (node.id.value === 'html') {

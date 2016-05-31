@@ -82,57 +82,16 @@ module.exports = (parseTree) => {
   if (parseTree.status) {
     const ast = parseTree.value;
     const input = parseTree.input;
-    console.log(JSON.stringify(parseTree, null, 2))
+    console.log(JSON.stringify(parseTree, null, 2));
     const transpiled = transpile(ast, input);
     //console.log(JSON.stringify(transpiled), transpiled.toString());
 
     // TODO: remove
-    const { into, comp, identity, map, mapcat } = require('transducers-js');
-    const t = require('transducers-js')
     // console.log('?', into([], comp(
     //   mapcat(($) => [{ p: 'a.txt' }, { p: 'b.txt' }]),
     //   map(($) => '<li>'+$.p+'</li>')
     // ), [{ request: 'get'}]));
 
-    t.Promise = function(f, xf) {
-      return {
-         "@@transducer/init": function() {
-           return xf["@@transducer/init"]();
-         },
-         "@@transducer/result": function(result) {
-           return xf["@@transducer/result"](result);
-         },
-         "@@transducer/step": function(result, input) {
-           return xf["@@transducer/step"](result, f(input));
-         }
-      };
-    };
-
-    t.promise = function(f) {
-      return function(xf) {
-        return new t.Promise(f, xf);
-      }
-    }
-
-    var xf = t.map(p => {
-      return n + 1;
-    });
-    var promiseReduce = function(xf, init, array) {
-        var acc = init;
-        for(var i = 0; i < array.length; i++) {
-            acc = xf["@@transducer/step"](acc, array[i]);
-            if(transducers.isReduced(acc)) {
-                acc = transducers.deref(acc);
-                break;
-            }
-        }
-        return xf["@@transducer/result"](acc);
-    };
-    //const promiseBuilder = 
-    //const a = promiseReduce(xf, Promise.resolve(0), ),
-    const a = t.transduce(promiseReduce, promiseBuilder, Promise.resolve(0), Promise.all([Promise.resolve(0)]))
-    console.log(a)
-    return Promise.resolve(a);
     // console.log('?', into([],
     //   t.promise($ => {
     //     return {test: $};

@@ -140,6 +140,9 @@ class Composition extends Marked {
 Composition.parser = P.lazy('Composition', () => {
   const reify = (mark) => {
     const elements = mark.value;
+    if (elements.length === 1) {
+      return elements[0];
+    }
     return new Composition(elements).withMark(mark);
   };
   return ignore(P.sepBy1(P.alt(

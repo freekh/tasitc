@@ -95,16 +95,20 @@ module.exports = {
     //   console.error(err.stack);
     // });
 
-    const request = (path, argRaw) => {
+    const request = (promisedPath, argRaw) => {
       const promiseArg = argRaw instanceof Promise ?
               argRaw : Promise.resolve(argRaw);
 
-      return promiseArg.then(argResponse => {
-        if (argResponse && argResponse.status !== 200) {
-          return Promise.reject(argResponse);
+      return Promise.all([promisedPath, promiseArg]).then(([pathResponse, argResponse]) => {
+        if (argResponse && argResponse.status !== 200) { // TODO: could be different than 200
+          return Promise.reject({
+            status: 404,
+            mime: 'text/plain',
+            content: `Malformed argument ${JSON.stringify(argResponse)}`,
+          });
         }
         const arg = argResponse ? argResponse.content : '';
-
+        const path = pathResponse.content; // TODO: check status
         let content = '';
         let mime = 'text/plain';
         if (path === 'html') {
@@ -118,16 +122,15 @@ module.exports = {
           }
           mime = 'text/html';
         } else if (path === 'li') {
-          console.log('ARG', arg);
           content = `<li>${arg}</li>`;
           mime = 'text/html';
         } else if (path === 'ls') {
           mime = 'application/json';
-          content = [{ path: 'a.txt' }, { path: 'b.txt' }, { path: 'c.txt' }];
+          content = [{ path: 'ab' }, { path: 'cd' }, { path: 'ef' }];
         } else {
           return Promise.reject({
             status: 404,
-            content: `Could not find/execute: ${path}`,
+            content: `Could not find/execute: ${JSON.stringify(path)}`,
             mime: 'application/json',
           });
         }
@@ -139,22 +142,81 @@ module.exports = {
       });
     };
 
+    const asIterable = (init) => {
+      let content = init;
+      if (typeof content === 'string') {
+        content = content.indexOf('\n') !== -1 ? content.split('\n') : content.split('');
+      }
+      return content;
+    };
+
     const map = (form) => {
       return ($) => {
-        return Promise.all($.content.map(content => {
-          return form({
-            mime: $.mime,
-            status: $.status,
-            content,
+        const content = asIterable($.content);
+        if (content.map) {
+          return Promise.all(content.map(content => {
+            return form({
+              mime: $.mime,
+              status: $.status,
+              content,
+            });
+          })).then(responses => {
+            return {
+              status: $.status,
+              mime: $.mime,
+              content: responses.map(r => {
+                return r.content;
+              }),
+            };
           });
-        })).then(responses => {
-          return {
-            status: $.status,
-            mime: $.mime,
-            content: responses.map(r => {
-              return r.content;
-            }),
-          };
+        }
+        return Promise.reject({
+          status: 500,
+          mime: 'text/plain',
+          content: `Cannot compose (map) ${JSON.stringify($.content)}`,
+        });
+      };
+    };
+
+
+    const flatMap = (form) => {
+      return ($) => {
+        const content = asIterable($.content);
+        let flattened = null;
+        if (content.reduce) {
+          // TODO: not very efficient nor elegant (could flatten during mapping):
+          flattened = content.reduce((listlike, value) => {
+            if (listlike === null || value === null) {
+              return null;
+            }
+            const listlikeIter = asIterable(listlike);
+            if (listlikeIter.concat) {
+              return listlikeIter.concat(asIterable(value));
+            }
+            return null;
+          });
+        }
+        if (flattened && flattened.map) {
+          return Promise.all(flattened.map(content => {
+            return form({
+              mime: $.mime,
+              status: $.status,
+              content,
+            });
+          })).then(responses => {
+            return {
+              status: $.status,
+              mime: $.mime,
+              content: responses.map(r => {
+                return r.content;
+              }),
+            };
+          });
+        }
+        return Promise.reject({
+          status: 500,
+          mime: 'text/plain',
+          content: `Cannot compose (reduce) ${JSON.stringify($.content)}`,
         });
       };
     };
@@ -198,52 +260,76 @@ module.exports = {
         const path = transpile(node.id, text);
         const arg = node.arg ? transpile(node.arg, text) : null;
         return ($) => {
-          return request(path, arg ? arg($) : $);
+          return request(path($), arg ? arg($) : $);
         };
       } else if (node.type === 'Chain') {
         const elements = node.elements.map((node, i) => {
-          if (i > 0) {
+          if (i === 0) {
+            return transpile(node, text);
+          } else if (i === 1) {
             const chained = transpile(node, text);
             return map(chained);
+          } else if (i > 1) {
+            const flatChained = transpile(node, text);
+            return flatMap(flatChained);
           }
-          return transpile(node, text);
         });
         return ($) => reduce(elements, $);
       } else if (node.type === 'Id') {
-        return node.value;
+        return ($) => Promise.resolve({
+          status: 200,
+          mime: 'text/plain',
+          content: node.value,
+        }); // TODO: is this necessary?
       } else if (node.type === 'Context') {
         return ($) => {
-          let content = $.content;
-          let mime = $.mime;
-          let status = 200;
-          let missingAttribute = null;
-          node.path.forEach(element => { // FIXME: ? prefer transpiling outside of function
-            if (content) {
-              if (element.type === 'Attribute') {
-                content = content[element.attr.value]; // FIXME: transpile instead or change AST?
-              } else {
-                throw Error(`Could not handle element ${JSON.stringify(element)} ` +
-                            `in node: ${JSON.stringify(node)}`);
+          const context = $ instanceof Promise ? $ : Promise.resolve($);
+          return context.then($ => {
+            let content = $.content;
+            let mime = $.mime;
+            let status = 200;
+            let missingAttribute = null;
+            node.path.forEach(element => { // FIXME: ? prefer transpiling outside of function
+              if (content) {
+                if (element.type === 'Attribute') {
+                  content = content[element.attr.value]; // FIXME: transpile instead or change AST?
+                } else {
+                  throw Error(`Could not handle element ${JSON.stringify(element)} ` +
+                              `in node: ${JSON.stringify(node)}`);
+                }
               }
+              if (!content) {
+                missingAttribute = element.attr.value;
+              }
+            });
+            if (node.path.length) {
+              if (!content) {
+                return Promise.reject({
+                  mime: 'text/plain',
+                  status: 500,
+                  content: `No attribute ${missingAttribute} in ${JSON.stringify($.content)}`,
+                });
+              } else if (typeof content === 'string') { //note: typeof: http://stackoverflow.com/questions/203739/why-does-instanceof-return-false-for-some-literals
+                mime = 'text/plain';
+              }
+              // TODO: mroe here?
             }
-            if (!content) {
-              missingAttribute = element.attr.value;
-            }
+            return {
+              status,
+              mime,
+              content,
+            };
           });
-          if (node.path.length) {
-            if (!content) {
-              mime = 'text/plain';
-              status = 404;
-              content = `No attribute ${missingAttribute}`;
-            } else if (content instanceof String) {
-              mime = 'text/plain';
-            }
-            // TODO: mroe here?
-          }
-          return Promise.resolve({
-            status,
-            mime,
-            content,
+        };
+      } else if (node.type === 'List') {
+        return ($) => {
+          return Promise.all(node.elements.map(element => transpile(element, text)($))).then(responses => {
+            const content = responses.map(response => response.content);
+            return {
+              status: 200,
+              mime: 'application/json',
+              content,
+            };
           });
         };
       }
@@ -254,18 +340,21 @@ module.exports = {
       throw new Error(`Unknown AST node (${node.type}): ${JSON.stringify(node)}`);
     };
 
-    const parseTree = parse('html (ul (ls | li $.path))');
+    //const parseTree = parse('html (ul (ls | li $.path))');
     //const parseTree = parse('$');
+    //const parseTree = parse('html (ul ($.cwd | li))');
+    //const parseTree = parse('ls | $.path | $ ');
+    const parseTree = parse('html (ls | [$.path] | (li $))');
     console.log(JSON.stringify(parseTree, null, 2));
 
     const stmt = transpile(parseTree.value, parseTree.text);
     stmt(Promise.resolve({
-      requests: [{ verb: 'get', path: '/tux/freekh' }],
+      request: { verb: 'get', path: '/tux/freekh' },
       status: 200,
       mime: 'application/json',
       content: { cwd: '/freekh', params: {} },
     })).then(res => {
-      console.log('Response', res);
+      console.log('Response', JSON.stringify(res, null, 2));
       test.done();
     }).catch(err => {
       console.error('ERROR', err);

@@ -68,7 +68,7 @@ Id.parser = P.lazy('Id', () => {
     const id = mark.value;
     return new Id(id).withMark(mark);
   };
-  return P.regex(/[~\/a-zA-Z\-0-9_]+/i).mark().map(reify);
+  return P.regex(/[\.~\/a-zA-Z\-0-9_]+/i).mark().map(reify);
 });
 
 //
@@ -196,6 +196,7 @@ Call.parser = P.lazy('Call', () => {
       form(Chain.parser),
       form(Str.parser),
       form(Id.parser),
+      List.parser,
       Context.parser,
       Keyword.parser, // eslint-disable-line no-use-before-define
       Parameter.parser, // eslint-disable-line no-use-before-define

@@ -2,32 +2,9 @@ const { ast } = require('../lang/grammar');
 
 const transpile = (node, text) => {
   if (node.type === 'Composition') {
+    
   } else if (node.type === 'Call') {
-    if (node.id.value === 'ls') {
-      return ($) => {
-        return $;
-      };
-    } else if (node.id.value === 'li') {
-      return ($) => {
-        return $;
-      };
-    } else if (node.id.value === 'ul') {
-      return ($) => {
-        return [`<ul>${args.join('')}</ul>`];
-      };
-    } else if (node.id.value === 'html') {
-      return ($) => {
-        const args = node.args.map(arg => {
-          if (arg.type === 'Composition') {
-            return into([], transpile(arg, text), [[]]).join('');
-          }
-          return transpile(arg, text)($);
-        });
-        return [`<html>${args.join('')}</html>`];
-      };
-    } else {
-      throw new Error('???'+JSON.stringify(node.id.value));
-    }
+    
   } else if (node.type === 'Id') {
     return ($) => { return [node.value]; };
   } else if (node.type === 'Stack') {

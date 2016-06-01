@@ -42,57 +42,209 @@ module.exports = {
     //   test.done();
     // }
 
-    const a = reduce([
-      ($$) => {
-        return Promise.resolve({
-          response: {
-            status: 200,
-            content: $$.response.content.map && $$.response.content.map($ => [
-              { path: 'a.txt' },
-              { path: 'b.txt' },
-              { path: 'c.txt' },
-            ]) || [
-              { path: 'a.txt' },
-              { path: 'b.txt' },
-              { path: 'c.txt' },
-            ],
-          },
-        });
-      },
-      ($$) => {
-        return $$.response.content.map($ => {
-          const promise = reduce([$ => {
-            return Promise.resolve({
-              response: {
-                status: 200,
-                content: $.response.content.map($ => {
-                  return $.path;
-                }),
-              },
-            });
-          }], $$);
-          return promise.then(arg => {
-            console.log(arg);
-            return {
-              response: {
-                status: 200,
-                content: arg.response.content.map(res => {
-                  return `<li>${res}</li>`;
-                }),
-              },
-            };
+    // const a = reduce([
+    //   ($$) => {
+    //     const content = $$.response.content.map && $$.response.content.map($ => {
+    //       return [
+    //         { path: 'a.txt' },
+    //         { path: 'b.txt' },
+    //         { path: 'c.txt' },
+    //       ];
+    //     }) || [
+    //       { path: 'a.txt' },
+    //       { path: 'b.txt' },
+    //       { path: 'c.txt' },
+    //     ];
+    //     return Promise.resolve({
+    //       response: {
+    //         status: 200,
+    //         content,
+    //       },
+    //     });
+    //   },
+    //   ($$) => {
+    //     const promiseArg = reduce([$ => {
+    //       return Promise.resolve({
+    //         response: {
+    //           status: 200,
+    //           content: $.response.content.map($ => {
+    //             return $.path;
+    //           }),
+    //         },
+    //       });
+    //     }], $$);
+    //     return promiseArg.then($ => {
+    //       return reduce([$ => {
+    //         return Promise.resolve({
+    //           response: {
+    //             status: 200,
+    //             content: $.response.content.map($ => {
+    //               return `<li>${$}</li>`;
+    //             }),
+    //           },
+    //         });
+    //       }], $);
+    //     });
+    //   },
+    // ], Promise.resolve({ request: { type: 'post' }, response: { status: 200, content: '' } }));
+    // a.then(res => {
+    //   console.log('reduced to', JSON.stringify(res, null, 2));
+    //   test.done();
+    // }).catch(err => {
+    //   console.error(err);
+    //   console.error(err.stack);
+    // });
+
+    const request = (path, argRaw) => {
+      const promiseArg = argRaw instanceof Promise ?
+              argRaw : Promise.resolve(argRaw);
+
+      return promiseArg.then(argResponse => {
+        if (argResponse && argResponse.status !== 200) {
+          return Promise.reject(argResponse);
+        }
+        const arg = argResponse ? argResponse.content : '';
+
+        let content = '';
+        let mime = 'text/plain';
+        if (path === '/tasitc/dom/html') {
+          content = `<html>${arg}</html>`;
+          mime = 'text/html';
+        } else if (path === '/tasitc/dom/ul') {
+          if (arg instanceof Array) {
+            content = `<ul>${arg.join('')}</ul>`;
+          } else {
+            content = `<ul>${arg}</ul>`;
+          }
+          mime = 'text/html';
+        } else if (path === '/tasitc/dom/li') {
+          console.log('ARG', arg);
+          content = `<li>${arg}</li>`;
+          mime = 'text/html';
+        } else if (path === '/tasitc/fs/ls') {
+          mime = 'application/json';
+          content = [{ path: 'a.txt' }, { path: 'b.txt' }, { path: 'c.txt' }];
+        } else {
+          return Promise.reject({
+            status: 404,
+            content,
+            mime,
           });
+        }
+        return Promise.resolve({
+          status: 200,
+          content,
+          mime,
         });
-      },
-    ], Promise.resolve({ request: { type: 'post' }, response: { status: 200, content: '' } }));
-    a.then(res => {
-      console.log('reduced to', JSON.stringify(res, null, 2));
+      });
+    };
+
+    const map = (form) => {
+      return ($) => {
+        return Promise.all($.content.map(content => {
+          return form({
+            mime: $.mime,
+            status: $.status,
+            content,
+          });
+        })).then(responses => {
+          return {
+            status: $.status,
+            mime: $.mime,
+            content: responses.map(r => {
+              return r.content;
+            }),
+          };
+        });
+      };
+    };
+
+    const tap = ($) => {
+      if ($ instanceof Promise) {
+        return $.then($ => {
+          console.log('TAP', $);
+          return $;
+        });
+      }
+      console.log('TAP', $);
+      return Promise.resolve($);
+    };
+
+    // `html (ul (ls | li $.path))`;
+
+    const ex1 = ($) => request('/tasitc/dom/html', reduce([
+      ($) => request('/tasitc/dom/ul', reduce([
+        ($) => reduce([
+          ($) => request('/tasitc/fs/ls', reduce([
+          ], $)),
+          map(
+            ($) => request('/tasitc/dom/li', reduce([
+              ($) => {
+                return Promise.resolve({
+                  status: 200,
+                  mime: 'application/json',
+                  content: $.content.path,
+                });
+              },
+            ], $))
+          ),
+        ], $),
+      ], $)),
+    ], $));
+
+
+    const transpile = (node, text) => {
+      if (node.type === 'Call') {
+        const path = transpile(node.id, text);
+        const arg = node.arg ? transpile(node.arg, text) : null;
+        return ($) => {
+          return request(path, arg ? arg($) : $);
+        };
+      } else if (node.type === 'Chain') {
+        const elements = node.elements.map((node, i) => {
+          if (i > 0) {
+            const chained = transpile(node, text);
+            return map(chained);
+          }
+          return transpile(node, text);
+        });
+        return ($) => reduce(elements, $);
+      } else if (node.type === 'Id') {
+        return node.value;
+      } else if (node.type === 'Context') {
+        return ($) => {
+          return Promise.resolve({
+            status: 200,
+            mime: 'application/json',
+            content: $.content.path,
+          });
+        };
+      }
+//      } else if (node.type === 'Stack') {
+//      } else if (node.type === 'Instance') {
+//      } else if (node.type === 'List') {
+//      }
+      throw new Error(`Unknown AST node (${node.type}): ${JSON.stringify(node)}`);
+    };
+
+    const parseTree = parse('/tasitc/dom/html (/tasitc/dom/ul (/tasitc/fs/ls | /tasitc/dom/li $.path))');
+    console.log(JSON.stringify(parseTree, null, 2));
+
+    const stmt = transpile(parseTree.value, parseTree.text);
+    stmt(Promise.resolve({
+      requests: [{ verb: 'get', path: '/tux/freekh' }],
+      status: 200,
+      mime: 'application/json',
+      content: { cwd: '/freekh', params: {} },
+    })).then(res => {
+      console.log('Response', res);
       test.done();
     }).catch(err => {
-      console.error(err);
+      console.error('ERROR', err);
       console.error(err.stack);
     });
 
+    
     // into({ mime: 'text/plain', content: ''}, comp(
     // ), { mime: 'text/plain', content: ''});
 

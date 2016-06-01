@@ -108,18 +108,18 @@ Attribute.parser = P.lazy('Attribute', () => {
 });
 
 //
-class Stack extends Marked { // $
+class Context extends Marked { // $
   constructor(path = []) {
     super();
-    this.type = 'Stack';
+    this.type = 'Context';
     this.id = '$';
     this.path = path;
   }
 }
-Stack.parser = P.lazy('Stack', () => {
+Context.parser = P.lazy('Context', () => {
   const reify = (mark) => {
     const path = mark.value;
-    return new Stack(path).withMark(mark);
+    return new Context(path).withMark(mark);
   };
   return P.string('$').then(P.alt(
     Subscript.parser,
@@ -130,23 +130,23 @@ Stack.parser = P.lazy('Stack', () => {
 });
 
 //
-class Composition extends Marked {
+class Chain extends Marked {
   constructor(elements) {
     super();
-    this.type = 'Composition';
+    this.type = 'Chain';
     this.elements = elements;
   }
 }
-Composition.parser = P.lazy('Composition', () => {
+Chain.parser = P.lazy('Chain', () => {
   const reify = (mark) => {
     const elements = mark.value;
     if (elements.length === 1) {
       return elements[0];
     }
-    return new Composition(elements).withMark(mark);
+    return new Chain(elements).withMark(mark);
   };
   return ignore(P.sepBy1(P.alt(
-    Stack.parser,
+    Context.parser,
     Instance.parser, // eslint-disable-line no-use-before-define
     List.parser, // eslint-disable-line no-use-before-define
     Call.parser // eslint-disable-line no-use-before-define
@@ -169,7 +169,7 @@ List.parser = P.lazy('List', () => {
   return P.string('[')
     .then(ignore(
       P.sepBy(
-        Composition.parser,
+        Chain.parser,
         P.whitespace
       )))
     .skip(P.string(']'))
@@ -179,24 +179,24 @@ List.parser = P.lazy('List', () => {
 
 //
 class Call extends Marked { // TODO: rename to Request? or Fn?
-  constructor(id, args = []) {
+  constructor(id, arg) {
     super();
     this.type = 'Call';
     this.id = id;
-    this.args = args;
+    this.arg = arg;
   }
 }
 Call.parser = P.lazy('Call', () => {
-  const expr = Id.parser.chain(id => {
-    const reify = mark => {
-      const args = mark.value;
-      return new Call(id, args || []).withMark(mark);
+  const expr = Id.parser.mark().chain(mark => { // FIXME: there is something fishy with this mark
+    const id = mark.value;
+    const reify = arg => {
+      return new Call(id, arg || null).withMark(mark);
     };
     const argument = P.alt(
-      form(Composition.parser),
+      form(Chain.parser),
       form(Str.parser),
       form(Id.parser),
-      Stack.parser,
+      Context.parser,
       Keyword.parser, // eslint-disable-line no-use-before-define
       Parameter.parser, // eslint-disable-line no-use-before-define
       Str.parser,
@@ -204,12 +204,9 @@ Call.parser = P.lazy('Call', () => {
     );
 
     return P.alt(
-      P.whitespace
-        .then(
-          P.sepBy(argument, P.whitespace)
-        ).skip(P.optWhitespace),
-      P.optWhitespace
-    ).mark().map(reify);
+      ignore(argument).map(reify),
+      P.succeed(reify(null))
+    );
   });
   return P.alt(
     form(ignore(expr)),
@@ -234,7 +231,7 @@ Instance.parser = P.lazy('Instance', () => {
     .then(P.seq(
       ignore(Str.parser).chain(key => {
         return ignore(P.string(':'))
-          .then(Composition.parser)
+          .then(Chain.parser)
           .map(call => {
             const value = {};
             value[key.value] = call;
@@ -264,7 +261,7 @@ Keyword.parser = P.lazy('Keyword', () => {
     };
     return P.string('=')
       .then(P.alt(
-        Stack.parser,
+        Context.parser,
         Num.parser,
         Str.parser,
         Call.parser
@@ -302,7 +299,7 @@ class Sink extends Marked { // TODO: rename to Write? or something else?
   }
 }
 Sink.parser = P.lazy('Sink', () => {
-  return Composition.parser.skip(P.optWhitespace).chain(expression => {
+  return Chain.parser.skip(P.optWhitespace).chain(expression => {
     const reify = (mark) => {
       const path = mark.value;
       return new Sink(expression, path).withMark(mark);
@@ -319,7 +316,7 @@ Sink.parser = P.lazy('Sink', () => {
 const parse = (text) => {
   const result = P.alt(
     Sink.parser,
-    Composition.parser
+    Chain.parser
   ).parse(text);
   result.text = text;
   return result;
@@ -341,11 +338,11 @@ const uniq = array => { // TODO: go through this, its pasted in from somewhere (
 
 const ast = {
   Sink,
-  Composition,
+  Chain,
   Call,
   Keyword,
   Parameter,
-  Stack,
+  Context,
   Attribute,
   Subscript,
   Id,

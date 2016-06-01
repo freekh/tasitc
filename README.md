@@ -20,6 +20,33 @@ Ah, you want an example? Here's an example (as it is now) where the rows of the 
 
 It can then be called from the tux (the next gen Terminal User Experience, aka an on-line command line interface) `~/test/rows --path='Test'` or by hitting the endpoint: `https://tasitc.com/freekh/test/rows?path=Test` .
 
+## Architecture
+tldr; 
+Tasitc statements are one-arg functions that take an http request/response object and returns an http response.
+A tasitc statement can be composed of multiple statements, either using an arg or using combinators. 
+The argument of the function is either specified (by the user) or 'piped' in by the previous statement.
+In the end, all statements are reduced and, thus, return one http response.
+
+There are 4 building blocks of tasitc: statements, combinators (the '|'), sinks and the virtual filesystem, called the endpoint structure.
+- statements are composed of: 
+  - request: returns the response of a specified http request (mime type is the same as the response)
+  - h: returns dom elements (mime type: text/html)
+  - str: returns strings (mime type: text/plain)
+  - json: returns json (mime type: application/json)
+- combinators: can be used to reduce iterable requests. There are only one (at least for now) which is the monadic combinator: the pipe ('|'). Example: In the following expression: [['a'], ['c']] | $ | $, the first | will map and the second will flatmap (mapcat, bind).
+- sinks: wait for requests at end-points or performs crud on a virtual filesystem. Examples:
+  - named pipe ('>'): assigns a tasitc statement to the endpoint structure.
+  - listen: listens on the endpoint structure and executes a tasitc statement. Used for one-off request handling.
+  - http/verb: specifies the http verb a function reacts to
+  - http/status: specifices the status of response.
+- endpoint structure: are opaque for most users so no examples (here), but hackable non the less. They can be used to emulate a file system. Other than CRUD operations, they also have a user permission model.
+
+## Basic syntax
+- Loops: there are no loops
+- Variables: there are no variables
+- Function definitions: there are no function defintions - every statement is a function
+- Parameters: it is possible to 
+
 ### When
 When my experiments are done! Oh, you meant when in time? Well, that is not up to me really :) Maybe in 2 weeks or maybe never :)
 

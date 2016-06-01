@@ -146,6 +146,7 @@ Chain.parser = P.lazy('Chain', () => {
     return new Chain(elements).withMark(mark);
   };
   return ignore(P.sepBy1(P.alt(
+    Str.parser,
     Context.parser,
     Instance.parser, // eslint-disable-line no-use-before-define
     List.parser, // eslint-disable-line no-use-before-define
@@ -170,7 +171,7 @@ List.parser = P.lazy('List', () => {
     .then(ignore(
       P.sepBy(
         Chain.parser,
-        P.whitespace
+        ignore(P.string(','))
       )))
     .skip(P.string(']'))
     .mark()
@@ -352,7 +353,8 @@ const ast = {
 };
 
 // TODO: move:
-const error = (parseTree, text) => {
+const error = (parseTree) => {
+  const text = parseTree.text;
   const lines = [];
   lines.push('##############################');
   lines.push(text);

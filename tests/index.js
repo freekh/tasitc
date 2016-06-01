@@ -280,14 +280,20 @@ module.exports = {
           status: 200,
           mime: 'text/plain',
           content: node.value,
-        }); // TODO: is this necessary?
+        }); // TODO: is $ function + Promise necessary?
+      } else if (node.type === 'Str') {
+        return ($) => Promise.resolve({
+          status: 200,
+          mime: 'text/plain',
+          content: node.value,
+        }); // TODO: is $ function + Promise necessary?
       } else if (node.type === 'Context') {
         return ($) => {
           const context = $ instanceof Promise ? $ : Promise.resolve($);
           return context.then($ => {
             let content = $.content;
             let mime = $.mime;
-            let status = 200;
+            const status = $.status;
             let missingAttribute = null;
             node.path.forEach(element => { // FIXME: ? prefer transpiling outside of function
               if (content) {
@@ -323,6 +329,7 @@ module.exports = {
         };
       } else if (node.type === 'List') {
         return ($) => {
+          // FIXME: smells bad
           return Promise.all(node.elements.map(element => transpile(element, text)($))).then(responses => {
             const content = responses.map(response => response.content);
             return {
@@ -340,27 +347,32 @@ module.exports = {
       throw new Error(`Unknown AST node (${node.type}): ${JSON.stringify(node)}`);
     };
 
-    //const parseTree = parse('html (ul (ls | li $.path))');
+    const parseTree = parse('html (ul (ls | li $.path))');
     //const parseTree = parse('$');
     //const parseTree = parse('html (ul ($.cwd | li))');
-    //const parseTree = parse('ls | $.path | $ ');
-    const parseTree = parse('html (ls | [$.path] | (li $))');
-    console.log(JSON.stringify(parseTree, null, 2));
+    //const parseTree = parse('ls | $.path ');
+    //const parseTree = parse('html (ls | [$.path] | (li $))');
+    //const parseTree = parse("ul (['hei', 'verden'] | li)");
+    if (!parseTree.status) {
+      console.log(parseTree);
+      console.error(error(parseTree).join('\n'));
+    } else {
+      console.log(JSON.stringify(parseTree, null, 2));
 
-    const stmt = transpile(parseTree.value, parseTree.text);
-    stmt(Promise.resolve({
-      request: { verb: 'get', path: '/tux/freekh' },
-      status: 200,
-      mime: 'application/json',
-      content: { cwd: '/freekh', params: {} },
-    })).then(res => {
-      console.log('Response', JSON.stringify(res, null, 2));
-      test.done();
-    }).catch(err => {
-      console.error('ERROR', err);
-      console.error(err.stack);
-    });
-
+      const stmt = transpile(parseTree.value, parseTree.text);
+      stmt(Promise.resolve({
+        request: { verb: 'get', path: '/tux/freekh' },
+        status: 200,
+        mime: 'application/json',
+        content: { cwd: '/freekh', params: {} },
+      })).then(res => {
+        console.log('Response', JSON.stringify(res, null, 2));
+        test.done();
+      }).catch(err => {
+        console.error('ERROR', err);
+        console.error(err.stack);
+      });
+    }
     
     // into({ mime: 'text/plain', content: ''}, comp(
     // ), { mime: 'text/plain', content: ''});

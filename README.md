@@ -58,3 +58,6 @@ Still, here are some imaginary use cases:
  - simple and extensible admin pages and other 'throw-away' webpages (landing pages, etc etc)
 
 Again, more to come... :)
+
+## Notes:
+- When ready, move master (again). First commit: ab incunabulis ofc..

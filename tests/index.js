@@ -107,28 +107,28 @@ module.exports = {
 
         let content = '';
         let mime = 'text/plain';
-        if (path === '/tasitc/dom/html') {
+        if (path === 'html') {
           content = `<html>${arg}</html>`;
           mime = 'text/html';
-        } else if (path === '/tasitc/dom/ul') {
+        } else if (path === 'ul') {
           if (arg instanceof Array) {
             content = `<ul>${arg.join('')}</ul>`;
           } else {
             content = `<ul>${arg}</ul>`;
           }
           mime = 'text/html';
-        } else if (path === '/tasitc/dom/li') {
+        } else if (path === 'li') {
           console.log('ARG', arg);
           content = `<li>${arg}</li>`;
           mime = 'text/html';
-        } else if (path === '/tasitc/fs/ls') {
+        } else if (path === 'ls') {
           mime = 'application/json';
           content = [{ path: 'a.txt' }, { path: 'b.txt' }, { path: 'c.txt' }];
         } else {
           return Promise.reject({
             status: 404,
-            content,
-            mime,
+            content: `Could not find/execute: ${path}`,
+            mime: 'application/json',
           });
         }
         return Promise.resolve({
@@ -172,13 +172,13 @@ module.exports = {
 
     // `html (ul (ls | li $.path))`;
 
-    const ex1 = ($) => request('/tasitc/dom/html', reduce([
-      ($) => request('/tasitc/dom/ul', reduce([
+    const ex1 = ($) => request('html', reduce([
+      ($) => request('ul', reduce([
         ($) => reduce([
-          ($) => request('/tasitc/fs/ls', reduce([
+          ($) => request('ls', reduce([
           ], $)),
           map(
-            ($) => request('/tasitc/dom/li', reduce([
+            ($) => request('li', reduce([
               ($) => {
                 return Promise.resolve({
                   status: 200,
@@ -213,10 +213,37 @@ module.exports = {
         return node.value;
       } else if (node.type === 'Context') {
         return ($) => {
+          let content = $.content;
+          let mime = $.mime;
+          let status = 200;
+          let missingAttribute = null;
+          node.path.forEach(element => { // FIXME: ? prefer transpiling outside of function
+            if (content) {
+              if (element.type === 'Attribute') {
+                content = content[element.attr.value]; // FIXME: transpile instead or change AST?
+              } else {
+                throw Error(`Could not handle element ${JSON.stringify(element)} ` +
+                            `in node: ${JSON.stringify(node)}`);
+              }
+            }
+            if (!content) {
+              missingAttribute = element.attr.value;
+            }
+          });
+          if (node.path.length) {
+            if (!content) {
+              mime = 'text/plain';
+              status = 404;
+              content = `No attribute ${missingAttribute}`;
+            } else if (content instanceof String) {
+              mime = 'text/plain';
+            }
+            // TODO: mroe here?
+          }
           return Promise.resolve({
-            status: 200,
-            mime: 'application/json',
-            content: $.content.path,
+            status,
+            mime,
+            content,
           });
         };
       }
@@ -227,7 +254,8 @@ module.exports = {
       throw new Error(`Unknown AST node (${node.type}): ${JSON.stringify(node)}`);
     };
 
-    const parseTree = parse('/tasitc/dom/html (/tasitc/dom/ul (/tasitc/fs/ls | /tasitc/dom/li $.path))');
+    const parseTree = parse('html (ul (ls | li $.path))');
+    //const parseTree = parse('$');
     console.log(JSON.stringify(parseTree, null, 2));
 
     const stmt = transpile(parseTree.value, parseTree.text);

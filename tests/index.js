@@ -6,6 +6,8 @@ const execute = require('../code/lang/execute');
 
 const reduce = require('../code/misc/reduce');
 
+const h = require('hyperscript');
+
 
 const pg = require('pg').native;
 
@@ -95,6 +97,31 @@ module.exports = {
     //   console.error(err.stack);
     // });
 
+    const responseToHyperscript = (elemType, res) => {
+      if (res.mime === 'text/plain') {
+        return h(elemType, res.content);
+      } else if (res.mime === 'application/json') {
+        if (res.content instanceof Array) {
+          const jsonContent = res.content.map(JSON.stringify).join('');
+          const elem = h(elemType);
+          elem.innerHTML = jsonContent;
+          return elem;
+        } else if (typeof res.content === 'string') {
+          return h(elemType, res.content);
+        } else if (res.content instanceof Object) {
+          return h(elemType, res.content, []);
+        }
+        return res.content;
+      } else if (res.mime === 'text/html') {
+        const elem = h(elemType);
+        elem.innerHTML = res.content;
+        console.log(elemType, res, elem);
+        return elem;
+      }
+      console.log('WUT', elemType, res);
+      return res.content.toString();
+    };
+
     const request = (promisedPath, argRaw) => {
       const promiseArg = argRaw instanceof Promise ?
               argRaw : Promise.resolve(argRaw);
@@ -112,17 +139,13 @@ module.exports = {
         let content = '';
         let mime = 'text/plain';
         if (path === 'html') {
-          content = `<html>${arg}</html>`;
+          content = responseToHyperscript('html', argResponse).outerHTML;
           mime = 'text/html';
         } else if (path === 'ul') {
-          if (arg instanceof Array) {
-            content = `<ul>${arg.join('')}</ul>`;
-          } else {
-            content = `<ul>${arg}</ul>`;
-          }
+          content = responseToHyperscript('ul', argResponse).outerHTML;
           mime = 'text/html';
         } else if (path === 'li') {
-          content = `<li>${arg}</li>`;
+          content = responseToHyperscript('li', argResponse).outerHTML;
           mime = 'text/html';
         } else if (path === 'ls') {
           mime = 'application/json';
@@ -263,16 +286,17 @@ module.exports = {
           return request(path($), arg ? arg($) : $);
         };
       } else if (node.type === 'Chain') {
-        const elements = node.elements.map((node, i) => {
+        const elements = node.elements.map((element, i) => {
           if (i === 0) {
-            return transpile(node, text);
+            return transpile(element, text);
           } else if (i === 1) {
-            const chained = transpile(node, text);
+            const chained = transpile(element, text);
             return map(chained);
           } else if (i > 1) {
-            const flatChained = transpile(node, text);
+            const flatChained = transpile(element, text);
             return flatMap(flatChained);
           }
+          throw Error(`Unexpected index '${i}' of elements ${JSON.stringify(node)}`);
         });
         return ($) => reduce(elements, $);
       } else if (node.type === 'Id') {
@@ -330,7 +354,10 @@ module.exports = {
       } else if (node.type === 'List') {
         return ($) => {
           // FIXME: smells bad
-          return Promise.all(node.elements.map(element => transpile(element, text)($))).then(responses => {
+          const promisedResponses = Promise.all(node.elements.map(element => {
+            return transpile(element, text)($);
+          }));
+          return promisedResponses.then(responses => {
             const content = responses.map(response => response.content);
             return {
               status: 200,
@@ -347,8 +374,8 @@ module.exports = {
       throw new Error(`Unknown AST node (${node.type}): ${JSON.stringify(node)}`);
     };
 
-    const parseTree = parse('html (ul (ls | li $.path))');
-    //const parseTree = parse('$');
+    //const parseTree = parse('html (ul (ls | li $.path))');
+    const parseTree = parse('html [$]');
     //const parseTree = parse('html (ul ($.cwd | li))');
     //const parseTree = parse('ls | $.path ');
     //const parseTree = parse('html (ls | [$.path] | (li $))');

@@ -51,6 +51,15 @@ const request = (promisedPath, argRaw) => {
     } else if (path === '/tasitc/dom/ul') {
       content = responseToHyperscript('ul', argResponse).outerHTML;
       mime = 'text/html';
+    } else if (path === '/tasitc/dom/body') {
+      content = responseToHyperscript('body', argResponse).outerHTML;
+      mime = 'text/html';
+    } else if (path === '/tasitc/dom/head') {
+      content = responseToHyperscript('head', argResponse).outerHTML;
+      mime = 'text/html';
+    } else if (path === '/tasitc/dom/style') {
+      content = responseToHyperscript('style', argResponse).outerHTML;
+      mime = 'text/html';
     } else if (path === '/tasitc/dom/li') {
       content = responseToHyperscript('li', argResponse).outerHTML;
       mime = 'text/html';
@@ -64,7 +73,7 @@ const request = (promisedPath, argRaw) => {
       return Promise.reject({
         status: 404,
         content: `Could not find/execute: ${JSON.stringify(path)}`,
-        mime: 'application/json',
+        mime: 'text/plain',
       });
     }
     return Promise.resolve({

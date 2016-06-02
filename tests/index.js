@@ -4,9 +4,9 @@ const { testable } = require('../code/backend/routers/node-structure');
 const parse = require('../code/lang/parser/parse');
 const parserError = require('../code/lang/parser/error');
 const transpile = require('../code/lang/transpile');
+const normalize = require('../code/term/normalize');
 
 const pg = require('pg').native;
-const path = require('path');
 
 module.exports = {
   tearDown: (callback) => {
@@ -43,24 +43,11 @@ module.exports = {
     } else {
       console.log(JSON.stringify(parseTree, null, 2));
       
-      const isRelative = (path) => {
-        return !(/^([a-z]:)?[\\\/]/i).test(path);
-      };
-      const normalize = (cwdRaw, aliases, id) => {
-        const alias = aliases[id];
-        if (alias) {
-          return alias;
-        }
-        const cwd = cwdRaw.endsWith('/') ? cwdRaw : `${cwdRaw}/`;
-        if (isRelative(id)) {
-          return path.normalize(cwd + id);
-        }
-        return id;
-      };
 
       const aliases = {
         ls: '/tasitc/ns/ls',
         html: '/tasitc/dom/html',
+        body: '/tasitc/dom/body',
         div: '/tasitc/dom/div',
         ul: '/tasitc/dom/ul',
         li: '/tasitc/dom/li',

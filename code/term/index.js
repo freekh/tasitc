@@ -3,6 +3,8 @@ const h = require('hyperscript');
 const log = require('../misc/log');
 
 const transpile = require('../lang/transpile');
+const parse = require('../lang/parser/parse');
+const normalize = require('./normalize');
 
 const tooltips = (cwd, value) => {
   const elem = value === 'ls' ? h('span', 'ls: bla bla') : null;
@@ -30,6 +32,18 @@ const global = {
   cursor: 0,
   // listen guys, I don't like this any more than you do! I am not sure I even need it!
   block: false,
+};
+
+// Fake:
+const aliases = {
+  ls: '/tasitc/ns/ls',
+  html: '/tasitc/dom/html',
+  body: '/tasitc/dom/body',
+  head: '/tasitc/dom/head',
+  style: '/tasitc/dom/style',
+  div: '/tasitc/dom/div',
+  ul: '/tasitc/dom/ul',
+  li: '/tasitc/dom/li',
 };
 
 let historyIndex = 0;
@@ -86,7 +100,7 @@ const tooltip = () => {
 
 // ------------------------------ Elems ---------------------------------------//
 
-const root = document.getElementById('tux');
+const root = document.getElementById('term');
 const parent = h('div#parent');
 const history = h('div#history');
 const completion = h('div#completion');
@@ -250,24 +264,15 @@ const appendLastToHistory = () => {
 
 
 const tab = () => {
-  completionDialog = true;
-  completionIndex = 0;
-  elems.completion.appendChild(
-    h('div#tab-elems',
-      Object.keys(services).map(service => h('div', service)))
-  );
+  console.log('TODO');
 };
 
 const tabUp = () => {
-  completionIndex -= 1;
-  global.value = Object.keys(services)[completionIndex];
-  updateView();
+  console.log('TODO');
 };
 
 const tabDown = () => {
-  completionIndex += 1;
-  global.value = Object.keys(services)[completionIndex];
-  updateView();
+  console.log('TODO');
 };
 
 const escape = () => {
@@ -286,18 +291,43 @@ const enter = () => {
 
   global.block = true;
   appendLastToHistory();
-  transpile(parser(global.value)).then(res => {
-    res.forEach(elem => {
-      if (elem) {
-        elems.history.appendChild(elem);
-      }
+  const parseTree = parse(global.value);
+  if (parseTree.status) {
+    const fn = transpile(parseTree.value, (id) => {
+      const content = normalize(global.cwd, aliases, id);
+      return ($) => {
+        return Promise.resolve({
+          status: 200,
+          mime: 'text/plain',
+          content,
+        });
+      };
+    }, parseTree.text);
+    const fakeReq = Promise.resolve({
+      request: { verb: 'get', path: '/tasitc/term/freekh' },
+      status: 200,
+      mime: 'application/json',
+      content: { cwd: '/freekh', params: {} },
     });
+    fn(fakeReq).then(res => {
+      let resElem = h('div');
+      if (res.mime === 'text/html') {
+        const shadowRoot = resElem.createShadowRoot();
+        shadowRoot.innerHTML = res.content;
+      } else {
+        resElem = h('div', JSON.stringify(res.content));
+      }
+      elems.history.appendChild(resElem);
+      complete();
+    }).catch(err => {
+      elems.history.appendChild(h('div', JSON.stringify(err)));
+      complete();
+      throw err;
+    });
+  } else {
+    elems.history.appendChild(h('div', `Parse error: ${JSON.stringify(parseTree)}`));
     complete();
-  }).catch(err => {
-    elems.history.appendChild(err);
-    complete();
-    throw err;
-  });
+  }
 };
 
 const space = () => {

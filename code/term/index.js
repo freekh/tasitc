@@ -294,7 +294,10 @@ const enter = () => {
   const parseTree = parse(global.value);
   if (parseTree.status) {
     const fn = transpile(parseTree.value, (id) => {
-      const content = normalize(global.cwd, aliases, id);
+      const content = {
+        path: normalize(global.cwd, aliases, id),
+        type: 'get',
+      };
       return ($) => {
         return Promise.resolve({
           status: 200,

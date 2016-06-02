@@ -1,5 +1,6 @@
 const h = require('hyperscript');
-
+const get = require('../../misc/get');
+const post = require('../../misc/post');
 
 const responseToHyperscript = (elemType, res) => {
   if (res.mime === 'text/plain') {
@@ -42,7 +43,7 @@ const request = (promisedPath, argRaw) => {
       });
     }
     const arg = argResponse ? argResponse.content : '';
-    const path = pathResponse.content; // TODO: check status
+    const { path, type } = pathResponse.content; // TODO: check status
     let content = '';
     let mime = 'text/plain';
     if (path === '/tasitc/dom/html') {
@@ -67,8 +68,7 @@ const request = (promisedPath, argRaw) => {
       content = responseToHyperscript('div', argResponse).outerHTML;
       mime = 'text/html';
     } else if (path === '/tasitc/ns/ls') {
-      mime = 'application/json';
-      content = [{ path: 'ab' }, { path: 'cd' }, { path: 'ef' }];
+      return post('/tasitc/ns/ls', arg);
     } else {
       return Promise.reject({
         status: 404,

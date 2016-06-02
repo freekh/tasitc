@@ -1,4 +1,5 @@
 const request = require('./request');
+const sink = require('./sink');
 // const listen = require('./listen');
 
 // const str = require('./str');
@@ -8,6 +9,7 @@ const request = require('./request');
 module.exports = {
   //
   request,
+  sink,
   // listen,
   // Types:
   // str,

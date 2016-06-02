@@ -1,5 +1,5 @@
-const FsNode = require('./fs-node');
+const NsNode = require('./ns-node');
 
 module.exports = {
-  FsNode,
+  NsNode,
 };

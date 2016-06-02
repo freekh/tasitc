@@ -20,6 +20,8 @@ const term = {
   },
 };
 
+router.use('/tasitc/term/assets', express.static(path.resolve('./assets')));
+
 router.get(term.js.path, (req, res) => {
   const stream = res.contentType('application/json');
   browserify(term.dir, term.js.index, stream);

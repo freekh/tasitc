@@ -33,8 +33,8 @@ const execute = (statements) => {
 
 const getContent = (path) => {
   return execute([{
-    name: 'fs_nodes_get',
-    text: 'SELECT content FROM fs_nodes WHERE path = $1',
+    name: 'ns_nodes_get',
+    text: 'SELECT text FROM ns_nodes WHERE path = $1',
     values: [path],
   }]);
 };
@@ -42,9 +42,9 @@ const getContent = (path) => {
 const put = (path, content) => {
   return execute([
     {
-      name: 'fs_nodes_put',
-      text: 'INSERT INTO fs_nodes (path, content) VALUES ($1, $2) ' +
-        'ON CONFLICT(path) DO UPDATE SET content = $2', // requires pg 9.5+
+      name: 'ns_nodes_put',
+      text: 'INSERT INTO ns_nodes (path, text) VALUES ($1, $2) ' +
+        'ON CONFLICT(path) DO UPDATE SET text = $2', // requires pg 9.5+
       values: [path, content],
     },
   ]);

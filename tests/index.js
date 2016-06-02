@@ -17,7 +17,7 @@ module.exports = {
     let text = 'ls | $ | $ | $.path';
     text = 'ls | sort';
     text = `html (ls | 
-         li [(div 'test')])`;
+         li [(div 'test')]) > ~/test`;
     //text = 'html (ul (ls | li $.path))';
 
     //text = `[ls | li $.path] | { 'test': $ }`;

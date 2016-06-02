@@ -1,4 +1,4 @@
-CREATE TABLE fs_nodes (
+CREATE TABLE ns_nodes (
   path TEXT PRIMARY KEY NOT NULL,
-  content TEXT NOT NULL
+  text TEXT NOT NULL
 );

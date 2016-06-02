@@ -1,15 +1,20 @@
 const express = require('express');
 const router = express.Router(); // eslint-disable-line new-cap
+
+const bodyParser = require('body-parser');
+const jsonBody = bodyParser.json();
+
 const multer = require('multer');
 const multipart = multer();
+
 const models = require('../models');
 
-const write = (path, input) => {
-  return models.FsNode.put(path, input);
+const write = (path, text) => {
+  return models.NsNode.put(path, text);
 };
 
 const read = (path) => {
-  return models.FsNode.getContent(path).then(results => {
+  return models.NsNode.getContent(path).then(results => {
     if (results.length && results[0].rows[0]) {
       return results[0].rows[0].content;
     }
@@ -19,10 +24,16 @@ const read = (path) => {
 
 router.post('/tasitc/ns/write', multipart.fields([]), (req, res) => {
   // FIXME: remove ast?
-  const { ast, input, path } = req.body;
-  // TODO: check permissions
-  write(input, path);
-  res.sendStatus(501);
+  const { ast, text, path } = req.body;
+  // FIXME: fix this, is unecessary
+  const astJson = JSON.parse(ast);
+  const exprText = text.slice(astJson.expression.start, astJson.start);
+  write(path, exprText);
+  res.sendStatus(200);
+});
+
+router.post('/tasitc/ns/ls', jsonBody, (req, res) => {
+  res.json([{ path: 'hello.txt' }]);
 });
 
 router.testable = {

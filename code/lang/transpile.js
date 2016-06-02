@@ -1,4 +1,4 @@
-const { request } = require('./atoms');
+const { request, sink } = require('./atoms');
 const { map, flatmap, reduce } = require('./combinators');
 
 const transpileStr = (node) => {
@@ -60,7 +60,7 @@ const transpileContext = (node) => {
 const transpile = (node, lookup, text) => {
   const recurse = (node) => {
     if (node.type === 'Call') {
-      const path = recurse(node.id);
+      const path = transpileId(node.id, lookup);
       const arg = node.arg ? recurse(node.arg) : null;
       return ($) => {
         return request(path($), arg ? arg($) : $);
@@ -129,8 +129,10 @@ const transpile = (node, lookup, text) => {
           };
         });
       };
+    } else if (node.type === 'Sink') {
+      return sink(node, text, node.path.value);
     }
-    throw new Error(`Unknown AST node (${node.type}): ${JSON.stringify(node)}`);
+    throw new Error(`Unknown AST node (${node.type}): ${JSON.stringify(node, null, 2)}`);
   };
   return recurse(node);
 };

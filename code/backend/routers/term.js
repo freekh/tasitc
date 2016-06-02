@@ -8,25 +8,25 @@ const log = require('../../misc/log');
 const browserify = require('../../build/browserify');
 const scss = require('../../build/scss');
 
-const tux = {
-  dir: path.resolve('./code/tux'),
+const term = {
+  dir: path.resolve('./code/term'),
   js: {
-    path: '/tasitc/tux/js',
+    path: '/tasitc/term/js',
     index: 'index.js',
   },
   css: {
-    path: '/tasitc/tux/css',
+    path: '/tasitc/term/css',
     scss: 'index.scss',
   },
 };
 
-router.get(tux.js.path, (req, res) => {
+router.get(term.js.path, (req, res) => {
   const stream = res.contentType('application/json');
-  browserify(tux.dir, tux.js.index, stream);
+  browserify(term.dir, term.js.index, stream);
 });
 
-router.get(tux.css.path, (req, res) => {
-  scss(path.resolve(tux.dir, tux.css.scss)).then(css => {
+router.get(term.css.path, (req, res) => {
+  scss(path.resolve(term.dir, term.css.scss)).then(css => {
     res.contentType('text/css').send(css.toString());
   }).catch(err => {
     log.error(err);
@@ -48,15 +48,15 @@ router.get('/:username*', (req, res) => {
       h('link', {
         rel: 'stylesheet',
         type: 'text/css',
-        href: tux.css.path,
+        href: term.css.path,
       }),
     ]),
     h('body', [
-      h('div#tux'),
+      h('div#term'),
       h('script', {
         type: 'application/javascript',
         defer: 'defer',
-        src: tux.js.path,
+        src: term.js.path,
       }),
     ]),
   ]);

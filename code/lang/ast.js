@@ -1,8 +1,5 @@
 const Marked = require('./parser/marked');
 
-// --------- AST ----------
-
-//
 class Str extends Marked { // TODO: rename?
   constructor(value) {
     super();
@@ -11,7 +8,6 @@ class Str extends Marked { // TODO: rename?
   }
 }
 
-//
 class Num extends Marked { // TODO: rename?
   constructor(value) {
     super();
@@ -20,7 +16,6 @@ class Num extends Marked { // TODO: rename?
   }
 }
 
-//
 class Id extends Marked { // TODO: rename to Path?
   constructor(value) {
     super();
@@ -29,7 +24,6 @@ class Id extends Marked { // TODO: rename to Path?
   }
 }
 
-//
 class Subscript extends Marked { // [1][0]
   constructor(index) {
     super();
@@ -38,7 +32,6 @@ class Subscript extends Marked { // [1][0]
   }
 }
 
-//
 class Attribute extends Marked { // foo.column
   constructor(attr) {
     super();
@@ -47,7 +40,6 @@ class Attribute extends Marked { // foo.column
   }
 }
 
-//
 class Context extends Marked { // $
   constructor(path = []) {
     super();
@@ -57,7 +49,6 @@ class Context extends Marked { // $
   }
 }
 
-//
 class Chain extends Marked {
   constructor(elements) {
     super();
@@ -66,7 +57,6 @@ class Chain extends Marked {
   }
 }
 
-//
 class List extends Marked {
   constructor(elements) {
     super();
@@ -75,7 +65,6 @@ class List extends Marked {
   }
 }
 
-//
 class Call extends Marked { // TODO: rename to Request? or Fn?
   constructor(id, arg) {
     super();
@@ -85,7 +74,6 @@ class Call extends Marked { // TODO: rename to Request? or Fn?
   }
 }
 
-//
 class Instance extends Marked {
   constructor(value) {
     super();
@@ -94,7 +82,6 @@ class Instance extends Marked {
   }
 }
 
-//
 class Keyword extends Marked {
   constructor(id, value) {
     super();
@@ -104,7 +91,6 @@ class Keyword extends Marked {
   }
 }
 
-//
 class Parameter extends Marked {
   constructor(id) {
     super();
@@ -113,7 +99,6 @@ class Parameter extends Marked {
   }
 }
 
-//
 class Sink extends Marked { // TODO: rename to Write? or something else?
   constructor(expression, path) {
     super();

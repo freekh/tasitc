@@ -5,7 +5,12 @@ const responseToHyperscript = (elemType, res) => {
     return h(elemType, res.content);
   } else if (res.mime === 'application/json') {
     if (res.content instanceof Array) {
-      const jsonContent = res.content.map(JSON.stringify).join('');
+      const jsonContent = res.content.map(element => {
+        if (typeof element === 'string') {
+          return element;
+        }
+        return JSON.stringify(element);
+      }).join('');
       const elem = h(elemType);
       elem.innerHTML = jsonContent;
       return elem;

@@ -1,5 +1,6 @@
 const P = require('parsimmon');
 
+// We use these to catch renames of the internal AST easily
 const { Sink,
         Chain,
         Call,

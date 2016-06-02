@@ -1,8 +1,5 @@
 // TODO: move to lang/execute
 
-// TODO: do we need more support for combinators or is a simple reduce enough?
-// the lang could be built up on Joys combinators I think...
-
 const errorStatus = value => {
   return value.status !== 200; // TODO
 };

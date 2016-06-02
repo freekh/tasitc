@@ -1,120 +1,106 @@
-const { ast } = require('../lang/grammar');
+const { request } = require('./atoms');
+const { map, flatmap, reduce } = require('./combinators');
 
-const transpile = (node, text) => {
-  if (node.type === 'Composition') {
-    
-  } else if (node.type === 'Call') {
-    
-  } else if (node.type === 'Id') {
-    return ($) => { return [node.value]; };
-  } else if (node.type === 'Stack') {
-    return ($) => {
-      let ret = $;
-      node.path.forEach(elem => {
-        if (elem.type === 'Attribute') {
-          ret = $[elem.attr.value];
+const transpileStr = (node) => {
+  // TODO: is $ function + Promise necessary?
+  return ($) => Promise.resolve({
+    status: 200,
+    mime: 'text/plain',
+    content: node.value,
+  });
+};
+
+const transpileId = (node) => {
+  return transpileStr(node);
+};
+
+const transpileContext = (node) => {
+  return ($) => {
+    const context = $ instanceof Promise ? $ : Promise.resolve($);
+    return context.then($ => {
+      let content = $.content;
+      let mime = $.mime;
+      const status = $.status;
+      let missingAttribute = null;
+      node.path.forEach(element => { // FIXME: ? prefer transpiling outside of function
+        if (content) {
+          if (element.type === 'Attribute') {
+            content = content[element.attr.value]; // FIXME: transpile instead or change AST?
+          } else {
+            throw Error(`Could not handle element ${JSON.stringify(element)} ` +
+                        `in node: ${JSON.stringify(node)}`);
+          }
+        }
+        if (!content) {
+          missingAttribute = element.attr.value;
         }
       });
-      return [ret];
-    };
-  } else if (node.type === 'Instance') {
+      if (node.path.length) {
+        if (!content) {
+          return Promise.reject({
+            mime: 'text/plain',
+            status: 500,
+            content: `No attribute ${missingAttribute} in ${JSON.stringify($.content)}`,
+          });
+          // Note: typeof: http://stackoverflow.com/questions/203739/why-does-instanceof-return-false-for-some-literals
+        } else if (typeof content === 'string') {
+          mime = 'text/plain';
+        }
+        // TODO: mroe here?
+      }
+      return {
+        status,
+        mime,
+        content,
+      };
+    });
+  };
+};
+
+const transpile = (node, text) => {
+  if (node.type === 'Call') {
+    const path = transpile(node.id, text);
+    const arg = node.arg ? transpile(node.arg, text) : null;
     return ($) => {
-      const ret = {};
-      node.value.forEach(keyValue => {
-        Object.keys(keyValue).forEach(key => {
-          console.log('?', $)
-          ret[key] = into([], transpile(keyValue[key], text), $);
-        });
-      })
-      return [ret];
+      return request(path($), arg ? arg($) : $);
     };
+  } else if (node.type === 'Chain') {
+    const elements = node.elements.map((element, i) => {
+      if (i === 0) {
+        return transpile(element, text);
+      } else if (i === 1) {
+        const chained = transpile(element, text);
+        return map(chained);
+      } else if (i > 1) {
+        const flatChained = transpile(element, text);
+        return flatmap(flatChained);
+      }
+      throw Error(`Unexpected index '${i}' of elements ${JSON.stringify(node)}`);
+    });
+    return ($) => reduce(elements, $);
+  } else if (node.type === 'Id') {
+    return transpileId(node);
+  } else if (node.type === 'Str') {
+    return transpileStr(node);
+  } else if (node.type === 'Context') {
+    return transpileContext(node);
   } else if (node.type === 'List') {
     return ($) => {
-      return node.elements.map(elem => {
-        console.log(elem)
-        return into([], transpile(elem, text), [$]);
-      })
+      // FIXME: smells bad
+      const promisedResponses = Promise.all(node.elements.map(element => {
+        return transpile(element, text)($); // eslint-disable-line no-use-before-define
+      }));
+      return promisedResponses.then(responses => {
+        const content = responses.map(response => response.content);
+        return {
+          status: 200,
+          mime: 'application/json',
+          content,
+        };
+      });
     };
-  } else {
-    console.warn('???', node.type);
-    return ($) => { return $; };
   }
-  // } else if (node.type === 'Call') {
-  //   return `comp(???)`;
-  // } else if (node.type === 'Id') {
-  //   return `id(${node.value})`;
-  // } else if (node.type === 'Str') {
-  //   return `'${node.value}'`;
-  // } else if (node.type === 'Parameter') {
-  //   return `parameter('${node.id}')`;
-  // } else if (node.type === 'Sink') {
-  //   return `write(${transpile(node.expression, text)}, ` +
-  //     `'${JSON.stringify(node.expression)}', '${JSON.stringify(text)}', '${node.path.value}')`;
-  // } else if (node.type === 'Keyword') {
-  //   return `{'${node.id}': ${transpile(node.value, text)}}`;
-  // } else if (node.type === 'Num') {
-  //   return `${node.value}`;
-  // } else if (node.type === 'Instance') {
-  //   return `${JSON.stringify(node.data)}`;
-  // } else if (node.type === 'List') {
-  //   return `${JSON.stringify(node.elements)}`;
-  // } else if (node.type === 'Context') {
-  //   return `\$${node.path.map(pathElem => {
-  //     if (pathElem instanceof ast.Subscript) {
-  //       return `[${pathElem.index.value}]`;
-  //     } else if (pathElem instanceof ast.Attribute) {
-  //       return `.${pathElem.attr.value}`;
-  //     }
-  //     throw new Error(`Unknown AST path element: ${JSON.stringify(pathElem)}`);
-  //   }).join('')}`;
-  // }
   throw new Error(`Unknown AST node (${node.type}): ${JSON.stringify(node)}`);
 };
-
-// TODO: DELETE THIS
-const transpile2 = (node, text) => { // TODO: dont. do. this... use Function instead!
-  const commons = {
-    args: (args) => {
-      return '[' + // eslint-disable-line prefer-template
-        args.map(arg => {
-          return `${transpile(arg, text)}`;
-        }).join(', ') +
-      ']';
-    },
-  };
-
-  if (node.type === 'Comprehension') {
-    return transpile(node.expression, text) + node.targets.map((n) => {
-      return `.pipe(function($) { return ${transpile(n, text)} })`;
-    }).join('');
-  } else if (node.type === 'Call') {
-    // if not alias and is atom, use atom directly
-    return `call('${node.id.value}', ${commons.args(node.args)}, $)`;
-  } else if (node.type === 'Id') {
-    return `callOrString('${node.value}', [], $)`;
-  } else if (node.type === 'Str') {
-    return `'${node.value}'`;
-  } else if (node.type === 'Parameter') {
-    return `parameter('${node.id}')`;
-  } else if (node.type === 'Sink') {
-    return `write(${transpile(node.expression, text)}, ` +
-      `'${JSON.stringify(node.expression)}', '${JSON.stringify(text)}', '${node.path.value}')`;
-  } else if (node.type === 'Keyword') {
-    return `{'${node.id}': ${transpile(node.value, text)}}`;
-  } else if (node.type === 'Num') {
-    return `${node.value}`;
-  } else if (node.type === 'Context') {
-    return `\$${node.path.map(pathElem => {
-      if (pathElem instanceof ast.Subscript) {
-        return `[${pathElem.index.value}]`;
-      } else if (pathElem instanceof ast.Attribute) {
-        return `.${pathElem.attr.value}`;
-      }
-      throw new Error(`Unknown AST path element: ${JSON.stringify(pathElem)}`);
-    }).join('')}`;
-  }
-  throw new Error(`Unknown AST node : ${JSON.stringify(node)}`);
-};
-
 
 module.exports = transpile;

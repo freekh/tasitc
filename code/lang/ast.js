@@ -75,10 +75,10 @@ class Call extends Marked { // TODO: rename to Request? or Fn?
 }
 
 class Instance extends Marked {
-  constructor(value) {
+  constructor(elements) {
     super();
     this.type = 'Instance';
-    this.value = value;
+    this.elements = elements;
   }
 }
 

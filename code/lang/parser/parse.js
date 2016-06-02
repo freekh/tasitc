@@ -128,6 +128,7 @@ Call.parser = P.lazy('Call', () => {
       form(Chain.parser),
       form(Str.parser),
       form(Id.parser),
+      Instance.parser,
       List.parser,
       Context.parser,
       Keyword.parser, // eslint-disable-line no-use-before-define
@@ -149,14 +150,18 @@ Call.parser = P.lazy('Call', () => {
 
 Instance.parser = P.lazy('Instance', () => {
   const reify = mark => {
-    const value = mark.value;
-    return new Instance(value).withMark(mark);
+    const elements = mark.value;
+    return new Instance(elements).withMark(mark);
   };
   return P.string('{')
     .then(P.seq(
       ignore(Str.parser).chain(key => {
         return ignore(P.string(':'))
           .then(Chain.parser)
+          .skip(P.alt(
+            ignore(P.string(',')),
+            P.succeed(null)
+          ))
           .map(call => {
             const value = {};
             value[key.value] = call;

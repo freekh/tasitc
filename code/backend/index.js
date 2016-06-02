@@ -1,14 +1,14 @@
 const express = require('express');
 const path = require('path');
 
-const tux = require('./routers/tux');
-const fs = require('./routers/fs');
+const term = require('./routers/term');
+const nodeStructure = require('./routers/node-structure');
 
 const app = express();
 
-app.use('/assets', express.static(path.resolve('./assets')));
+app.use('/', nodeStructure);
 
-app.use('/', tux);
-app.use('/', fs);
+app.use('/', term);
+app.use('/tasitc/term/assets', express.static(path.resolve('./assets')));
 
 app.listen(8080);

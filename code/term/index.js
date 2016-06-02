@@ -2,7 +2,7 @@ const h = require('hyperscript');
 
 const log = require('../misc/log');
 
-const execute = require('../lang/execute');
+const transpile = require('../lang/transpile');
 
 const tooltips = (cwd, value) => {
   const elem = value === 'ls' ? h('span', 'ls: bla bla') : null;
@@ -286,7 +286,7 @@ const enter = () => {
 
   global.block = true;
   appendLastToHistory();
-  execute(global.value).then(res => {
+  transpile(parser(global.value)).then(res => {
     res.forEach(elem => {
       if (elem) {
         elems.history.appendChild(elem);

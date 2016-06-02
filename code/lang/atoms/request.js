@@ -1,5 +1,6 @@
 const h = require('hyperscript');
 
+
 const responseToHyperscript = (elemType, res) => {
   if (res.mime === 'text/plain') {
     return h(elemType, res.content);
@@ -44,16 +45,19 @@ const request = (promisedPath, argRaw) => {
     const path = pathResponse.content; // TODO: check status
     let content = '';
     let mime = 'text/plain';
-    if (path === 'html') {
+    if (path === '/tasitc/dom/html') {
       content = responseToHyperscript('html', argResponse).outerHTML;
       mime = 'text/html';
-    } else if (path === 'ul') {
+    } else if (path === '/tasitc/dom/ul') {
       content = responseToHyperscript('ul', argResponse).outerHTML;
       mime = 'text/html';
-    } else if (path === 'li') {
+    } else if (path === '/tasitc/dom/li') {
       content = responseToHyperscript('li', argResponse).outerHTML;
       mime = 'text/html';
-    } else if (path === 'ls') {
+    } else if (path === '/tasitc/dom/div') {
+      content = responseToHyperscript('div', argResponse).outerHTML;
+      mime = 'text/html';
+    } else if (path === '/tasitc/ns/ls') {
       mime = 'application/json';
       content = [{ path: 'ab' }, { path: 'cd' }, { path: 'ef' }];
     } else {

@@ -1,12 +1,12 @@
 // FIXME: These tests are written to help dev flow. I don't like TDD really so they should be removed and factored into seperate more correct tests as things go further. I want stable tests, no flacky ones.
 
-const { testable } = require('../code/backend/routers/fs');
-const parser = require('../code/lang/parser');
+const { testable } = require('../code/backend/routers/node-structure');
+const parse = require('../code/lang/parser/parse');
 const parserError = require('../code/lang/parser/error');
 const transpile = require('../code/lang/transpile');
 
 const pg = require('pg').native;
-
+const path = require('path');
 
 module.exports = {
   tearDown: (callback) => {
@@ -16,8 +16,9 @@ module.exports = {
   'end-to-end': (test) => {
     let text = 'ls | $ | $ | $.path';
     text = 'ls | sort';
-    text = 'ls | li $.path';
-    text = 'html (ul (ls | li $.path))';
+    text = `html (ls | 
+         li [(div 'test')])`;
+    //text = 'html (ul (ls | li $.path))';
 
     //text = `[ls | li $.path] | { 'test': $ }`;
     //text = `[ls]`
@@ -28,26 +29,62 @@ module.exports = {
     //text = `li foo`;
     //text = `ls`;
 
+    const parseTree = parse(text);
+
     //const parseTree = parser('html (ul (ls | li $.path))');
     //const parseTree = parser('html [$]');
     //const parseTree = parser('html (ul ($.cwd | li))');
     //const parseTree = parser('ls | $.path ');
     //const parseTree = parser('html (ls | [$.path] | (li $))');
-    const parseTree = parser("ul (['hei', 'verden'] | li)");
+    //const parseTree = parser("ul (['hei', 'verden'] | li)");
     if (!parseTree.status) {
       console.log(parseTree);
       console.error(parserError(parseTree).join('\n'));
     } else {
       console.log(JSON.stringify(parseTree, null, 2));
+      
+      const isRelative = (path) => {
+        return !(/^([a-z]:)?[\\\/]/i).test(path);
+      };
+      const normalize = (cwdRaw, aliases, id) => {
+        const alias = aliases[id];
+        if (alias) {
+          return alias;
+        }
+        const cwd = cwdRaw.endsWith('/') ? cwdRaw : `${cwdRaw}/`;
+        if (isRelative(id)) {
+          return path.normalize(cwd + id);
+        }
+        return id;
+      };
 
-      const stmt = transpile(parseTree.value, parseTree.text);
+      const aliases = {
+        ls: '/tasitc/ns/ls',
+        html: '/tasitc/dom/html',
+        div: '/tasitc/dom/div',
+        ul: '/tasitc/dom/ul',
+        li: '/tasitc/dom/li',
+      };
+
+      const cwd = '/freekh';
+      const stmt = transpile(parseTree.value, (id) => {
+        const content = normalize(cwd, aliases, id);
+        return ($) => {
+          return Promise.resolve({
+            status: 200,
+            mime: 'text/plain',
+            content,
+          });
+        };
+      }, parseTree.text);
       stmt(Promise.resolve({
-        request: { verb: 'get', path: '/tux/freekh' },
+        request: { verb: 'get', path: '/tasitc/term/freekh' },
         status: 200,
         mime: 'application/json',
         content: { cwd: '/freekh', params: {} },
       })).then(res => {
         console.log('Response', JSON.stringify(res, null, 2));
+        console.log(res.content);
         test.done();
       }).catch(err => {
         console.error('ERROR', err);

@@ -10,8 +10,8 @@ const transpileStr = (node) => {
   });
 };
 
-const transpileId = (node) => {
-  return transpileStr(node);
+const transpileId = (node, lookup) => {
+  return lookup(node.value);
 };
 
 const transpileContext = (node) => {
@@ -57,50 +57,82 @@ const transpileContext = (node) => {
   };
 };
 
-const transpile = (node, text) => {
-  if (node.type === 'Call') {
-    const path = transpile(node.id, text);
-    const arg = node.arg ? transpile(node.arg, text) : null;
-    return ($) => {
-      return request(path($), arg ? arg($) : $);
-    };
-  } else if (node.type === 'Chain') {
-    const elements = node.elements.map((element, i) => {
-      if (i === 0) {
-        return transpile(element, text);
-      } else if (i === 1) {
-        const chained = transpile(element, text);
-        return map(chained);
-      } else if (i > 1) {
-        const flatChained = transpile(element, text);
-        return flatmap(flatChained);
-      }
-      throw Error(`Unexpected index '${i}' of elements ${JSON.stringify(node)}`);
-    });
-    return ($) => reduce(elements, $);
-  } else if (node.type === 'Id') {
-    return transpileId(node);
-  } else if (node.type === 'Str') {
-    return transpileStr(node);
-  } else if (node.type === 'Context') {
-    return transpileContext(node);
-  } else if (node.type === 'List') {
-    return ($) => {
-      // FIXME: smells bad
-      const promisedResponses = Promise.all(node.elements.map(element => {
-        return transpile(element, text)($); // eslint-disable-line no-use-before-define
-      }));
-      return promisedResponses.then(responses => {
-        const content = responses.map(response => response.content);
-        return {
-          status: 200,
-          mime: 'application/json',
-          content,
-        };
+const transpile = (node, lookup, text) => {
+  const recurse = (node) => {
+    if (node.type === 'Call') {
+      const path = recurse(node.id);
+      const arg = node.arg ? recurse(node.arg) : null;
+      return ($) => {
+        return request(path($), arg ? arg($) : $);
+      };
+    } else if (node.type === 'Chain') {
+      const elements = node.elements.map((element, i) => {
+        if (i === 0) {
+          return recurse(element);
+        } else if (i === 1) {
+          const chained = recurse(element);
+          return map(chained);
+        } else if (i > 1) {
+          const flatChained = recurse(element);
+          return flatmap(flatChained);
+        }
+        throw Error(`Unexpected index '${i}' of elements ${JSON.stringify(node)}`);
       });
-    };
-  }
-  throw new Error(`Unknown AST node (${node.type}): ${JSON.stringify(node)}`);
+      return ($) => reduce(elements, $);
+    } else if (node.type === 'Id') {
+      return transpileId(node, lookup);
+    } else if (node.type === 'Str') {
+      return transpileStr(node);
+    } else if (node.type === 'Context') {
+      return transpileContext(node);
+    } else if (node.type === 'Instance') {
+      return $ => {
+        const promises = [];
+        // FIXME: avoid transpiling here... (it is not transpilation, it is transexecuting)
+        node.elements.forEach(element => {
+          Object.keys(element).forEach(key => {
+            const promise = recurse(element[key])($).then(response => {
+              const value = {};
+              value[key] = response.content;
+              return value;
+            });
+            promises.push(promise);
+          });
+        });
+
+        return Promise.all(promises).then(elements => {
+          const content = {};
+          elements.forEach(element => {
+            Object.keys(element).forEach(key => {
+              content[key] = element[key];
+            });
+          });
+          return {
+            mime: 'application/json',
+            status: 200,
+            content,
+          };
+        });
+      };
+    } else if (node.type === 'List') {
+      return ($) => {
+        // FIXME: smells bad
+        const promisedResponses = Promise.all(node.elements.map(element => {
+          return recurse(element)($); // eslint-disable-line no-use-before-define
+        }));
+        return promisedResponses.then(responses => {
+          const content = responses.map(response => response.content);
+          return {
+            status: 200,
+            mime: 'application/json',
+            content,
+          };
+        });
+      };
+    }
+    throw new Error(`Unknown AST node (${node.type}): ${JSON.stringify(node)}`);
+  };
+  return recurse(node);
 };
 
 module.exports = transpile;

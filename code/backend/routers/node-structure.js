@@ -17,7 +17,7 @@ const read = (path) => {
   });
 };
 
-router.post('/tasitc/fs/write', multipart.fields([]), (req, res) => {
+router.post('/tasitc/ns/write', multipart.fields([]), (req, res) => {
   // FIXME: remove ast?
   const { ast, input, path } = req.body;
   // TODO: check permissions

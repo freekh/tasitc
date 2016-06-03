@@ -289,10 +289,10 @@ const enter = () => {
     window.scrollTo(0, elems.parent.offsetTop + elems.parent.offsetHeight);
   };
 
-  global.block = true;
-  appendLastToHistory();
   const parseTree = parse(global.value);
   if (parseTree.status) {
+    global.block = true;
+    appendLastToHistory();
     const fn = transpile(parseTree.value, (id) => {
       const content = {
         path: normalize(global.cwd, aliases, id),
@@ -327,7 +327,16 @@ const enter = () => {
       complete();
       throw err;
     });
+  } else if (parseTree.expected.indexOf("']'") !== -1 ||
+             parseTree.expected.indexOf("')'") !== -1) {
+    const { value, cursor } = insertText(global.value, global.cursor, '\n');
+    global.cursor = cursor;
+    global.value = value;
+    updateView();
   } else {
+    global.block = true;
+    appendLastToHistory();
+
     elems.history.appendChild(h('div', `Parse error: ${JSON.stringify(parseTree)}`));
     complete();
   }

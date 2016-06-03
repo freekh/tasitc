@@ -1,6 +1,6 @@
 const h = require('hyperscript');
 const get = require('../../misc/get');
-const post = require('../../misc/post');
+const postJson = require('../../misc/post-json');
 
 const responseToHyperscript = (elemType, res) => {
   if (res.mime === 'text/plain') {
@@ -68,7 +68,7 @@ const request = (promisedPath, argRaw) => {
       content = responseToHyperscript('div', argResponse).outerHTML;
       mime = 'text/html';
     } else if (path === '/tasitc/ns/ls') {
-      return post('/tasitc/ns/ls', arg);
+      return postJson('/tasitc/ns/ls', arg);
     } else {
       return Promise.reject({
         status: 404,

@@ -33,6 +33,7 @@ router.post('/tasitc/ns/write', multipart.fields([]), (req, res) => {
 });
 
 router.post('/tasitc/ns/ls', jsonBody, (req, res) => {
+  console.log(req.body);
   res.json([{ path: 'hello.txt' }]);
 });
 

@@ -4,7 +4,7 @@ const log = require('../misc/log');
 
 const transpile = require('../lang/transpile');
 const parse = require('../lang/parser/parse');
-const normalize = require('./normalize');
+const normalize = require('../misc/normalize');
 
 const tooltips = (cwd, value) => {
   const elem = value === 'ls' ? h('span', 'ls: bla bla') : null;

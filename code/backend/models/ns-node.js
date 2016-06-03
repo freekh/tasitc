@@ -31,10 +31,10 @@ const execute = (statements) => {
   });
 };
 
-const getContent = (path) => {
+const list = (path) => {
   return execute([{
-    name: 'ns_nodes_get',
-    text: 'SELECT text FROM ns_nodes WHERE path = $1',
+    name: 'ns_nodes_list',
+    text: "SELECT * FROM ns_nodes WHERE path  LIKE $1 || '%'",
     values: [path],
   }]);
 };
@@ -51,6 +51,6 @@ const put = (path, content) => {
 };
 
 module.exports = {
-  getContent,
+  list,
   put,
 };

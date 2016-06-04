@@ -9,10 +9,18 @@ const normalize = (cwdRaw, aliases, id) => {
     return alias;
   }
   const cwd = cwdRaw.endsWith('/') ? cwdRaw : `${cwdRaw}/`;
+  let value = id;
   if (isRelative(id)) {
-    return path.normalize(cwd + id);
+    if (id.startsWith('~')) {
+      value = path.normalize(id);
+    } else {
+      value = path.normalize(cwd + id);
+    }
   }
-  return id;
+  if (value.endsWith('/')) {
+    return value.slice(0, value.length - 1);
+  }
+  return value;
 };
 
 module.exports = normalize;

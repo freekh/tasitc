@@ -48,18 +48,19 @@ const aliases = {
 };
 
 router.post('/tasitc/ns/ls', jsonBody, (req, res) => {
-  const body = req.body;
+  const { arg, env } = req.body;
   let path = null;
-  if (body.path && body.cwd) {
-    path = normalize(body.cwd, aliases, body.path);
-  } else if (body.cwd && !body.path) {
-    path = normalize(body.cwd, aliases, '');
+  if (arg.path && env.cwd) {
+    path = normalize(env.cwd, aliases, arg.path);
+  } else if (env.cwd && !arg.path) {
+    path = normalize(env.cwd, aliases, '');
   }
 
   if (!path) {
     res.status(500).json({ msg: 'Could not build path! Missing cwd and/or path in request',
-                           request: body });
+                           request: req.body });
   } else {
+    console.log(path);
     read(path).then(results => {
       res.json(results);
     }).catch(err => {

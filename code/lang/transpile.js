@@ -57,13 +57,13 @@ const transpileContext = (node) => {
   };
 };
 
-const transpile = (node, lookup, text) => {
+const transpile = (node, lookup, text, env) => {
   const recurse = (node) => {
     if (node.type === 'Call') {
       const path = transpileId(node.id, lookup);
       const arg = node.arg ? recurse(node.arg) : null;
       return ($) => {
-        return request(path($), arg ? arg($) : $);
+        return request(path($), arg ? arg($) : $, env);
       };
     } else if (node.type === 'Chain') {
       const elements = node.elements.map((element, i) => {

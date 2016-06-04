@@ -280,6 +280,20 @@ const escape = () => {
   completionDialog = false;
 };
 
+const lookup = (id) => {
+  const content = {
+    path: normalize(global.cwd, aliases, id), // FIXME: global == danger
+    type: 'get',
+  };
+  return ($) => {
+    return Promise.resolve({
+      status: 200,
+      mime: 'text/plain',
+      content,
+    });
+  };
+};
+
 const enter = () => {
   const complete = () => {
     global.block = false;
@@ -293,19 +307,8 @@ const enter = () => {
   if (parseTree.status) {
     global.block = true;
     appendLastToHistory();
-    const fn = transpile(parseTree.value, (id) => {
-      const content = {
-        path: normalize(global.cwd, aliases, id),
-        type: 'get',
-      };
-      return ($) => {
-        return Promise.resolve({
-          status: 200,
-          mime: 'text/plain',
-          content,
-        });
-      };
-    }, parseTree.text);
+
+    const fn = transpile(parseTree.value, lookup, parseTree.text, { cwd: global.cwd });
     const fakeReq = Promise.resolve({
       request: { verb: 'get', path: '/tasitc/term/freekh' },
       status: 200,

@@ -30,7 +30,7 @@ const responseToHyperscript = (elemType, res) => {
   return res.content.toString();
 };
 
-const request = (promisedPath, argRaw) => {
+const request = (promisedPath, argRaw, env) => {
   const promiseArg = argRaw instanceof Promise ?
           argRaw : Promise.resolve(argRaw);
 
@@ -68,7 +68,7 @@ const request = (promisedPath, argRaw) => {
       content = responseToHyperscript('div', argResponse).outerHTML;
       mime = 'text/html';
     } else if (path === '/tasitc/ns/ls') {
-      return postJson('/tasitc/ns/ls', arg);
+      return postJson('/tasitc/ns/ls', { arg, env });
     } else {
       return Promise.reject({
         status: 404,

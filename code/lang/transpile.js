@@ -130,7 +130,7 @@ const transpile = (node, lookup, text, env) => {
         });
       };
     } else if (node.type === 'Sink') {
-      return sink(node, text, node.path.value);
+      return sink(node, text, node.path.value, env);
     }
     throw new Error(`Unknown AST node (${node.type}): ${JSON.stringify(node, null, 2)}`);
   };

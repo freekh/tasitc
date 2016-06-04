@@ -70,6 +70,7 @@ const request = (promisedPath, argRaw, env) => {
     } else if (path === '/tasitc/ns/ls') {
       return postJson('/tasitc/ns/ls', { arg, env });
     } else {
+      return get(path); // HAXIN
       return Promise.reject({
         status: 404,
         content: `Could not find/execute: ${JSON.stringify(path)}`,

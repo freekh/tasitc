@@ -29,6 +29,7 @@ const clear = (elem) => {
 const global = {
   value: '',
   cwd: '~',
+  user: 'freekh',
   cursor: 0,
   // listen guys, I don't like this any more than you do! I am not sure I even need it!
   block: false,
@@ -282,7 +283,7 @@ const escape = () => {
 
 const lookup = (id) => {
   const content = {
-    path: normalize(global.cwd, aliases, id), // FIXME: global == danger
+    path: normalize(global.cwd, global.user, aliases, id), // FIXME: global == danger
     type: 'get',
   };
   return ($) => {
@@ -308,7 +309,7 @@ const enter = () => {
     global.block = true;
     appendLastToHistory();
 
-    const fn = transpile(parseTree.value, lookup, parseTree.text, { cwd: global.cwd });
+    const fn = transpile(parseTree.value, lookup, parseTree.text, { cwd: global.cwd, user: global.user });
     const fakeReq = Promise.resolve({
       request: { verb: 'get', path: '/tasitc/term/freekh' },
       status: 200,

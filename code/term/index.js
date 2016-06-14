@@ -4,6 +4,7 @@ const log = require('../misc/log');
 
 const transpile = require('../lang/transpile');
 const parse = require('../lang/parser/parse');
+const atoms = require('../lang/atoms');
 const normalize = require('../misc/normalize');
 
 const tooltips = (cwd, value) => {
@@ -309,7 +310,7 @@ const enter = () => {
     global.block = true;
     appendLastToHistory();
 
-    const fn = transpile(parseTree.value, lookup, parseTree.text, { cwd: global.cwd, user: global.user });
+    const fn = transpile(parseTree.value, lookup, parseTree.text, { cwd: global.cwd, user: global.user }, atoms);
     const fakeReq = Promise.resolve({
       request: { verb: 'get', path: '/tasitc/term/freekh' },
       status: 200,

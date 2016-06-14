@@ -16,6 +16,15 @@ const write = (path, text) => {
 };
 
 const read = (path) => {
+  return models.NsNode.get(path).then(results => {
+    if (results.length && results[0].rows && results[0].rows[0]) {
+      return results[0].rows[0];
+    }
+    return null;
+  });
+};
+
+const list = (path) => {
   return models.NsNode.list(path).then(results => {
     if (results.length && results[0].rows) {
       return results[0].rows;
@@ -133,12 +142,13 @@ const request = (promisedPath, argRaw, env) => {
 
 router.get('/:path*', (req, res, next) => {
   const path = `/${req.params.path}${req.params[0]}`;
-  read(path).then(results => {
-    if (results && results.length === 1 && results[0].path === path) {
-      const text = results[0].text;
+  console.log('READ PATH', path);
+  read(path).then(result => {
+    if (result) {
+      const text = result.text;
       const parseTree = parse(text);
       // TODO: remove:
-      const cwd = '~';
+      const cwd = '/freekh';
       const user = 'freekh';
       const lookup = (id) => {
         const content = {
@@ -162,7 +172,6 @@ router.get('/:path*', (req, res, next) => {
           content: { cwd: '/freekh', params: {} },
         });
         fn(fakeReq).then(result => {
-          console.log('!', res);
           res
             .contentType(result.mime)
             .status(result.status)
@@ -175,7 +184,7 @@ router.get('/:path*', (req, res, next) => {
         res.status(500).json(parseTree);
       }
     } else {
-      console.log('next', results, path, req.params);
+      console.log('next', result, path, req.params);
       next();
     }
   });
@@ -194,20 +203,19 @@ router.post('/tasitc/ns/write', multipart.fields([]), (req, res) => {
 });
 
 router.post('/tasitc/ns/ls', jsonBody, (req, res) => {
-  console.log('HELLO!');
   const { arg, env } = req.body;
   let path = null;
   if (arg.path && env.cwd) {
     path = normalize(env.cwd, env.user, aliases, arg.path);
-  } else if (env.cwd && !arg.path) {
-    path = normalize(env.cwd, env.user, aliases, '');
+  } else if (env.cwd && arg.cwd) {
+    path = normalize(env.cwd, env.user, aliases, arg.cwd);
   }
-
+  console.log('PATH', path, env, arg);
   if (!path) {
     res.status(500).json({ msg: 'Could not build path! Missing cwd and/or path in request',
                            request: req.body });
   } else {
-    read(path).then(results => {
+    list(path).then(results => {
       res.json(results);
     }).catch(err => {
       log.error(err);

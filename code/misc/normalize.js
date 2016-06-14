@@ -21,6 +21,7 @@ const normalize = (cwdRaw, user, aliases, id) => {
       }
       value = path.normalize(id.replace(home, `/${normalizedHome}`));
     } else {
+      console.log('-->', path.normalize(cwd + id), cwd, id);
       value = path.normalize(cwd + id);
     }
   }

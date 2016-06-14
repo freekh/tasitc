@@ -69,6 +69,7 @@ const request = (promisedPath, argRaw, env) => {
       content = responseToHyperscript('div', argResponse).outerHTML;
       mime = 'text/html';
     } else if (path === '/tasitc/ns/ls') {
+      console.log('HELLO', arg, env)
       return postJson('/tasitc/ns/ls', { arg, env });
     } else {
       return get(path); // HAXIN

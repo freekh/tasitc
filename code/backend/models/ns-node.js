@@ -39,6 +39,14 @@ const list = (path) => {
   }]);
 };
 
+const get = (path) => {
+  return execute([{
+    name: 'ns_nodes_list',
+    text: 'SELECT * FROM ns_nodes WHERE path = $1',
+    values: [path],
+  }]);
+};
+
 const put = (path, content) => {
   return execute([
     {
@@ -53,4 +61,5 @@ const put = (path, content) => {
 module.exports = {
   list,
   put,
+  get,
 };

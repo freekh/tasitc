@@ -1,5 +1,15 @@
+const xhr2 = require('xhr2');
+
 module.exports = (url, data) => {
-  const req = new XMLHttpRequest();
+  let XHR = null;
+  // FIXME: ugly hack
+  if (typeof window === 'undefined') {
+    XHR = xhr2;
+    url = 'http://localhost:8080'+ url; // :___(
+  } else {
+    XHR = XMLHttpRequest;
+  }
+  const req = new XHR();
   req.open('POST', url);
   req.setRequestHeader('Content-Type', 'application/json');
   const promise = new Promise((resolve, reject) => {
@@ -15,7 +25,9 @@ module.exports = (url, data) => {
         content,
       });
     };
-    req.onerror = reject;
+    req.onerror = err => {
+      reject(err);
+    };
   });
   req.send(JSON.stringify(data));
   return promise;

@@ -46,6 +46,7 @@ const request = (promisedPath, argRaw, env) => {
     const { path, type } = pathResponse.content; // TODO: check status
     let content = '';
     let mime = 'text/plain';
+    console.log('Request', path);
     if (path === '/tasitc/dom/html') {
       content = responseToHyperscript('html', argResponse).outerHTML;
       mime = 'text/html';

@@ -155,22 +155,24 @@ router.get('/:path*', (req, res, next) => {
       };
       if (parseTree.status) {
         const fn = transpile(parseTree.value, lookup, parseTree.text, { cwd, user });
-        console.log(fn);
         const fakeReq = Promise.resolve({
           request: { verb: 'get', path: '/tasitc/term/freekh' },
           status: 200,
           mime: 'application/json',
           content: { cwd: '/freekh', params: {} },
         });
-        fn(fakeReq).then(res => {
+        fn(fakeReq).then(result => {
           console.log('!', res);
-          res.json(res);
+          res
+            .contentType(result.mime)
+            .status(result.status)
+            .send(result.content);
         }).catch(err => {
-          console.error('?', err);
-          res.json(err);
+          console.error('?', path, err, parseTree);
+          res.json({ error: err });
         });
       } else {
-        res.contentType(500).json(parseTree);
+        res.status(500).json(parseTree);
       }
     } else {
       console.log('next', results, path, req.params);
@@ -192,6 +194,7 @@ router.post('/tasitc/ns/write', multipart.fields([]), (req, res) => {
 });
 
 router.post('/tasitc/ns/ls', jsonBody, (req, res) => {
+  console.log('HELLO!');
   const { arg, env } = req.body;
   let path = null;
   if (arg.path && env.cwd) {

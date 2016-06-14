@@ -1,3 +1,4 @@
+const { request, sink } = require('./atoms');
 const { map, flatmap, reduce } = require('./combinators');
 
 const transpileStr = (node) => {
@@ -56,8 +57,7 @@ const transpileContext = (node) => {
   };
 };
 
-const transpile = (node, lookup, text, env, atoms) => {
-  const { request, sink } = atoms;
+const transpile = (node, lookup, text, env) => {
   const recurse = (node) => {
     if (node.type === 'Call') {
       const path = transpileId(node.id, lookup);

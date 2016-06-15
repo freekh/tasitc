@@ -1,14 +1,12 @@
 const h = require('hyperscript');
 
-const log = require('../misc/log');
+const log = require('../dev-utils/log');
 
 const transpile = require('../lang/transpile');
 const parse = require('../lang/parser/parse');
-const normalize = require('../misc/normalize');
 
 const tooltips = (cwd, value) => {
-  const elem = value === 'ls' ? h('span', 'ls: bla bla') : null;
-  return elem;
+  return null;
 };
 
 // ----------------------------- Helpers --------------------------------------//
@@ -29,29 +27,15 @@ const clear = (elem) => {
 const global = {
   value: '',
   cwd: '~',
-  user: 'freekh',
+  user: 'freekh', // FIXME: hardcoded
   cursor: 0,
-  // listen guys, I don't like this any more than you do! I am not sure I even need it!
+  // FIXME: Replace block with keybuffer
   block: false,
-};
-
-// Fake:
-const aliases = {
-  ls: '/tasitc/ns/ls',
-  html: '/tasitc/dom/html',
-  body: '/tasitc/dom/body',
-  head: '/tasitc/dom/head',
-  style: '/tasitc/dom/style',
-  div: '/tasitc/dom/div',
-  ul: '/tasitc/dom/ul',
-  li: '/tasitc/dom/li',
 };
 
 let historyIndex = 0;
 const historyMem = [];
 
-let completionIndex = 0;
-let completionDialog = false;
 
 //                  ----------------------------                              //
 
@@ -64,7 +48,6 @@ const insertText = (value, cursor, text) => {
     cursor: cursor + text.length,
   };
 };
-
 
 // ------------------------------ View ----------------------------------------//
 
@@ -263,38 +246,6 @@ const appendLastToHistory = () => {
   elems.history.appendChild(ps1(global.cwd, global.value));
 };
 
-
-const tab = () => {
-  console.log('TODO');
-};
-
-const tabUp = () => {
-  console.log('TODO');
-};
-
-const tabDown = () => {
-  console.log('TODO');
-};
-
-const escape = () => {
-  clear(elems.completion);
-  completionDialog = false;
-};
-
-const lookup = (id) => {
-  const content = {
-    path: normalize(global.cwd, global.user, aliases, id), // FIXME: global == danger
-    type: 'get',
-  };
-  return ($) => {
-    return Promise.resolve({
-      status: 200,
-      mime: 'text/plain',
-      content,
-    });
-  };
-};
-
 const enter = () => {
   const complete = () => {
     global.block = false;
@@ -309,7 +260,7 @@ const enter = () => {
     global.block = true;
     appendLastToHistory();
 
-    const fn = transpile(parseTree.value, lookup, parseTree.text, { cwd: global.cwd, user: global.user });
+    const fn = transpile(parseTree.value, parseTree.text, { cwd: global.cwd, user: global.user });
     const fakeReq = Promise.resolve({
       request: { verb: 'get', path: '/tasitc/term/freekh' },
       status: 200,
@@ -396,14 +347,6 @@ window.addEventListener('keydown', ev => {
         case 75: killLine(); ev.preventDefault(); break;
         default: break;
       }
-    } else if (completionDialog) {
-      switch (ev.keyCode) {
-        case 13: escape(); enter(); ev.preventDefault(); break;
-        case 27: escape(); ev.preventDefault(); break;
-        case 38: tabUp(); ev.preventDefault(); break;
-        case 40: tabDown(); ev.preventDefault(); break;
-        default: break;
-      }
     } else if (ev.shiftKey) {
       switch (ev.keyCode) {
         case 8: ev.preventDefault(); break; // avoid chrome nav
@@ -413,7 +356,6 @@ window.addEventListener('keydown', ev => {
     } else {
       switch (ev.keyCode) {
         case 8: backspace(); ev.preventDefault(); break;
-        case 9: tab(); ev.preventDefault(); break;
         case 13: enter(); ev.preventDefault(); break;
         case 37: moveCharLeft(); ev.preventDefault(); break;
         case 38: historyUp(); ev.preventDefault(); break;
@@ -436,48 +378,4 @@ window.addEventListener('paste', ev => {
   global.value = value;
   global.cursor = cursor;
   updateView();
-});
-
-// HACK: really. redo this!
-let pathSelectElem = null;
-window.addEventListener('mouseover', ev => {
-  if (pathSelectElem) { // HACK: ???
-    const isParent = (elem, target) => {
-      if (target === null) {
-        return false;
-      } else if (target === elem) {
-        return true;
-      }
-      return isParent(elem, target.parentElement);
-    };
-    if (!isParent(pathSelectElem, ev.srcElement)) {
-      pathSelectElem.remove();
-      pathSelectElem = null;
-    }
-  } else {
-    const pathElem = ev.target && ev.target.getAttribute('class') === 'path' && ev.target;
-    if (pathElem) {
-      pathSelectElem = h('div.clux2-path-selector', { style: { position: 'absolute' } });
-      pathSelectElem.style.top = pathElem.offsetTop;
-      pathSelectElem.style.left = pathElem.offsetLeft;
-      const lineHeight = pathElem.offsetHeight;
-      const listLeft = pathElem.offsetLeft;
-      pathSelectElem.appendChild(
-        h('ul', {
-          style: {
-            'min-width': `${pathElem.offsetWidthpx}`,
-            top: `${lineHeight}px`,
-            left: `${listLeft}px`,
-          },
-        }, [
-          h('li', '..'),
-          h('li', 'dir'),
-        ])
-      );
-      pathSelectElem.style.minHeight = pathElem.offsetHeight;
-      pathSelectElem.style.minWidth = pathElem.offsetWidth;
-      document.body.appendChild(pathSelectElem);
-      window.scrollTo(0, pathSelectElem.offsetTop + pathSelectElem.offsetHeight);
-    }
-  }
 });

@@ -1,5 +1,6 @@
 const iterable = require('./iterable');
 
+// FIXME: rewrite: this could be done less complicated?
 const flatmap = (form) => {
   return ($) => {
     const content = iterable($.content);

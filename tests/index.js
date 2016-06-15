@@ -4,20 +4,41 @@ const { testable } = require('../code/backend/routers/node-structure');
 const parse = require('../code/lang/parser/parse');
 const parserError = require('../code/lang/parser/error');
 const transpile = require('../code/lang/transpile');
-const normalize = require('../code/term/normalize');
+const lookup = require('../code/core/lookup');
 
 const pg = require('pg').native;
 
+const express = require('express');
+const term = require('../code/backend/routers/term');
+const nodeStructure = require('../code/backend/routers/node-structure');
+
 module.exports = {
-  tearDown: (callback) => {
+  setUp: callback => {
+    const app = express();
+    app.use('/', nodeStructure);
+    app.use('/', term);
+
+    this.listener = app.listen();
+    this.port = this.listener.address().port;
+    this.server = `http://localhost:${this.port}`;
+    callback();
+  },
+  tearDown: callback => {
+    if (this.listener) {
+      this.listener.close();
+    }
     pg.end();
     callback();
   },
   'end-to-end': (test) => {
+
     let text = 'ls | $ | $ | $.path';
-    text = 'ls | sort';
-    text = `html (ls | 
-         li [(div 'test')]) > ~/test`;
+    text = 'h { elem: div, attrs: { class: Test }';
+    text = 'div (ul [#foo {width: 4px, } tst])';
+    text = 'div[{class: test}] test';
+    text = 'ls ';
+    //text = 'ls | sort';
+    //text = `html (ls |       li [(div 'test')]) > ~/test`;
     //text = 'html (ul (ls | li $.path))';
 
     //text = `[ls | li $.path] | { 'test': $ }`;
@@ -42,32 +63,20 @@ module.exports = {
       console.error(parserError(parseTree).join('\n'));
     } else {
       console.log(JSON.stringify(parseTree, null, 2));
-      
 
       const aliases = {
         ls: '/tasitc/ns/ls',
-        html: '/tasitc/dom/html',
-        body: '/tasitc/dom/body',
-        div: '/tasitc/dom/div',
         ul: '/tasitc/dom/ul',
-        li: '/tasitc/dom/li',
       };
-
-      const cwd = '/freekh';
-      const stmt = transpile(parseTree.value, (id) => {
-        const content = normalize(cwd, aliases, id);
-        return ($) => {
-          return Promise.resolve({
-            status: 200,
-            mime: 'text/plain',
-            content,
-          });
-        };
-      }, parseTree.text);
-      stmt(Promise.resolve({
+      const cwd = '~';
+      const stmt = transpile(parseTree);
+      const cache = {};
+      cache[cacheKey('/tasitc/dom/ul')]
+      stmt(cache, Promise.resolve({
         request: { verb: 'get', path: '/tasitc/term/freekh' },
         status: 200,
         mime: 'application/json',
+        meta: { cwd: '/freekh' },
         content: { cwd: '/freekh', params: {} },
       })).then(res => {
         console.log('Response', JSON.stringify(res, null, 2));
@@ -76,6 +85,7 @@ module.exports = {
       }).catch(err => {
         console.error('ERROR', err);
         console.error(err.stack);
+        test.done();
       });
     }
   },

@@ -1,19 +1,16 @@
 const request = require('./request');
-const sink = require('./sink');
-// const listen = require('./listen');
+// const await = require('./await');
 
-// const str = require('./str');
-// const json = require('./json');
-// const h = require('./h');
+const text = require('./text');
+const json = require('./json');
+const h = require('./h');
 
 module.exports = {
   //
   request,
-  sink,
-  // listen,
   // Types:
-  // str,
-  // json,
-  // h,
+  '/tasitc/atoms/json': json,
+  '/tasitc/atoms/text': text,
+  '/tasitc/atoms/h': h,
   //
 };

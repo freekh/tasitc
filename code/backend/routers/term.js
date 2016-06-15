@@ -4,7 +4,7 @@ const router = express.Router(); // eslint-disable-line new-cap
 const path = require('path');
 const h = require('hyperscript');
 
-const log = require('../../misc/log');
+const log = require('../../dev-utils/log');
 const browserify = require('../../build/browserify');
 const scss = require('../../build/scss');
 

@@ -1,17 +1,18 @@
 const xhr2 = require('xhr2');
 
-module.exports = (url, data) => {
+// FIXME: this needs a bit of work: server side code mixed into client, etc etc
+module.exports = (url, options) => {
+  const { type, data, mime } = options;
   let XHR = null;
   // FIXME: ugly hack
   if (typeof window === 'undefined') {
     XHR = xhr2;
-    url = 'http://localhost:8080'+ url; // :___(
   } else {
     XHR = XMLHttpRequest;
   }
   const req = new XHR();
-  req.open('POST', url);
-  req.setRequestHeader('Content-Type', 'application/json');
+  req.open(type, url);
+  req.setRequestHeader('Content-Type', mime);
   const promise = new Promise((resolve, reject) => {
     req.onload = () => {
       const mime = req.getResponseHeader('Content-Type');
@@ -29,6 +30,15 @@ module.exports = (url, data) => {
       reject(err);
     };
   });
-  req.send(JSON.stringify(data));
+  if (type === 'POST') {
+    if (mime.indexOf('application/json' !== -1)) {
+      req.send(JSON.stringify(data));
+    } else {
+      req.send(data);
+    }
+  } else {
+    req.send();
+  }
+
   return promise;
 };

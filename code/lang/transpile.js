@@ -1,4 +1,4 @@
-const { request, sink } = require('./atoms');
+const { request } = require('./atoms');
 const { map, flatmap, reduce } = require('./combinators');
 
 const transpileStr = (node) => {
@@ -37,11 +37,11 @@ const transpileContext = (node) => {
       });
       if (node.path.length) {
         if (!content) {
-          return Promise.reject({
+          return {
             mime: 'text/plain',
             status: 500,
             content: `No attribute ${missingAttribute} in ${JSON.stringify($.content)}`,
-          });
+          };
           // Note: typeof: http://stackoverflow.com/questions/203739/why-does-instanceof-return-false-for-some-literals
         } else if (typeof content === 'string') {
           mime = 'text/plain';
@@ -57,13 +57,13 @@ const transpileContext = (node) => {
   };
 };
 
-const transpile = (node, lookup, text, env) => {
+const transpile = (parseTree, lookup) => {
   const recurse = (node) => {
     if (node.type === 'Call') {
       const path = transpileId(node.id, lookup);
       const arg = node.arg ? recurse(node.arg) : null;
       return ($) => {
-        return request(path($), arg ? arg($) : $, env);
+        return request(path($), arg ? arg($) : $);
       };
     } else if (node.type === 'Chain') {
       const elements = node.elements.map((element, i) => {
@@ -88,7 +88,7 @@ const transpile = (node, lookup, text, env) => {
     } else if (node.type === 'Instance') {
       return $ => {
         const promises = [];
-        // FIXME: avoid transpiling here... (it is not transpilation, it is transexecuting)
+        // FIXME: avoid transpiling here. (not transpilation: transexecuting or whatever)
         node.elements.forEach(element => {
           Object.keys(element).forEach(key => {
             const promise = recurse(element[key])($).then(response => {
@@ -130,11 +130,11 @@ const transpile = (node, lookup, text, env) => {
         });
       };
     } else if (node.type === 'Sink') {
-      return sink(node, text, node.path.value, env);
+      throw new Error('SINK TODO');
     }
     throw new Error(`Unknown AST node (${node.type}): ${JSON.stringify(node, null, 2)}`);
   };
-  return recurse(node);
+  return recurse(parseTree.value);
 };
 
 module.exports = transpile;

@@ -4,21 +4,41 @@ const { testable } = require('../code/backend/routers/node-structure');
 const parse = require('../code/lang/parser/parse');
 const parserError = require('../code/lang/parser/error');
 const transpile = require('../code/lang/transpile');
-const lookup = require('../code/core/lookup');
 
-const pg = require('pg').native;
+const app = require('../code/backend/app');
 
-const express = require('express');
-const term = require('../code/backend/routers/term');
-const nodeStructure = require('../code/backend/routers/node-structure');
+
+// TODO: test cases for: ?
+// const text = 'ls | $ | $ | $.path';
+// const text = 'h { elem: div, attrs: { class: Test }';
+// const text = 'div (ul [#foo {width: 4px, } tst])';
+// const text = 'div[{class: test}] test';
+// const text = 'ls | sort';
+// const text = `html (ls |       li [(div 'test')]) > ~/test`;
+// const text = 'html (ul (ls | li $.path))';
+// const text = `[ls | li $.path] | { 'test': $ }`;
+// const text = `[ls]`
+// const text = `{ 'test': $ }`
+// const text = `ls | $ | li $.path`;
+// const text = `html (ul (ls | li $.path))`;
+// const text = `ls | ul $.path`;
+// const text = `li foo`;
+// const text = `ls`
+// const parseTree = parser('html (ul (ls | li $.path))');
+// const parseTree = parser('html [$]');
+// const parseTree = parser('html (ul ($.cwd | li))');
+// const parseTree = parser('ls | $.path ');
+// const parseTree = parser('html (ls | [$.path] | (li $))');
+// const parseTree = parser("ul (['hei', 'verden'] | li)");
+
+const store = (fixture, user, path, content) => {
+  const { backend } = fixture;
+
+};
 
 module.exports = {
   setUp: callback => {
-    const app = express();
-    app.use('/', nodeStructure);
-    app.use('/', term);
-
-    this.listener = app.listen();
+    this.listener = app(env).listen();
     this.port = this.listener.address().port;
     this.server = `http://localhost:${this.port}`;
     callback();
@@ -27,37 +47,20 @@ module.exports = {
     if (this.listener) {
       this.listener.close();
     }
-    pg.end();
     callback();
   },
-  'end-to-end': (test) => {
-
-    let text = 'ls | $ | $ | $.path';
-    text = 'h { elem: div, attrs: { class: Test }';
-    text = 'div (ul [#foo {width: 4px, } tst])';
-    text = 'div[{class: test}] test';
-    text = 'ls ';
-    //text = 'ls | sort';
-    //text = `html (ls |       li [(div 'test')]) > ~/test`;
-    //text = 'html (ul (ls | li $.path))';
-
-    //text = `[ls | li $.path] | { 'test': $ }`;
-    //text = `[ls]`
-    //text = `{ 'test': $ }`
-    //text = `ls | $ | li $.path`;
-    //text = `html (ul (ls | li $.path))`;
-    //text = `ls | ul $.path`;
-    //text = `li foo`;
-    //text = `ls`;
-
+  'ls | div $.path': (test) => {
+    const user = 'freekh';
+    store(this, user, '~/foo', 'foo content');
+    store(this, user, '~/bar', 'bar content');
+    store(this, user, '~/zoo/foo', 'zoo foo content');
+    const text = 'ls ~ | div $.path';
+    const expected = {
+      mime: 'text/html',
+      content: '<div>~/foo</div><div>~/bar</div>',
+    };
     const parseTree = parse(text);
 
-    //const parseTree = parser('html (ul (ls | li $.path))');
-    //const parseTree = parser('html [$]');
-    //const parseTree = parser('html (ul ($.cwd | li))');
-    //const parseTree = parser('ls | $.path ');
-    //const parseTree = parser('html (ls | [$.path] | (li $))');
-    //const parseTree = parser("ul (['hei', 'verden'] | li)");
     if (!parseTree.status) {
       console.log(parseTree);
       console.error(parserError(parseTree).join('\n'));
@@ -70,9 +73,10 @@ module.exports = {
       };
       const cwd = '~';
       const stmt = transpile(parseTree);
-      const cache = {};
-      cache[cacheKey('/tasitc/dom/ul')]
-      stmt(cache, Promise.resolve({
+      const lookup = () => {
+        
+      };
+      stmt(lookup, Promise.resolve({
         request: { verb: 'get', path: '/tasitc/term/freekh' },
         status: 200,
         mime: 'application/json',

@@ -2,16 +2,11 @@ const { request } = require('./atoms');
 const { map, flatmap, reduce } = require('./combinators');
 
 const transpileStr = (node) => {
-  // TODO: is $ function + Promise necessary?
-  return ($) => Promise.resolve({
-    status: 200,
-    mime: 'text/plain',
-    content: node.value,
-  });
+  return node.value;
 };
 
-const transpileId = (node, lookup) => {
-  return lookup(node.value);
+const transpileId = (node) => {
+  return node.value;
 };
 
 const transpileContext = (node) => {
@@ -60,7 +55,7 @@ const transpileContext = (node) => {
 const transpile = (parseTree, lookup) => {
   const recurse = (node) => {
     if (node.type === 'Call') {
-      const path = transpileId(node.id, lookup);
+      const path = lookup(transpileId(node.id));
       const arg = node.arg ? recurse(node.arg) : null;
       return ($) => {
         return request(path($), arg ? arg($) : $);
@@ -70,17 +65,15 @@ const transpile = (parseTree, lookup) => {
         if (i === 0) {
           return recurse(element);
         } else if (i === 1) {
-          const chained = recurse(element);
-          return map(chained);
+          return map(recurse(element));
         } else if (i > 1) {
-          const flatChained = recurse(element);
-          return flatmap(flatChained);
+          return flatmap(recurse(element));
         }
         throw Error(`Unexpected index '${i}' of elements ${JSON.stringify(node)}`);
       });
       return ($) => reduce(elements, $);
     } else if (node.type === 'Id') {
-      return transpileId(node, lookup);
+      return transpileId(node);
     } else if (node.type === 'Str') {
       return transpileStr(node);
     } else if (node.type === 'Context') {

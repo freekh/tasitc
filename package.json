@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "The Amazing Shell In The Cloud",
   "scripts": {
-    "start": "node ./node_modules/nodemon/bin/nodemon.js ./code/backend/index.js | node ./node_modules/bunyan/bin/bunyan",
+    "start": "node ./node_modules/nodemon/bin/nodemon.js ./code/backend/start.js | node ./node_modules/bunyan/bin/bunyan",
     "test": "node ./node_modules/nodeunit/bin/nodeunit tests | node ./node_modules/bunyan/bin/bunyan"
   },
   "author": "Fredrik Ekholdt",

@@ -1,5 +1,7 @@
-const NsNode = require('./ns-node');
+const nsNode = require('./ns-node');
 
-module.exports = {
-  NsNode,
+module.exports = (pg, pgConnectionString) => {
+  return {
+    NsNode: nsNode(pg, pgConnectionString),
+  };
 };

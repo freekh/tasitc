@@ -3,87 +3,88 @@ const router = express.Router(); // eslint-disable-line new-cap
 
 const bodyParser = require('body-parser');
 const jsonBody = bodyParser.json();
-
 const multer = require('multer');
 const multipart = multer();
 
-const models = require('../models');
-const log = require('../../dev-utils/log');
+const Models = require('../models');
 
-const write = (path, text) => {
-  return models.NsNode.put(path, text);
-};
+module.exports = (pg, pgConnectionString) => {
+  const models = Models(pg, pgConnectionString); // eslint-disable-line new-cap
+  const write = (path, text) => {
+    return models.NsNode.put(path, text);
+  };
 
-const read = (path) => {
-  return models.NsNode.get(path).then(results => {
-    if (results.length && results[0].rows && results[0].rows[0]) {
-      return results[0].rows[0];
-    }
-    return null;
+  const read = (path) => {
+    return models.NsNode.get(path).then(results => {
+      if (results.length && results[0].rows && results[0].rows[0]) {
+        return results[0].rows[0];
+      }
+      return null;
+    });
+  };
+
+  const list = (path) => {
+    return models.NsNode.list(path).then(results => {
+      if (results.length && results[0].rows) {
+        return results[0].rows;
+      } else if (results.length && results[0].rowCount === 0) {
+        return [];
+      }
+      return null;
+    });
+  };
+
+
+  router.get('/:path*', (req, res, next) => {
+    const path = `/${req.params.path}${req.params[0]}`;
+    console.log('READ PATH', path);
+    read(path).then(result => {
+      if (result) {
+
+      } else {
+        console.log('next', result, path, req.params);
+        next();
+      }
+    });
   });
-};
 
-const list = (path) => {
-  return models.NsNode.list(path).then(results => {
-    if (results.length && results[0].rows) {
-      return results[0].rows;
-    } else if (results.length && results[0].rowCount === 0) {
-      return [];
-    }
-    return null;
+  router.post('/tasitc/ns/write', multipart.fields([]), (req, res) => {
+    const { ast, text, path } = req.body;
+    // FIXME: fix this, is unecessary
+    const astJson = JSON.parse(ast);
+
+    const exprText = text.slice(astJson.expression.start, astJson.start);
+    write(path, exprText);
+    res.sendStatus(200);
   });
-};
 
-
-router.get('/:path*', (req, res, next) => {
-  const path = `/${req.params.path}${req.params[0]}`;
-  console.log('READ PATH', path);
-  read(path).then(result => {
-    if (result) {
-
-    } else {
-      console.log('next', result, path, req.params);
-      next();
-    }
+  router.post('/tasitc/ns/ls', jsonBody, (req, res) => {
+    // const { arg, env } = req.body;
+    // let path = null;
+    // if (arg.path && env.cwd) {
+    //   path = normalize(env.cwd, env.user, aliases, arg.path);
+    // } else if (env.cwd && arg.cwd) {
+    //   path = normalize(env.cwd, env.user, aliases, arg.cwd);
+    // }
+    // console.log('PATH', path, env, arg);
+    // if (!path) {
+    //   res.status(500).json({ msg: 'Could not build path! Missing cwd and/or path in request',
+    //                          request: req.body });
+    // } else {
+    //   list(path).then(results => {
+    //     res.json(results);
+    //   }).catch(err => {
+    //     log.error(err);
+    //     res.sendStatus(500);
+    //   });
+    // }
   });
-});
-
-router.post('/tasitc/ns/write', multipart.fields([]), (req, res) => {
-  const { ast, text, path } = req.body;
-  // FIXME: fix this, is unecessary
-  const astJson = JSON.parse(ast);
-
-  const exprText = text.slice(astJson.expression.start, astJson.start);
-  write(path, exprText);
-  res.sendStatus(200);
-});
-
-router.post('/tasitc/ns/ls', jsonBody, (req, res) => {
-  // const { arg, env } = req.body;
-  // let path = null;
-  // if (arg.path && env.cwd) {
-  //   path = normalize(env.cwd, env.user, aliases, arg.path);
-  // } else if (env.cwd && arg.cwd) {
-  //   path = normalize(env.cwd, env.user, aliases, arg.cwd);
-  // }
-  // console.log('PATH', path, env, arg);
-  // if (!path) {
-  //   res.status(500).json({ msg: 'Could not build path! Missing cwd and/or path in request',
-  //                          request: req.body });
-  // } else {
-  //   list(path).then(results => {
-  //     res.json(results);
-  //   }).catch(err => {
-  //     log.error(err);
-  //     res.sendStatus(500);
-  //   });
-  // }
-});
 
 
-router.testable = {
-  write,
-  read,
+  router.testable = {
+    write,
+    read,
+  };
+
+  return router;
 };
-
-module.exports = router;

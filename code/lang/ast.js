@@ -99,7 +99,7 @@ class Parameter extends Marked {
   }
 }
 
-class Sink extends Marked { // TODO: rename to Write? or something else?
+class Sink extends Marked { // TODO: rename to Write? or something else? Assign? Store?
   constructor(expression, path) {
     super();
     this.type = 'Sink';

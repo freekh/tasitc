@@ -1,5 +1,4 @@
-// TODO: the contents here are not really proper combinators,
-// but they have the same names (which makes it even worse I suppose)
+// FIXME: rename combinator => transducers?
 
 const map = require('./map');
 const flatmap = require('./flatmap');
@@ -9,12 +8,12 @@ const html = require('./html');
 const text = require('./text');
 
 module.exports = {
-  map,
-  flatmap,
+  '/tasitc/core/combinators/map': map,
+  '/tasitc/core/combinators/flatmap': flatmap,
   //
-  ifte,
-  contains,
+  '/tasitc/core/combinators/ifte': ifte,
+  '/tasitc/core/combinators/contains': contains,
   //
-  html,
-  text,
+  '/tasitc/core/combinators/text': text,
+  '/tasitc/core/combinators/html': html,
 };

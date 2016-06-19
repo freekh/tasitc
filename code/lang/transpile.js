@@ -1,4 +1,3 @@
-const { request } = require('./atoms');
 const transduce = require('./transduce');
 const builtins = require('./combinators');
 
@@ -61,87 +60,100 @@ const transpileContext = (node) => {
 };
 
 const transpile = (parseTree) => {
-  const recurse = (node) => {
-    if (node.type === 'Expression') {
-      const path = transpileId(node.id);
-      const arg = node.arg ? recurse(node.arg) : null;
-      const builtin = builtins[path];
-      if (builtin) {
-        return builtin($ => {
-          let argValue = null;
-          if (arg) {
-            if (arg instanceof Function) {
-              argValue = arg($);
-            } else if (node.arg && node.arg.type === 'Id') {
-              argValue = request(arg, $);
-            } else {
-              argValue = arg;
+  const init = (node, aliases, request) => {
+    const recurse = (node) => {
+      if (node.type === 'Expression') {
+        const path = transpileId(node.id);
+        const alias = aliases[path];
+        const fullPath = alias || path;
+        const arg = node.arg ? recurse(node.arg) : null;
+        const builtin = builtins[fullPath];
+        if (builtin) {
+          return builtin($ => {
+            let argValue = null;
+            if (arg) {
+              if (arg instanceof Function) {
+                argValue = arg($);
+              } else if (node.arg && node.arg.type === 'Id') {
+                argValue = request(arg, $);
+              } else {
+                argValue = arg;
+              }
             }
-          }
-          return argValue || $;
-        });
-      }
-      return $ => {
-        return request(path, arg || $);
-      };
-    } else if (node.type === 'Combination') {
-      const combinators = node.combinators.map(recurse);
-      const target = recurse(node.target);
-      return $ => {
-        return transduce(combinators, target($), node.combinators);
-      };
-    } else if (node.type === 'Id') {
-      return transpileId(node);
-    } else if (node.type === 'Text') {
-      return $ => transpileText(node);
-    } else if (node.type === 'Context') {
-      return transpileContext(node);
-    } else if (node.type === 'Eval') {
-      const id = transpileId(node.id);
-      const arg = node.arg ? recurse(node.arg) : null;
-      return $ => {
-        return request(id).then(expression => {
-          if (expression.mime.indexOf('application/js') === -1) {
-            return Promise.reject({
-              status: 500,
-              mime: 'text/plain',
-              content: `Expression must be application/js but got: '${expression.mime}'`,
-            });
-          }
-          let result = null;
-          const argPromise = Promise.resolve((arg && arg($) || $));
-          return argPromise.then(argValue => {
-            try {
-              result = {
-                mime: 'text/plain',
-                status: 200,
-                content: eval(expression.content)(argValue.content), // FIXME: eval, only read content...?
-              };
-            } catch (e) {
-              result = {
-                mime: 'application/json',
-                status: 500,
-                content: JSON.stringify(e),
-              };
-            }
-            return result;
+            return argValue || $;
           });
-        });
-      };
-    } else if (node.type === 'Instance') {
-      throw new Error('INSTANCE TODO');
-    } else if (node.type === 'List') {
-      return $ => {
-        return node.elements.map(element => {
-          return recurse(element)($);
-        });
-      };
-    } else if (node.type === 'Sink') {
-      throw new Error('SINK TODO');
-    }
-    throw new Error(`Unknown AST node (${node.type}): ${JSON.stringify(node, null, 2)}`);
+        }
+        return $ => {
+          return request(fullPath, arg || $);
+        };
+      } else if (node.type === 'Combination') {
+        const combinators = node.combinators.map(recurse);
+        const target = recurse(node.target);
+        return $ => {
+          return transduce(combinators, target($), node.combinators);
+        };
+      } else if (node.type === 'Id') {
+        return transpileId(node);
+      } else if (node.type === 'Text') {
+        return $ => transpileText(node);
+      } else if (node.type === 'Context') {
+        return transpileContext(node);
+      } else if (node.type === 'Eval') {
+        const path = transpileId(node.id);
+        const alias = aliases[path];
+        const fullPath = alias || path;
+        const arg = node.arg ? recurse(node.arg) : null;
+        return $ => {
+          return request(fullPath).then(expression => {
+            if (expression.mime.indexOf('application/js') === -1) {
+              return Promise.reject({
+                status: 500,
+                mime: 'text/plain',
+                content: `Expression must be application/js but got: '${expression.mime}'`,
+              });
+            }
+            let result = null;
+            const argPromise = Promise.resolve((arg && arg($) || $));
+            return argPromise.then(argValue => {
+              try {
+                result = {
+                  mime: 'text/plain',
+                  status: 200,
+                  content: eval(expression.content)(argValue.content), // FIXME: eval, only read content...?
+                };
+              } catch (e) {
+                result = {
+                  mime: 'application/json',
+                  status: 500,
+                  content: e.toString(),
+                };
+              }
+              return result;
+            });
+          });
+        };
+      } else if (node.type === 'Instance') {
+        throw new Error('INSTANCE TODO');
+      } else if (node.type === 'List') {
+        return $ => {
+          return {
+            status: 200,
+            mime: 'application/json',
+            content: node.elements.map(element => {
+              return recurse(element)($);
+            }),
+          };
+        };
+      } else if (node.type === 'Sink') {
+        throw new Error('SINK TODO');
+      }
+      throw new Error(`Unknown AST node (${node.type}): ${JSON.stringify(node, null, 2)}`);
+    };
+    return recurse(node);
   };
-  return recurse(parseTree.value);
+  return ($, aliases, request) => {
+    return aliases.then(aliases => init(parseTree.value, aliases, request)($));
+  };
 };
 
 module.exports = transpile;

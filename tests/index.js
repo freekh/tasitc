@@ -7,6 +7,46 @@ const transpile = require('../code/lang/transpile');
 const app = require('../code/backend/app');
 const testEnv = require('./env');
 
+const fs = require('fs');
+const path = require('path');
+
+const list = (fullPath) => {
+  return new Promise((resolve, reject) => {
+    const dir = path.resolve(fullPath && ('./tests/ns' + fullPath) || './tests/ns/freekh');
+    fs.readdir(dir, (err, files) => {
+      if (err) {
+        reject(err);
+      } else {
+        return resolve({
+          mime: 'application/json',
+          status: 200,
+          content: files.map(file => {
+            return {
+              path: path.resolve(dir, file),
+              name: file,
+            };
+          }),
+        });
+      }
+    });
+  });
+};
+
+const read = (fullPath) => {
+  return new Promise((resolve, reject) => {
+    fs.readFile(path.resolve('./tests/ns' + (fullPath || '')), (err, content) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({
+          mime: 'application/js',
+          status: 200,
+          content: content.toString(),
+        });
+      }
+    });
+  });
+};
 
 // TODO: test cases for: ?
 // const text = 'ls | $ | $ | $.path';
@@ -109,7 +149,10 @@ module.exports = {
     // [ ?one, ?two, ?rest ]
 
     //const text = `ls | map $.path | $[0] | ifte [contains 'freekh', $, 'nope'] | html`;
-    const text = `ls | map ifte [$.path | contains 'freekh', :li $.path, 'nope']`;
+    const text = `request --verb='get' /tasitc/core/ns/list`; // or request --get ?,  should it be possible to write request --verb='get' > /tasitc/requests/get
+    const text = `ls | map ifte [$.path | contains 'freekh', :li $.name, 'nope'] | html`;
+    //const text = `ls | map ifte [$.path | contains 'freekh', 'yes', 'nope']`;
+    // const text = `ls | map :li $.name`;
     // ls |> [map, ifte [ge [(len $.path) 200], $.path, 'too long']]
     const parseTree = parse(text);
     if (!parseTree.status) {
@@ -129,7 +172,28 @@ module.exports = {
           user,
         },
       };
-      expr(fakeReq).then($ => {
+      const aliases = {
+        map: '/tasitc/core/combinators/map',
+        flatmap: '/tasitc/core/combinators/flatmap',
+        //
+        ifte: '/tasitc/core/combinators/ifte',
+        contains: '/tasitc/core/combinators/contains',
+        //
+        text: '/tasitc/core/combinators/text',
+        html: '/tasitc/core/combinators/html',
+        //
+        ls: '/tasitc/core/ns/list',
+        write: '/tasitc/core/ns/write',
+        //
+        li: '/tasitc/dom/li',
+      };
+      const request = (path, context) => {
+        if (path === '/tasitc/core/ns/list') {
+          return list(context.content);
+        }
+        return read(path);
+      };
+      expr(fakeReq, Promise.resolve(aliases), request).then($ => {
         console.log('-->', JSON.stringify($));
         test.done();
       }).catch(err => {

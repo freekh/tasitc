@@ -4,7 +4,7 @@ const request = (promisedPath, argRaw, env) => {
           argRaw : Promise.resolve(argRaw);
 
   return Promise.all([promisedPath, promisedArg]).then(([path, arg]) => {
-    if (path === 'ls') {
+    if (path === '/tasitc/core/ns/ls') {
       return {
         status: 200,
         mime: 'application/json',
@@ -12,7 +12,7 @@ const request = (promisedPath, argRaw, env) => {
           { path: '/freekh/dir' },
         ],
       };
-    } else if (path === 'li') {
+    } else if (path === '/tasitc/dom/li') {
       return {
         status: 200,
         mime: 'application/js',

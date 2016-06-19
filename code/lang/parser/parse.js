@@ -2,8 +2,11 @@ const P = require('parsimmon');
 
 // We use these to catch renames of the internal AST easily
 const { Sink,
-        Chain,
-        Call,
+        Combination,
+        Expression,
+        Eval,
+        Fragment,
+        Tag,
         Keyword,
         Parameter,
         Instance,
@@ -12,7 +15,7 @@ const { Sink,
         Attribute,
         Subscript,
         Id,
-        Str,
+        Text,
         Num,
       } = require('../ast');
 
@@ -24,10 +27,10 @@ const form = (expr) => {
   return P.string('(').then(expr).skip(P.string(')'));
 };
 
-Str.parser = P.lazy('Str', () => {
+Text.parser = P.lazy('Text', () => {
   const reify = (mark) => {
     const str = mark.value;
-    return new Str(str).withMark(mark);
+    return new Text(str).withMark(mark);
   };
   // FIXME:
   return P.string('\'').then(P.regex(/[\.a-zA-Z0-9:; {}\-]*/i))
@@ -49,7 +52,7 @@ Id.parser = P.lazy('Id', () => {
     const id = mark.value;
     return new Id(id).withMark(mark);
   };
-  return P.regex(/[\.~\/a-z\-0-9_]+/i).mark().map(reify);
+  return P.regex(/[\.~\/a-z\-0-9_]+/i).desc('URL safe character').mark().map(reify);
 });
 
 Subscript.parser = P.lazy('Subscript', () => {
@@ -85,21 +88,25 @@ Context.parser = P.lazy('Context', () => {
     .map(reify);
 });
 
-Chain.parser = P.lazy('Chain', () => {
+Combination.parser = P.lazy('Combination', () => {
   const reify = (mark) => {
-    const elements = mark.value;
-    if (elements.length === 1) {
-      return elements[0];
+    const expressions = mark.value;
+    if (expressions.length <= 1) {
+      return expressions[0];
     }
-    return new Chain(elements).withMark(mark);
+    return new Combination(expressions[0], expressions.slice(1));
   };
+
   return ignore(P.sepBy1(P.alt(
-    Str.parser,
+    Text.parser,
     Context.parser,
-    Instance.parser, // eslint-disable-line no-use-before-define
-    List.parser, // eslint-disable-line no-use-before-define
-    Call.parser // eslint-disable-line no-use-before-define
-  ), ignore(P.string('|')))).mark().map(reify);
+    Instance.parser,
+    List.parser,
+    Expression.parser,
+    Eval.parser
+  ), ignore(P.string('|'))))
+    .mark()
+    .map(reify);
 });
 
 List.parser = P.lazy('List', () => {
@@ -110,7 +117,7 @@ List.parser = P.lazy('List', () => {
   return P.string('[')
     .then(ignore(
       P.sepBy(
-        Chain.parser,
+        Combination.parser,
         ignore(P.string(','))
       )))
     .skip(P.string(']'))
@@ -118,27 +125,28 @@ List.parser = P.lazy('List', () => {
     .map(reify);
 });
 
-Call.parser = P.lazy('Call', () => {
+const argumentParser = P.lazy('Argument', () => {
+  return P.alt(
+    form(Combination.parser),
+    Instance.parser,
+    List.parser,
+    Eval.parser,
+    Expression.parser,
+    Context.parser,
+    Keyword.parser, // eslint-disable-line no-use-before-define
+    Parameter.parser, // eslint-disable-line no-use-before-define
+    Text.parser
+  );
+});
+
+Expression.parser = P.lazy('Expression', () => {
   const expr = Id.parser.mark().chain(mark => { // FIXME: there is something fishy with this mark
     const id = mark.value;
     const reify = arg => {
-      return new Call(id, arg || null).withMark(mark);
+      return new Expression(id, arg || null).withMark(mark);
     };
-    const argument = P.alt(
-      form(Chain.parser),
-      form(Str.parser),
-      form(Id.parser),
-      Instance.parser,
-      List.parser,
-      Context.parser,
-      Keyword.parser, // eslint-disable-line no-use-before-define
-      Parameter.parser, // eslint-disable-line no-use-before-define
-      Str.parser,
-      Id.parser
-    );
-
     return P.alt(
-      ignore(argument).map(reify),
+      ignore(argumentParser).map(reify),
       P.succeed(reify(null))
     );
   });
@@ -148,6 +156,50 @@ Call.parser = P.lazy('Call', () => {
   );
 });
 
+const cssSelector = P.regex(/-?[_a-zA-Z]+[_a-zA-Z0-9-]*/).desc('CSS selector');
+
+Fragment.parser = P.lazy('Fragment', () => {
+  const reify = (mark) => {
+    const id = mark.value;
+    return new Fragment(id).withMark(mark);
+  };
+  return P.string('#')
+    .then(cssSelector)
+    .mark()
+    .map(reify);
+});
+
+Tag.parser = P.lazy('Tag', () => {
+  const reify = (mark) => {
+    const id = mark.value;
+    return new Tag(id).withMark(mark);
+  };
+  return P.string('.')
+    .then(cssSelector)
+    .mark()
+    .map(reify);
+});
+
+Eval.parser = P.lazy('Eval', () => {
+  return P.string(':').then(Id.parser.chain(expression => {
+    return P.alt(Fragment.parser, P.succeed(null)).chain(fragment => {
+      return P.alt(P.seq(Tag.parser), P.succeed([])).chain(tags => {
+        return P.alt(P.whitespace.then(argumentParser), P.succeed(null)).map(arg => {
+          const fragmentEnd = fragment ? fragment.end : -1;
+          const tagsEnd = tags && tags.length ? tags.slice(-1)[0].end : -1;
+          const argEnd = arg ? arg.end : -1;
+          const end = Math.max([fragmentEnd, tagsEnd, argEnd]);
+          const mark = {
+            start: expression.start,
+            end,
+          };
+          return new Eval(expression, arg, fragment, tags).withMark(mark);
+        });
+      });
+    });
+  }));
+});
+
 Instance.parser = P.lazy('Instance', () => {
   const reify = mark => {
     const elements = mark.value;
@@ -155,9 +207,9 @@ Instance.parser = P.lazy('Instance', () => {
   };
   return P.string('{')
     .then(P.seq(
-      ignore(Str.parser).chain(key => {
+      ignore(Text.parser).chain(key => {
         return ignore(P.string(':'))
-          .then(Chain.parser)
+          .then(Combination.parser)
           .skip(P.alt(
             ignore(P.string(',')),
             P.succeed(null)
@@ -181,12 +233,8 @@ Keyword.parser = P.lazy('Keyword', () => {
       return new Keyword(id, value).withMark(mark);
     };
     return P.string('=')
-      .then(P.alt(
-        Context.parser,
-        Num.parser,
-        Str.parser,
-        Call.parser
-      )).mark()
+      .then(Combination.parser)
+      .mark()
       .map(reify);
   }));
 });
@@ -203,7 +251,7 @@ Parameter.parser = P.lazy('Parameter', () => {
 });
 
 Sink.parser = P.lazy('Sink', () => {
-  return Chain.parser.skip(P.optWhitespace).chain(expression => {
+  return Combination.parser.skip(P.optWhitespace).chain(expression => {
     const reify = (mark) => {
       const path = mark.value;
       return new Sink(expression, path).withMark(mark);
@@ -217,13 +265,13 @@ Sink.parser = P.lazy('Sink', () => {
 
 //
 
-const parser = (text) => {
+const parse = (text) => {
   const result = P.alt(
     Sink.parser,
-    Chain.parser
+    Combination.parser
   ).parse(text);
   result.text = text;
   return result;
 };
 
-module.exports = parser;
+module.exports = parse;

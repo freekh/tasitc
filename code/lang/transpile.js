@@ -1,8 +1,13 @@
 const { request } = require('./atoms');
-const { map, flatmap, reduce } = require('./combinators');
+const transduce = require('./transduce');
+const builtins = require('./combinators');
 
-const transpileStr = (node) => {
-  return node.value;
+const transpileText = (node) => {
+  return {
+    status: 200,
+    content: node.value,
+    mime: 'text/plain',
+  };
 };
 
 const transpileId = (node) => {
@@ -19,10 +24,13 @@ const transpileContext = (node) => {
       let missingAttribute = null;
       node.path.forEach(element => { // FIXME: ? prefer transpiling outside of function
         if (content) {
+           // FIXME: transpile instead or change AST?
           if (element.type === 'Attribute') {
-            content = content[element.attr.value]; // FIXME: transpile instead or change AST?
+            content = content[element.attr.value];
+          } else if (element.type === 'Subscript') {
+            content = content[element.index.value];
           } else {
-            throw Error(`Could not handle element ${JSON.stringify(element)} ` +
+            throw Error(`Could not handle element ${JSON.stringify(element)}` +
                         `in node: ${JSON.stringify(node)}`);
           }
         }
@@ -32,11 +40,11 @@ const transpileContext = (node) => {
       });
       if (node.path.length) {
         if (!content) {
-          return {
+          return Promise.reject({
             mime: 'text/plain',
             status: 500,
             content: `No attribute ${missingAttribute} in ${JSON.stringify($.content)}`,
-          };
+          });
           // Note: typeof: http://stackoverflow.com/questions/203739/why-does-instanceof-return-false-for-some-literals
         } else if (typeof content === 'string') {
           mime = 'text/plain';
@@ -52,74 +60,80 @@ const transpileContext = (node) => {
   };
 };
 
-const transpile = (parseTree, lookup) => {
+const transpile = (parseTree) => {
   const recurse = (node) => {
-    if (node.type === 'Call') {
-      const path = lookup(transpileId(node.id));
+    if (node.type === 'Expression') {
+      const path = transpileId(node.id);
       const arg = node.arg ? recurse(node.arg) : null;
-      return ($) => {
-        return request(path($), arg ? arg($) : $);
+      const builtin = builtins[path];
+      if (builtin) {
+        return builtin($ => {
+          let argValue = null;
+          if (arg) {
+            if (arg instanceof Function) {
+              argValue = arg($);
+            } else if (node.arg && node.arg.type === 'Id') {
+              argValue = request(arg, $);
+            } else {
+              argValue = arg;
+            }
+          }
+          return argValue || $;
+        });
+      }
+      return $ => {
+        return request(path, arg || $);
       };
-    } else if (node.type === 'Chain') {
-      const elements = node.elements.map((element, i) => {
-        if (i === 0) {
-          return recurse(element);
-        } else if (i === 1) {
-          return map(recurse(element));
-        } else if (i > 1) {
-          return flatmap(recurse(element));
-        }
-        throw Error(`Unexpected index '${i}' of elements ${JSON.stringify(node)}`);
-      });
-      return ($) => reduce(elements, $);
+    } else if (node.type === 'Combination') {
+      const combinators = node.combinators.map(recurse);
+      const target = recurse(node.target);
+      return $ => {
+        return transduce(combinators, target($), node.combinators);
+      };
     } else if (node.type === 'Id') {
       return transpileId(node);
-    } else if (node.type === 'Str') {
-      return transpileStr(node);
+    } else if (node.type === 'Text') {
+      return $ => transpileText(node);
     } else if (node.type === 'Context') {
       return transpileContext(node);
-    } else if (node.type === 'Instance') {
+    } else if (node.type === 'Eval') {
+      const id = transpileId(node.id);
+      const arg = node.arg ? recurse(node.arg) : null;
       return $ => {
-        const promises = [];
-        // FIXME: avoid transpiling here. (not transpilation: transexecuting or whatever)
-        node.elements.forEach(element => {
-          Object.keys(element).forEach(key => {
-            const promise = recurse(element[key])($).then(response => {
-              const value = {};
-              value[key] = response.content;
-              return value;
+        return request(id).then(expression => {
+          if (expression.mime.indexOf('application/js') === -1) {
+            return Promise.reject({
+              status: 500,
+              mime: 'text/plain',
+              content: `Expression must be application/js but got: '${expression.mime}'`,
             });
-            promises.push(promise);
+          }
+          let result = null;
+          const argPromise = Promise.resolve((arg && arg($) || $));
+          return argPromise.then(argValue => {
+            try {
+              result = {
+                mime: 'text/plain',
+                status: 200,
+                content: eval(expression.content)(argValue.content), // FIXME: eval, only read content...?
+              };
+            } catch (e) {
+              result = {
+                mime: 'application/json',
+                status: 500,
+                content: JSON.stringify(e),
+              };
+            }
+            return result;
           });
-        });
-
-        return Promise.all(promises).then(elements => {
-          const content = {};
-          elements.forEach(element => {
-            Object.keys(element).forEach(key => {
-              content[key] = element[key];
-            });
-          });
-          return {
-            mime: 'application/json',
-            status: 200,
-            content,
-          };
         });
       };
+    } else if (node.type === 'Instance') {
+      throw new Error('INSTANCE TODO');
     } else if (node.type === 'List') {
-      return ($) => {
-        // FIXME: smells bad
-        const promisedResponses = Promise.all(node.elements.map(element => {
-          return recurse(element)($); // eslint-disable-line no-use-before-define
-        }));
-        return promisedResponses.then(responses => {
-          const content = responses.map(response => response.content);
-          return {
-            status: 200,
-            mime: 'application/json',
-            content,
-          };
+      return $ => {
+        return node.elements.map(element => {
+          return recurse(element)($);
         });
       };
     } else if (node.type === 'Sink') {

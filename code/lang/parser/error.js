@@ -23,7 +23,7 @@ const error = (parseTree) => {
     lines.push(JSON.stringify(parseTree, null, 2));
   }
   if (parseTree.status === false) {
-    let indents = '';
+    let indents = ' ';
     let column = 0;
     let line = 1;
     for (let i = 0; i < parseTree.index; i++) {

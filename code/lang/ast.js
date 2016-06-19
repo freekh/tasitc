@@ -1,9 +1,9 @@
 const Marked = require('./parser/marked');
 
-class Str extends Marked { // TODO: rename?
+class Text extends Marked { // TODO: rename?
   constructor(value) {
     super();
-    this.type = 'Str';
+    this.type = 'Text';
     this.value = value;
   }
 }
@@ -44,16 +44,16 @@ class Context extends Marked { // $
   constructor(path = []) {
     super();
     this.type = 'Context';
-    this.id = '$';
     this.path = path;
   }
 }
 
-class Chain extends Marked {
-  constructor(elements) {
+class Combination extends Marked {
+  constructor(target, combinators) {
     super();
-    this.type = 'Chain';
-    this.elements = elements;
+    this.type = 'Combination';
+    this.target = target;
+    this.combinators = combinators;
   }
 }
 
@@ -65,12 +65,39 @@ class List extends Marked {
   }
 }
 
-class Call extends Marked { // TODO: rename to Request? or Fn?
+class Expression extends Marked {
   constructor(id, arg) {
     super();
-    this.type = 'Call';
+    this.type = 'Expression';
     this.id = id;
     this.arg = arg;
+  }
+}
+
+class Eval extends Marked {
+  constructor(id, arg, fragment, tags) {
+    super();
+    this.type = 'Eval';
+    this.id = id;
+    this.arg = arg;
+    this.fragment = fragment;
+    this.tags = tags;
+  }
+}
+
+class Fragment extends Marked {
+  constructor(id) {
+    super();
+    this.type = 'Fragment';
+    this.id = id;
+  }
+}
+
+class Tag extends Marked {
+  constructor(id) {
+    super();
+    this.type = 'Tag';
+    this.id = id;
   }
 }
 
@@ -110,8 +137,11 @@ class Sink extends Marked { // TODO: rename to Write? or something else? Assign?
 
 module.exports = {
   Sink,
-  Chain,
-  Call,
+  Combination,
+  Expression,
+  Eval,
+  Fragment,
+  Tag,
   Keyword,
   Parameter,
   Context,
@@ -120,6 +150,6 @@ module.exports = {
   List,
   Instance,
   Id,
-  Str,
+  Text,
   Num,
 };

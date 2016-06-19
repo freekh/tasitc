@@ -7,7 +7,7 @@ const flatmap = (form) => {
     let flattened = null;
     if (content.reduce) {
       // TODO: not very efficient nor elegant (could flatten during mapping):
-      flattened = content.reduce((listlike, value) => {
+      flattened = iterable(content.reduce((listlike, value) => {
         if (listlike === null || value === null) {
           return null;
         }
@@ -16,7 +16,7 @@ const flatmap = (form) => {
           return listlikeIter.concat(iterable(value));
         }
         return null;
-      });
+      }));
     }
     if (flattened && flattened.map) {
       return Promise.all(flattened.map(content => {
@@ -38,7 +38,7 @@ const flatmap = (form) => {
     return Promise.reject({
       status: 500,
       mime: 'text/plain',
-      content: `Cannot compose (flatmap) ${JSON.stringify($.content)}`,
+      content: `Cannot flatmap content of: ${JSON.stringify($)}`,
     });
   };
 };

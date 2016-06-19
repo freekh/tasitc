@@ -1,11 +1,11 @@
 // FIXME: These tests are written to help dev flow. I don't like TDD really so they should be removed and factored into seperate more correct tests as things go further. I want stable tests, no flacky ones.
 
-const { testable } = require('../code/backend/routers/node-structure');
 const parse = require('../code/lang/parser/parse');
 const parserError = require('../code/lang/parser/error');
 const transpile = require('../code/lang/transpile');
 
 const app = require('../code/backend/app');
+const testEnv = require('./env');
 
 
 // TODO: test cases for: ?
@@ -31,14 +31,10 @@ const app = require('../code/backend/app');
 // const parseTree = parser('html (ls | [$.path] | (li $))');
 // const parseTree = parser("ul (['hei', 'verden'] | li)");
 
-const store = (fixture, user, path, content) => {
-  const { backend } = fixture;
-
-};
-
 module.exports = {
   setUp: callback => {
-    this.listener = app(env).listen();
+    this.app = app(testEnv);
+    this.listener = this.app.listen();
     this.port = this.listener.address().port;
     this.server = `http://localhost:${this.port}`;
     callback();
@@ -49,48 +45,97 @@ module.exports = {
     }
     callback();
   },
-  'ls | div $.path': (test) => {
+  'ls | div $.path': test => {
     const user = 'freekh';
-    store(this, user, '~/foo', 'foo content');
-    store(this, user, '~/bar', 'bar content');
-    store(this, user, '~/zoo/foo', 'zoo foo content');
-    const text = 'ls ~ | div $.path';
+    // const text = 'ls ~ | div $.path';
+    // const text = 'ls /freekh';
+    // https://term.tasitc.com/tasitc/core/dom/div##foo [#foo]
+    // https://api.tasitc.com/freekh/div
     const expected = {
       mime: 'text/html',
-      content: '<div>~/foo</div><div>~/bar</div>',
+      content: '<div>/freekh/dir</div><div>/freekh/foo</div><div>/freekh/bar</div>',
     };
-    const parseTree = parse(text);
+    // `ls |> :js { (ctx) => 'hello' + ctx.path }`
+    // `css { div { color: red; } }`
+    // `ls | :li.Elem $.path | html { :ul $ }`
+    // `for [ls, :li]`; $[0] |> map $[1]
+    // `ls |> map (:li $.path)`
+    // `ls |> flatmap (:li [$.path])`
+    // `ls |> reduce [0, concat]`
+    // `html [ :style css { div { color: red; } }, ]` 
+    // `html { :div [.foo]) }`;
+    // `html :div ['test'])`;
+    // `html :div [.foo 'test']`;
+    // `html :div [{} 'test']`;
+    // `html :div [.foo {}]`;
+    // `html :div.foo [{} 'test']`;
 
+    // ls |> {
+    //   [ { path: 'path' }, ?] if (:gt (:len ?node.path) 10) => ?node.path
+    //   ? => fail
+    // }
+
+    // ls |> transduce [map $.path, flatmap :li] ;;ls | $.path | :li
+    // ls |> map $.path |> flatmap :span#char |> html > foo
+    // ls |> map $.path | :span#char |> html > foo
+
+    // mount (/github/freekh --account=(ls ~/.accounts/github |> $[0])) > ~/github
+    // ln ~/github/tasitc/trees/release > ~/myapp/code
+    // cd ~/myapp
+    // hook [
+    //   ./package.json
+    //   :/js/lock ./package.json |> ifte [eq [$.sha1  ./lock |> $.sha1], $, ./lock]
+    // ] > ./lock
+    // hook [
+    //   [./code/**.js, ./lock]
+    //   /browersify { entry: ./code/index.js, babelify: true } |> /tgz
+    // ] > ./main.js.tgz
+    // expose main.js.tgz
+    // html [
+    //   :body [
+    //     :div#entry.test
+    //     :script (url ./main.js.tgz)
+    //   ]
+    // ] >> ./index.html
+    // expose index.html
+    // ALT:
+    // html [
+    //   :body [
+    //     :ul (ls |> map (:li $.path))
+    //   ]
+    // ]
+    // ls |> map (if [{ ?path }, 'nope'])
+    // { ?path, foo: 'value' } |> if [(gt [len $, 10]), ]
+    // [ ?one, ?two, ?rest ]
+
+    const text = `ls | map $.path | $[0] | ifte [contains 'freekh', $, 'nope'] | html`;
+    // ls |> [map, ifte [ge [(len $.path) 200], $.path, 'too long']]
+    const parseTree = parse(text);
     if (!parseTree.status) {
       console.log(parseTree);
       console.error(parserError(parseTree).join('\n'));
+      test.done();
     } else {
       console.log(JSON.stringify(parseTree, null, 2));
-
-      const aliases = {
-        ls: '/tasitc/ns/ls',
-        ul: '/tasitc/dom/ul',
-      };
-      const cwd = '~';
-      const stmt = transpile(parseTree);
-      const lookup = () => {
-        
-      };
-      stmt(lookup, Promise.resolve({
-        request: { verb: 'get', path: '/tasitc/term/freekh' },
-        status: 200,
+      const expr = transpile(parseTree);
+      const fakeReq = {
         mime: 'application/json',
-        meta: { cwd: '/freekh' },
-        content: { cwd: '/freekh', params: {} },
-      })).then(res => {
-        console.log('Response', JSON.stringify(res, null, 2));
-        console.log(res.content);
+        type: 'get',
+        path: `/~${user}`,
+        meta: {
+          term: true,
+          cwd: `/${user}`,
+          user,
+        },
+      };
+      expr(fakeReq).then($ => {
+        console.log('-->', JSON.stringify($));
         test.done();
       }).catch(err => {
-        console.error('ERROR', err);
-        console.error(err.stack);
+        console.error(err);
         test.done();
       });
     }
+
   },
 };

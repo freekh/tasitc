@@ -3,7 +3,7 @@ const iterable = require('./iterable');
 const map = (form) => {
   return ($) => {
     const content = iterable($.content);
-    if (content.map) {
+    if (content && content.map) {
       return Promise.all(content.map(content => {
         return form({
           mime: $.mime,
@@ -23,7 +23,7 @@ const map = (form) => {
     return Promise.reject({
       status: 500,
       mime: 'text/plain',
-      content: `Cannot compose (map) ${JSON.stringify($.content)}`,
+      content: `Cannot map content of: ${JSON.stringify($)}`,
     });
   };
 };

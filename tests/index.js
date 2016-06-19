@@ -108,7 +108,8 @@ module.exports = {
     // { ?path, foo: 'value' } |> if [(gt [len $, 10]), ]
     // [ ?one, ?two, ?rest ]
 
-    const text = `ls | map $.path | $[0] | ifte [contains 'freekh', $, 'nope'] | html`;
+    //const text = `ls | map $.path | $[0] | ifte [contains 'freekh', $, 'nope'] | html`;
+    const text = `ls | map ifte [$.path | contains 'freekh', :li $.path, 'nope']`;
     // ls |> [map, ifte [ge [(len $.path) 200], $.path, 'too long']]
     const parseTree = parse(text);
     if (!parseTree.status) {

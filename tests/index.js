@@ -38,15 +38,43 @@ const read = (fullPath) => {
       if (err) {
         reject(err);
       } else {
+        const js = (script) => {
+          return {
+            status: 200,
+            mime: 'application/js',
+            content: script.toString(),
+          };
+        };
+        const tasitc = (script) => {
+          return {
+            status: 200,
+            mime: 'application/vnd.tasitc',
+            content: script.toString(),
+          };
+        };
+        resolve(eval(content.toString())); // FIXME: eval!
+      }
+    });
+  });
+};
+
+const write = (fullPath, content) => {
+  return new Promise((resolve, reject) => {
+    const resolvedPath = path.resolve('./tests/ns' + (fullPath || ''));
+    fs.writeFile(resolvedPath, content, (err) => {
+      if (err) {
+        reject(err);
+      } else {
         resolve({
-          mime: 'application/js',
+          mime: 'text/plain',
           status: 200,
-          content: content.toString(),
+          content: resolvedPath,
         });
       }
     });
   });
 };
+
 
 // TODO: test cases for: ?
 // const text = 'ls | $ | $ | $.path';
@@ -127,6 +155,7 @@ module.exports = {
     //   :/js/lock ./package.json |> ifte [eq [$.sha1  ./lock |> $.sha1], $, ./lock]
     // ] > ./lock
     // hook [
+
     //   [./code/**.js, ./lock]
     //   /browersify { entry: ./code/index.js, babelify: true } |> /tgz
     // ] > ./main.js.tgz
@@ -149,8 +178,27 @@ module.exports = {
     // [ ?one, ?two, ?rest ]
 
     //const text = `ls | map $.path | $[0] | ifte [contains 'freekh', $, 'nope'] | html`;
-    const text = `request --verb='get' /tasitc/core/ns/list`; // or request --get ?,  should it be possible to write request --verb='get' > /tasitc/requests/get
-    const text = `ls | map ifte [$.path | contains 'freekh', :li $.name, 'nope'] | html`;
+    //const text = `request /tasitc/core/ns/list > /tasitc/ns/ls`; // or request --get ?,  should it be possible to write request --verb='get' > /tasitc/requests/get
+    //const text = `map > /mapalt`; //%{ } / %&
+    //const text = `[ls, 'freekh'] | swap map ifte [$.path | contains, $.name, 'nope']`;
+    // ls | map $.path | filter 'freekh'
+    // filter => [$, 'freekh'] | flatmap ifte [$[0] | contains $[1], [$[0]], []]
+    //const text = `$ | filter 'freekh'`;
+    const text= `ls | [$, contains 'freekh'] | ifte [$[0], 'nope']`;
+
+    // dup 0 eq | [ pop 1 ] | [ dup 1 - fac * ] | if > fac
+    // ls . 'nothing' | 
+
+    
+
+    // map ifte [$ | contains ?.sql, [$], []] > filter
+    // ls | filter 'freekh'
+    // '/tasitc/ns/core/ls' | request --get ? > ls
+    // ls | sort | map psql { sql: "select $.name from names" }
+    // '/tasitc/db/psql' | request --credentials=(credentials 'psql') ?.sql
+    //const text = `ls | map $.path | /freekh/filter 'zoo'`;
+    //const text = `ls | map $.path | filter 'freekh'`;
+    //const text = `ls | map ifte [$.path | contains 'freekh', :li $.name, 'nope'] | html`;
     //const text = `ls | map ifte [$.path | contains 'freekh', 'yes', 'nope']`;
     // const text = `ls | map :li $.name`;
     // ls |> [map, ifte [ge [(len $.path) 200], $.path, 'too long']]
@@ -190,6 +238,8 @@ module.exports = {
       const request = (path, context) => {
         if (path === '/tasitc/core/ns/list') {
           return list(context.content);
+        } else if (path === '/tasitc/core/ns/write') {
+          return write(path, context.content);
         }
         return read(path);
       };

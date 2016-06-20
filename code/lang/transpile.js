@@ -1,5 +1,6 @@
 const transduce = require('./transduce');
 const builtins = require('./combinators');
+const parse = require('./parser/parse');
 
 const transpileText = (node) => {
   return {
@@ -34,7 +35,7 @@ const transpileContext = (node) => {
           }
         }
         if (!content) {
-          missingAttribute = element.attr.value;
+          missingAttribute = element;
         }
       });
       if (node.path.length) {
@@ -42,7 +43,7 @@ const transpileContext = (node) => {
           return Promise.reject({
             mime: 'text/plain',
             status: 500,
-            content: `No attribute ${missingAttribute} in ${JSON.stringify($.content)}`,
+            content: `No attribute ${JSON.stringify(missingAttribute)} in ${JSON.stringify($.content)}`,
           });
           // Note: typeof: http://stackoverflow.com/questions/203739/why-does-instanceof-return-false-for-some-literals
         } else if (typeof content === 'string') {
@@ -59,17 +60,14 @@ const transpileContext = (node) => {
   };
 };
 
+
 const transpile = (parseTree) => {
   const init = (node, aliases, request) => {
     const recurse = (node) => {
       if (node.type === 'Expression') {
-        const path = transpileId(node.id);
-        const alias = aliases[path];
-        const fullPath = alias || path;
-        const arg = node.arg ? recurse(node.arg) : null;
-        const builtin = builtins[fullPath];
-        if (builtin) {
-          return builtin($ => {
+        const combinatorArg = (node, request) => {
+          const arg = node.arg ? recurse(node.arg) : null;
+          return $ => {
             let argValue = null;
             if (arg) {
               if (arg instanceof Function) {
@@ -81,10 +79,37 @@ const transpile = (parseTree) => {
               }
             }
             return argValue || $;
-          });
+          };
+        };
+        const path = transpileId(node.id);
+        const alias = aliases[path];
+        const fullPath = alias || path;
+        const builtin = builtins[fullPath];
+        if (builtin) {
+          return builtin(combinatorArg(node, request));
         }
+        const arg = node.arg ? recurse(node.arg) : null;
         return $ => {
-          return request(fullPath, arg || $);
+          return request(fullPath, arg || $).then(result => {
+            if (result.mime === 'application/vnd.tasitc') {
+              const parseTree = parse(result.content);
+              if (parseTree.status) {
+                // FIXME: !!! this!?!? is. not. what. we want.... cleanliness is next to godliness
+                parseTree.value.arg = node.arg;
+                const parsedNode = recurse(parseTree.value);
+                return parsedNode($);
+              }
+              return Promise.reject({
+                mime: 'application/json',
+                status: 500,
+                content: {
+                  ast: parseTree.value,
+                  msg: `Could not parse: ${result.content}`,
+                },
+              });
+            }
+            return result;
+          });
         };
       } else if (node.type === 'Combination') {
         const combinators = node.combinators.map(recurse);
@@ -136,16 +161,22 @@ const transpile = (parseTree) => {
         throw new Error('INSTANCE TODO');
       } else if (node.type === 'List') {
         return $ => {
-          return {
-            status: 200,
-            mime: 'application/json',
-            content: node.elements.map(element => {
-              return recurse(element)($);
-            }),
-          };
+          const promisedElements = node.elements.map(element => {
+            const maybePromise = recurse(element)($);
+            return maybePromise instanceof Promise ? maybePromise : Promise.resolve(maybePromise);
+          });
+          return Promise.all(promisedElements).then(elements => {
+            return {
+              status: 200,
+              mime: 'application/json',
+              content: elements.map(element => element.content),
+            };
+          });
         };
       } else if (node.type === 'Sink') {
-        throw new Error('SINK TODO');
+        return $ => {
+          return request('/tasitc/core/ns/write', node);
+        };
       }
       throw new Error(`Unknown AST node (${node.type}): ${JSON.stringify(node, null, 2)}`);
     };

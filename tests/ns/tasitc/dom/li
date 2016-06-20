@@ -1,4 +1,4 @@
-(context, env, fragment, tags, tasitc) => {
+js((context, env, fragment, tags, tasitc) => {
   const classAttr = tags && tags.length ? 'class='+tags.join(' ')+'"' : '';
   const idAttr = fragment ? 'id="'+fragment+'"' : '';
   let attrs = '';
@@ -10,4 +10,4 @@
   }
   const content = typeof context === 'string' ? context : JSON.stringify(context);
   return '<li'+attrs+'>'+content+'</li>';
-};
+});

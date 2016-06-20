@@ -48,7 +48,7 @@ class Context extends Marked { // $
   }
 }
 
-class Combination extends Marked {
+class Combination extends Marked { // Rename to Composition
   constructor(target, combinators) {
     super();
     this.type = 'Combination';

@@ -60,7 +60,7 @@ There are 4 building blocks of tasitc: statements, combinators (the '|'), sinks 
 - Loops: there are no loops - tasitc-lang is an expression based functional language. Instead there are combinators which allows you to iterate over iterables.
 - Variables: there are no variables. Variables are inheritly mutable and fits poorly for an http based language. It is possible to read query parameters, but it is not possible to.
 - Function definitions: there are no function defintions, instead every statement is a function. Since there's only type of expression (a function) in tasitc, it doesn't make sense to have a special syntax for it.
-- Function parameters: there can only be one function paramter.
+- Function parameters: there can only be one function paramter. 
 - Query & path parameter: tasitc is http based and has syntactical sugar to make it easy to parse query (`/name?name='fredrik'`) and path (`/name/:name`) parameters.
 - Pattern matching: this is in the works. An example of the planned syntax:
 ```
@@ -84,3 +84,41 @@ Again, more to come... :)
 
 ## Notes:
 - When ready, move master (again). First commit: ab incunabulis ofc..
+
+
+## More notes:
+tasitc is a semi-tacit programming language.
+A combinator combines an argument with the context.
+The context is the result of the last operation.
+
+When a function operates on the context it is by definition a combinator.
+All context-less functions operate on the argument only.
+
+`ifte [?, ?, '.'] | post --text '/tasitc/ns/core/list > ls`
+`range [0, 100] | ls` expands to: `range [0, 100] | (ifte ['', '', '.'] | post --text '/tasitc/ns/core/list')` which posts '.' to '/tasitc/ns/core/list' a 100 times.
+
+`filter < flatmap ifte [regex ?, [$], []]`
+
+Other core combinators: `ifte`, `map`, `flatmap`, `id` (identity, returns whateer it had before), `reduce` (reduces context using the argument), `swap` (swaps argument and context with eachother), `ctxarg` (creates a new list argument that has the argument (first) then the context. useful to create a combinator out of a function), `argctx` (takes an argument and puts it in the context).
+
+`ls | reduce concat $.path`
+`ls | dup 'seed' | reduce concat $.path`
+
+`[/google/drive/Spreadsheet | gsheet2json, psql "select email from users"] | reduce { name: $[0], email: $[1]} | html :ul map :li [:div $.email, :div $.name]`
+
+`/google/drive/Spreadsheet | gsheet2json | psql "select * from users where email = $" | html :ul map :li [:div $.email, :div $.name]`
+
+The main goal of tasitc is to aggregate http requests into a responses. The secondary goal of tasitc is to create purely functional and consistent shell experience.
+
+Hypothesis:
+- authors of (rest) endpoints are willing (and eager) to codify and document them
+- many (most) web services aggregates (rest or db) endpoints and does little else
+- authentication (managing and creating keys) is akward in a world where many (rest) endpoints.
+- building good staging, development, production environments 
+- tasitc is a good tool (language/platform) to aggregate, express and share endpoints
+
+If these can be asserted then tasitc helps developers develop and deploy web services easier than before.
+In that case, tasitc is valuable.
+
+Why another language? Why not just use javascript or some other well known language?
+Uhm... I am not sure. The idea came to me while thinking that it should be easier to get a landing page up and running. I didnt want a hosted WSIWYG, I wanted to expand the page later. I wanted a precise way to handle this. A hosted WSIWYG was the only real alternative to writing it in node, which is what I ended up doing. However, I thought to myself: if there was a way to programming a landing page directly in the cloud I would have gone for it. After some thought, a bit of research and a lot of experiments tasitc is what I ended up with.

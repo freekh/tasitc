@@ -184,12 +184,9 @@ module.exports = {
     // ls | map $.path | filter 'freekh'
     // filter => [$, 'freekh'] | flatmap ifte [$[0] | contains $[1], [$[0]], []]
     //const text = `$ | filter 'freekh'`;
-    const text= `ls | [$, contains 'freekh'] | ifte [$[0], 'nope']`;
-
+    const text= `filter < flatmap ifte [regex ?, [$], []]`;
+    //const text = `foo < js ((context, argument) => { return context + argument; })`; // ls | map :foo 'yeah'
     // dup 0 eq | [ pop 1 ] | [ dup 1 - fac * ] | if > fac
-    // ls . 'nothing' | 
-
-    
 
     // map ifte [$ | contains ?.sql, [$], []] > filter
     // ls | filter 'freekh'

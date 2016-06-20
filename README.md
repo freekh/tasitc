@@ -108,17 +108,30 @@ Other core combinators: `ifte`, `map`, `flatmap`, `id` (identity, returns whatee
 
 `/google/drive/Spreadsheet | gsheet2json | psql "select * from users where email = $" | html :ul map :li [:div $.email, :div $.name]`
 
-The main goal of tasitc is to aggregate http requests into a responses. The secondary goal of tasitc is to create purely functional and consistent shell experience.
+The main goal of tasitc is to aggregate http requests into a responses. The secondary goal of tasitc is to create purely functional and consistent shell experience. The tertiary goal is to create a language that grows, built around as few constructs as possible. 
 
 Hypothesis:
 - authors of (rest) endpoints are willing (and eager) to codify and document them
 - many (most) web services aggregates (rest or db) endpoints and does little else
-- authentication (managing and creating keys) is akward in a world where many (rest) endpoints.
-- building good staging, development, production environments 
-- tasitc is a good tool (language/platform) to aggregate, express and share endpoints
+- authentication (managing and creating keys) is akward in a world where there are many (rest) endpoints.
+- building good staging, development, production environments is still harder than it needs to be
+- deploying is harder than it needs to be
+- sharing internal web sites and the like in a team/company is harder than it needs to be
+- tasitc is a good language/platform/way to aggregate, express and share endpoints
 
 If these can be asserted then tasitc helps developers develop and deploy web services easier than before.
 In that case, tasitc is valuable.
 
 Why another language? Why not just use javascript or some other well known language?
-Uhm... I am not sure. The idea came to me while thinking that it should be easier to get a landing page up and running. I didnt want a hosted WSIWYG, I wanted to expand the page later. I wanted a precise way to handle this. A hosted WSIWYG was the only real alternative to writing it in node, which is what I ended up doing. However, I thought to myself: if there was a way to programming a landing page directly in the cloud I would have gone for it. After some thought, a bit of research and a lot of experiments tasitc is what I ended up with.
+Uhm... I am not sure. The idea came to me while thinking that it should be easier to get a landing page up and running. I didnt want a hosted WSIWYG, I find it easier and cleaner to write it myself. I wanted a precise way to handle this. A hosted WSIWYG was the only real alternative to writing it in node, which is what I ended up doing. However, I thought to myself: if there was a way to programming a landing page directly in the cloud I would have gone for it. After some thought, a bit of research and a lot of experiments tasitc is what I ended up with.
+
+
+`/babel@6.1.0 ~/github/project@release/index.js > ./index.js`
+`/scss { entry: ~/github/project@release/index.css, dir: ~/github/project@release } > ./index.css`
+`[:h1 ['Welcome to my landing page'], :form [{ action: url ./newsletter}, :input 'Signup for newsletter']] > ./body`
+`html [head [:script url /jquery/jquery@3.0.0], body [./body, :script { src: url ./index.js}] ] > index.html`
+`./psql "insert into users values($.email)" | exists > get --url-encoded ./login`
+`ln -r . ../staging`
+`{ prod: false } > ../staging/env`
+`ln -r . ../prod`
+`{ prod: true } > ../prod/env`

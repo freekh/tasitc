@@ -2,7 +2,7 @@ const P = require('parsimmon');
 
 // We use these to catch renames of the internal AST easily
 const { Sink,
-        Combination,
+        Composition,
         Expression,
         Eval,
         Fragment,
@@ -88,13 +88,13 @@ Context.parser = P.lazy('Context', () => {
     .map(reify);
 });
 
-Combination.parser = P.lazy('Combination', () => {
+Composition.parser = P.lazy('Composition', () => {
   const reify = (mark) => {
     const expressions = mark.value;
     if (expressions.length <= 1) {
       return expressions[0];
     }
-    return new Combination(expressions[0], expressions.slice(1));
+    return new Composition(expressions[0], expressions.slice(1));
   };
 
   return ignore(P.sepBy1(P.alt(
@@ -117,7 +117,7 @@ List.parser = P.lazy('List', () => {
   return P.string('[')
     .then(ignore(
       P.sepBy(
-        Combination.parser,
+        Composition.parser,
         ignore(P.string(','))
       )))
     .skip(P.string(']'))
@@ -127,7 +127,7 @@ List.parser = P.lazy('List', () => {
 
 const argumentParser = P.lazy('Argument', () => {
   return P.alt(
-    form(Combination.parser),
+    form(Composition.parser),
     Instance.parser,
     List.parser,
     Eval.parser,
@@ -209,7 +209,7 @@ Instance.parser = P.lazy('Instance', () => {
     .then(P.seq(
       ignore(Text.parser).chain(key => {
         return ignore(P.string(':'))
-          .then(Combination.parser)
+          .then(Composition.parser)
           .skip(P.alt(
             ignore(P.string(',')),
             P.succeed(null)
@@ -233,7 +233,7 @@ Keyword.parser = P.lazy('Keyword', () => {
       return new Keyword(id, value).withMark(mark);
     };
     return P.string('=')
-      .then(Combination.parser)
+      .then(Composition.parser)
       .mark()
       .map(reify);
   }));
@@ -250,8 +250,12 @@ Parameter.parser = P.lazy('Parameter', () => {
     .map(reify);
 });
 
+Argument.parser = P.lazy('Argument', () => {
+  
+});
+
 Sink.parser = P.lazy('Sink', () => {
-  return Combination.parser.skip(P.optWhitespace).chain(expression => {
+  return Composition.parser.skip(P.optWhitespace).chain(expression => {
     const reify = (mark) => {
       const path = mark.value;
       return new Sink(expression, path).withMark(mark);
@@ -268,7 +272,7 @@ Sink.parser = P.lazy('Sink', () => {
 const parse = (text) => {
   const result = P.alt(
     Sink.parser,
-    Combination.parser
+    Composition.parser
   ).parse(text);
   result.text = text;
   return result;

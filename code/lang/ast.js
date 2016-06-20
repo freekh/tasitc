@@ -48,10 +48,10 @@ class Context extends Marked { // $
   }
 }
 
-class Combination extends Marked { // Rename to Composition
+class Composition extends Marked {
   constructor(target, combinators) {
     super();
-    this.type = 'Combination';
+    this.type = 'Composition';
     this.target = target;
     this.combinators = combinators;
   }
@@ -137,7 +137,7 @@ class Sink extends Marked { // TODO: rename to Write? or something else? Assign?
 
 module.exports = {
   Sink,
-  Combination,
+  Composition,
   Expression,
   Eval,
   Fragment,

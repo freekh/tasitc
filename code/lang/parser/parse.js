@@ -190,7 +190,7 @@ Tag.parser = P.lazy('Tag', () => {
 });
 
 Eval.parser = P.lazy('Eval', () => {
-  return P.string(':').then(Id.parser.chain(expression => {
+  return P.string(':').then(P.alt(Id.parser, Expression.parser).chain(expression => {
     return P.alt(Fragment.parser, P.succeed(null)).chain(fragment => {
       return P.alt(P.seq(Tag.parser), P.succeed([])).chain(tags => {
         return P.alt(P.whitespace.then(argumentParser), P.succeed(null)).map(arg => {

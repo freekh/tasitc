@@ -6,6 +6,7 @@ const transpile = require('../code/lang/transpile');
 
 const app = require('../code/backend/app');
 const testEnv = require('./env');
+const aliases = require('./aliases');
 
 const fs = require('fs');
 const path = require('path');
@@ -20,7 +21,7 @@ const list = (fullPath) => {
         resolve(files.map(file => {
           return {
             absolute: path.resolve(dir, file).replace(dir, ''),
-            relative: path.relative(dir, path.resolve(dir, file)),
+            name: file,
           };
         }));
       }
@@ -34,21 +35,7 @@ const read = (fullPath) => {
       if (err) {
         reject(err);
       } else {
-        const js = (script) => {
-          return {
-            status: 200,
-            mime: 'application/js',
-            content: script.toString(),
-          };
-        };
-        const tasitc = (script) => {
-          return {
-            status: 200,
-            mime: 'application/vnd.tasitc',
-            content: script.toString(),
-          };
-        };
-        resolve(eval(content.toString())); // FIXME: eval!
+        resolve(content.toString());
       }
     });
   });
@@ -71,11 +58,14 @@ const write = (fullPath, content) => {
   });
 };
 
-const request = (fullPath, argFun) => {
-  return (ctx) => {
-    if (fullPath === '/tasitc/core/ns/list') {
-      return list(argFun(ctx));
-    }
+const request = (fullPath) => {
+  return argFun => {
+    return (ctx) => {
+      if (fullPath === '/tasitc/core/ns/list') {
+        return list(argFun && argFun(ctx) || '');
+      }
+      return read(fullPath);
+    };
   };
 };
 
@@ -114,25 +104,8 @@ module.exports = () => {
             console.log(JSON.stringify(parseTree, null, 2));
           }
           const expr = transpile(parseTree);
-          const fakeReq = {
-            cwd: '~',
-          };
-          const aliases = {
-            map: '/tasitc/core/combinators/map',
-            flatmap: '/tasitc/core/combinators/flatmap',
-            //
-            ifte: '/tasitc/core/combinators/ifte',
-            regex: '/tasitc/core/combinators/regex',
-            //
-            text: '/tasitc/core/combinators/text',
-            html: '/tasitc/core/combinators/html',
-            //
-            ls: '/tasitc/core/ns/list',
-            write: '/tasitc/core/ns/write',
-            //
-            li: '/tasitc/dom/li',
-          };
-          expr(fakeReq, Promise.resolve(aliases), request).then(result => {
+
+          expr({}, Promise.resolve(aliases), request).then(result => {
             test.deepEqual(result, expected);
             test.done();
           }).catch(err => {

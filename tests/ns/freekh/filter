@@ -1,1 +1,1 @@
-#!/bin/tasitc
+flatmap ifte [regex ?, [$], []]

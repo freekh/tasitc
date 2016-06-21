@@ -1,9 +1,10 @@
 const h = require('hyperscript');
 
 const log = require('../dev-utils/log');
+const request = require('../dev-utils/request');
 
-const transpile = require('../lang/transpile');
 const parse = require('../lang/parser/parse');
+const parseError = require('./render-parse-error');
 
 const tooltips = (cwd, value) => {
   return null;
@@ -160,7 +161,9 @@ const deleteWord = () => {
   let value = global.value;
   let cursor = global.cursor;
   let char = value[cursor];
-  while (cursor > 0 && (global.cursor === cursor || char !== ' ')) { // TODO: perf!?
+  while (cursor > 0 && (
+    global.cursor === cursor || (
+      char !== ' ' && char !== '|' && char !== '\''))) { // TODO: perf!?
     cursor -= 1;
     char = value[cursor];
     value = value.slice(0, -1);
@@ -259,15 +262,10 @@ const enter = () => {
   if (parseTree.status) {
     global.block = true;
     appendLastToHistory();
-
-    const fn = transpile(parseTree.value, parseTree.text, { cwd: global.cwd, user: global.user });
-    const fakeReq = Promise.resolve({
-      request: { verb: 'get', path: '/tasitc/term/freekh' },
-      status: 200,
-      mime: 'application/json',
-      content: { cwd: '/freekh', params: {} },
-    });
-    fn(fakeReq).then(res => {
+    request(
+      '/tasitc/term/execute',
+      { mime: 'application/json', type: 'POST', data: parseTree }
+    ).then(res => {
       let resElem = h('div');
       if (res.mime === 'text/html') {
         const shadowRoot = resElem.createShadowRoot();
@@ -282,17 +280,16 @@ const enter = () => {
       complete();
       throw err;
     });
-  } else if (parseTree.expected.indexOf("']'") !== -1 ||
-             parseTree.expected.indexOf("')'") !== -1) {
-    const { value, cursor } = insertText(global.value, global.cursor, '\n');
-    global.cursor = cursor;
-    global.value = value;
-    updateView();
+  // } else if (parseTree.expected.indexOf("']'") !== -1 ||
+  //            parseTree.expected.indexOf("')'") !== -1) {
+  //   const { value, cursor } = insertText(global.value, global.cursor, '\n');
+  //   global.cursor = cursor;
+  //   global.value = value;
+  //   updateView();
   } else {
     global.block = true;
     appendLastToHistory();
-
-    elems.history.appendChild(h('div', `Parse error: ${JSON.stringify(parseTree)}`));
+    parseError(parseTree).forEach(line => elems.history.appendChild(line));
     complete();
   }
 };

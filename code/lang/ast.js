@@ -82,13 +82,11 @@ class Expression extends Marked {
 }
 
 class Eval extends Marked {
-  constructor(path, arg, fragment, tags) {
+  constructor(expression, arg, fragment, tags) { // FIXME: decide on fragment and tags!
     super();
     this.type = 'Eval';
-    this.path = path;
+    this.expression = expression;
     this.arg = arg;
-    this.fragment = fragment;
-    this.tags = tags;
   }
 }
 

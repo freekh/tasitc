@@ -14,14 +14,15 @@ const uniq = array => { // TODO: go through this, its pasted in from somewhere (
   return out;
 };
 
-module.exports = (expr, result) => {
+module.exports = (parseTree) => {
+  const text = parseTree.text;
   const elems = [];
-  if (result.status === false) {
+  if (parseTree.status === false) {
     let indents = '';
     let column = 0;
     let line = 1;
-    for (let i = 0; i < result.index; i++) {
-      if (expr[i] === '\n') {
+    for (let i = 0; i < parseTree.index; i++) {
+      if (text[i] === '\n') {
         indents = '';
         column = 0;
         line += 1;
@@ -30,16 +31,16 @@ module.exports = (expr, result) => {
         column += 1;
       }
     }
-    elems.push(h('div', h('pre', `FAILURE: line: ${line}, column: ${column}`)));
-    elems.push(h('div', h('pre', `${expr.split('\n').slice(line - 3 > 0 ? line - 3 : 0, line).join('\n ')}`)));
-    elems.push(h('div', h('pre', `${indents}^`)));
-    const context = expr
+    elems.push(h('div', h('pre', { style: { color: 'red' } }, `FAILURE: line: ${line}, column: ${column}`)));
+    elems.push(h('div', h('pre', `${text.split('\n').slice(line - 3 > 0 ? line - 3 : 0, line).join('\n ')}`)));
+    elems.push(h('div', h('pre', { style: { color: 'red' } }, `${indents.slice(1)}^`))); // TODO: proper css
+    const context = text
             .split('\n')
-            .slice(line, line + 3 <= expr.length ? line + 3 : expr.length)
+            .slice(line, line + 3 <= text.length ? line + 3 : text.length)
             .join('\n');
     elems.push(h('div', h('pre', `${context}`)));
-    const expected = uniq(result.expected).join(' or ');
-    const actual = expr[result.index] ? expr[result.index].replace('\n', '\\n') : 'EOF';
+    const expected = uniq(parseTree.expected).join(' or ');
+    const actual = text[parseTree.index] ? text[parseTree.index].replace('\n', '\\n') : 'EOF';
     elems.push(h('div', h('pre', `Got: '${actual}'. Expected: ${expected}\n`)));
     return elems;
   }

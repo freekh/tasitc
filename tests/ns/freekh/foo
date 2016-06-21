@@ -1,4 +1,0 @@
-{
-  "content": "html [div#foo 'foo content', ul [li 'foo']]",
-  "mime": "application/tasitc"
-}

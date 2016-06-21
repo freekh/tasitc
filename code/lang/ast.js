@@ -41,10 +41,17 @@ class Attribute extends Marked { // foo.column
 }
 
 class Context extends Marked { // $
-  constructor(path = []) {
+  constructor(paths = []) {
     super();
     this.type = 'Context';
-    this.path = path;
+    this.paths = paths;
+  }
+}
+
+class Curry extends Marked {
+  constructor() {
+    super();
+    this.type = 'Curry';
   }
 }
 
@@ -66,19 +73,19 @@ class List extends Marked {
 }
 
 class Expression extends Marked {
-  constructor(id, arg) {
+  constructor(path, arg) {
     super();
     this.type = 'Expression';
-    this.id = id;
+    this.path = path;
     this.arg = arg;
   }
 }
 
 class Eval extends Marked {
-  constructor(id, arg, fragment, tags) {
+  constructor(path, arg, fragment, tags) {
     super();
     this.type = 'Eval';
-    this.id = id;
+    this.path = path;
     this.arg = arg;
     this.fragment = fragment;
     this.tags = tags;
@@ -145,6 +152,7 @@ module.exports = {
   Keyword,
   Parameter,
   Context,
+  Curry,
   Attribute,
   Subscript,
   List,

@@ -12,6 +12,7 @@ const { Sink,
         Instance,
         List,
         Context,
+        Curry,
         Attribute,
         Subscript,
         Id,
@@ -33,7 +34,7 @@ Text.parser = P.lazy('Text', () => {
     return new Text(str).withMark(mark);
   };
   // FIXME:
-  return P.string('\'').then(P.regex(/[\.a-zA-Z0-9:; {}\-]*/i))
+  return P.string('\'').then(P.regex(/[\*\?\[\]\/\.a-zA-Z0-9:; {}\-]*/i))
     .skip(P.string('\''))
     .mark()
     .map(reify);
@@ -88,6 +89,13 @@ Context.parser = P.lazy('Context', () => {
     .map(reify);
 });
 
+Curry.parser = P.lazy('Curry', () => {
+  const reify = (mark) => {
+    return new Curry().withMark(mark);
+  };
+  return P.string('?').mark().map(reify);
+});
+
 Composition.parser = P.lazy('Composition', () => {
   const reify = (mark) => {
     const expressions = mark.value;
@@ -133,6 +141,7 @@ const argumentParser = P.lazy('Argument', () => {
     Eval.parser,
     Expression.parser,
     Context.parser,
+    Curry.parser,
     Keyword.parser, // eslint-disable-line no-use-before-define
     Parameter.parser, // eslint-disable-line no-use-before-define
     Text.parser
@@ -206,21 +215,11 @@ Instance.parser = P.lazy('Instance', () => {
     return new Instance(elements).withMark(mark);
   };
   return P.string('{')
-    .then(P.seq(
-      ignore(Text.parser).chain(key => {
-        return ignore(P.string(':'))
-          .then(Composition.parser)
-          .skip(P.alt(
-            ignore(P.string(',')),
-            P.succeed(null)
-          ))
-          .map(call => {
-            const value = {};
-            value[key.value] = call;
-            return value;
-          });
-      })
-    ))
+    .then(P.sepBy(ignore(Text.parser).chain(key => {
+      return ignore(P.string(':')).then(Composition.parser).map(value => {
+        return { key, value };
+      });
+    }), P.string(',')))
     .skip(P.string('}'))
     .mark()
     .map(reify);
@@ -248,10 +247,6 @@ Parameter.parser = P.lazy('Parameter', () => {
   return P.string('?').then(parameterId)
     .mark()
     .map(reify);
-});
-
-Argument.parser = P.lazy('Argument', () => {
-  
 });
 
 Sink.parser = P.lazy('Sink', () => {

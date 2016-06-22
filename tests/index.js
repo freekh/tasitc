@@ -30,9 +30,14 @@ fixture.test(`[['he'], ['wo'], ['rld']] | flatmap [$]`,
              [['he'], ['wo'], ['rld']], true);
 // TODO: this 'abc' | split '' | flatmap ifte [regex 'a', $, $]
 //       should not be ["a","b","c"]
-// TODO: this: l
 fixture.test(`ls | map $.name | flatmap ($ | split)`,
              ["d", "i", "r", "f", "i", "l", "t", "e", "r"], true);
+fixture.test(`ls | flatmap ls`, [
+  { absolute: '/dir', name: 'dir' },
+  { absolute: '/filter', name: 'filter' },
+  { absolute: '/dir', name: 'dir' },
+  { absolute: '/filter', name: 'filter' },
+], true);
 
 // regex:
 fixture.test(`'test' | regex 'test'`,

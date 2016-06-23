@@ -40,7 +40,7 @@ const normalize = (id, aliases) => {
 
 const transpile = (parseTree) => {
   const init = (node, aliases, request) => {
-    const recurse = (node, lifted, liftedArg) => {
+    const recurse = (node) => {
       if (node.type === 'Expression') {
         const fullPath = normalize(node.path, aliases);
         const builtin = builtins[fullPath];
@@ -52,31 +52,28 @@ const transpile = (parseTree) => {
           fun = request(fullPath);
         }
 
-        if (lifted && node.arg && node.arg.type === 'Curry') {
-          return fun(() => liftedArg);
-        } else if (node.arg && node.arg.type === 'Curry') {
-          throw new Error('Use eval (:) for partial applications (?)');
+        if (node.arg && node.arg.type === 'Curry') {
+          return fun;
         }
-
-        const argFun = node.arg ? recurse(node.arg, lifted, liftedArg) : null;
+        const argFun = node.arg ? recurse(node.arg) : null;
         return fun(argFun);
       } else if (node.type === 'Composition') {
         return ctx => {
           // FIXME: [{'a': 'foo'}, {'a': 'bar'}] | map ($.a | regex 'foo') fails if the 2 lines below are outside of this closure!?!?!?!?!?!?!?!?!?!?!?!?
-          const combinators = node.combinators.map(combinator => recurse(combinator, lifted, liftedArg));
-          const argFun = recurse(node.target, lifted, liftedArg);
+          const combinators = node.combinators.map(combinator => recurse(combinator));
+          const argFun = recurse(node.target);
 
           return transduce(combinators, argFun(ctx), node.combinators);
         };
       } else if (node.type === 'List') {
-        const elements = node.elements.map(element => recurse(element, lifted, liftedArg));
+        const elements = node.elements.map(element => recurse(element));
         return ctx => {
           return elements.map(element => element(ctx));
         };
       } else if (node.type === 'Instance') {
         const pairs = {};
         node.elements.forEach(({ key, value }) => {
-          pairs[key.value] = recurse(value, lifted, liftedArg);
+          pairs[key.value] = recurse(value);
         });
         return ctx => {
           const result = {};
@@ -105,18 +102,6 @@ const transpile = (parseTree) => {
         };
         return ctx => {
           return scoped(ctx);
-        };
-      } else if (node.type === 'Eval') {
-        return ctx => {
-          // FIXME: move out of ctx
-          const argFun = node.arg ? recurse(node.arg, lifted, liftedArg) : null;
-          const arg = argFun && argFun(ctx);
-          if (node.expression.type === 'Id') {
-            const fullPath = normalize(node.expression.value, aliases);
-            return request(fullPath);
-          }
-          const expression = recurse(node.expression, true, arg);
-          return expression(ctx);
         };
       }
 

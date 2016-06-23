@@ -81,6 +81,24 @@ class Expression extends Marked {
   }
 }
 
+class Partial extends Marked {
+  constructor(path, arg) {
+    super();
+    this.type = 'Partial';
+    this.path = path;
+    this.arg = arg;
+  }
+}
+
+class Apply extends Marked {
+  constructor(path, arg) {
+    super();
+    this.type = 'Apply';
+    this.path = path;
+    this.arg = arg;
+  }
+}
+
 class Eval extends Marked {
   constructor(expression, arg, fragment, tags) { // FIXME: decide on fragment and tags!
     super();
@@ -144,9 +162,11 @@ module.exports = {
   Sink,
   Composition,
   Expression,
-  Eval,
-  Fragment,
-  Tag,
+  Partial,
+  Apply,
+  Eval, // TODO: delete?
+  Fragment,  // TODO: delete?
+  Tag,  // TODO: delete?
   Keyword,
   Parameter,
   Context,
@@ -154,8 +174,10 @@ module.exports = {
   Attribute,
   Subscript,
   List,
-  Instance,
+  Instance, // TODO: would like to rename to Object, but can't so find some other better name
   Id,
   Text,
   Num,
+  // TODO: add Boolean
+  // TODO: add a type representing mimes to represent html, ...
 };

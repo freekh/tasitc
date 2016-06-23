@@ -24,19 +24,16 @@ const error = (parseTree) => {
   }
   if (parseTree.status === false) {
     let indents = ' ';
-    let column = 0;
-    let line = 1;
-    for (let i = 0; i < parseTree.index; i++) {
+    const offset = parseTree.index.offset;
+    const line = parseTree.index.line;
+    for (let i = 0; i < offset; i++) {
       if (text[i] === '\n') {
         indents = '';
-        column = 0;
-        line += 1;
       } else {
         indents += '~';
-        column += 1;
       }
     }
-    lines.push('\x1b[91m', `\nFAILURE: line: ${line}, column: ${column}\n`, '\x1b[0m');
+    lines.push('\x1b[91m', `\nFAILURE: line: ${line}, offset: ${offset}\n`, '\x1b[0m');
     lines.push(` ${text.split('\n').slice(line - 3 > 0 ? line - 3 : 0, line).join('\n ')}`);
     lines.push('\x1b[91m', `${indents}^`, '\x1b[0m');
     const context = text
@@ -45,7 +42,7 @@ const error = (parseTree) => {
             .join('\n');
     lines.push(`${context}`);
     const expected = uniq(parseTree.expected).join(' or ');
-    const actual = text[parseTree.index] ? text[parseTree.index].replace('\n', '\\n') : 'EOF';
+    const actual = text.slice(parseTree.index.offset, parseTree.index.column) ? text.slice(parseTree.index.offset, parseTree.index.column).replace('\n', '\\n') : 'EOF';
     lines.push('\x1b[91m', `Got: '${actual}'. Expected: ${expected}\n`, '\x1b[0m');
     return lines;
   }

@@ -19,16 +19,13 @@ module.exports = (parseTree) => {
   const elems = [];
   if (parseTree.status === false) {
     let indents = '';
-    let column = 0;
-    let line = 1;
-    for (let i = 0; i < parseTree.index; i++) {
+    const column = parseTree.index.column;
+    const line = parseTree.index.line;
+    for (let i = 0; i < column; i++) {
       if (text[i] === '\n') {
         indents = '';
-        column = 0;
-        line += 1;
       } else {
         indents += '~';
-        column += 1;
       }
     }
     elems.push(h('div', h('pre', { style: { color: 'red' } }, `FAILURE: line: ${line}, column: ${column}`)));

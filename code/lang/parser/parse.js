@@ -4,6 +4,8 @@ const P = require('parsimmon');
 const { Sink,
         Composition,
         Expression,
+        Partial,
+        Apply,
         Eval,
         Fragment,
         Tag,
@@ -29,77 +31,73 @@ const form = (expr) => {
 };
 
 Text.parser = P.lazy('Text', () => {
-  const reify = (mark) => {
-    const str = mark.value;
-    return new Text(str).withMark(mark);
+  const reify = (data) => {
+    const str = data;
+    return new Text(str);
   };
   // FIXME:
   return P.string('\'').then(P.regex(/[\*\?\[\]\/\.a-zA-Z0-9:; {}\-]*/i))
     .skip(P.string('\''))
-    .mark()
     .map(reify);
 });
 
 Num.parser = P.lazy('Num', () => {
-  const reify = (mark) => {
-    const num = mark.value;
-    return new Num(parseInt(num, 10)).withMark(mark);
+  const reify = (data) => {
+    const num = data;
+    return new Num(parseInt(num, 10));
   };
-  return P.regex(/[0-9]+/i).mark().map(reify);
+  return P.regex(/[0-9]+/i).map(reify);
 });
 
 Id.parser = P.lazy('Id', () => {
-  const reify = mark => {
-    const id = mark.value;
-    return new Id(id).withMark(mark);
+  const reify = data => {
+    const id = data;
+    return new Id(id);
   };
-  return P.regex(/[\.~\/a-z\-0-9_]+/i).desc('URL safe character').mark().map(reify);
+  return P.regex(/[\.~\/a-z\-0-9_]+/i).desc('URL safe character').map(reify);
 });
 
 Subscript.parser = P.lazy('Subscript', () => {
-  const reify = (mark) => {
-    const num = mark.value;
-    return new Subscript(num).withMark(mark);
+  const reify = (data) => {
+    const num = data;
+    return new Subscript(num);
   };
   return P.string('[').then(Num.parser).skip(P.string(']'))
-    .mark()
     .map(reify);
 });
 
 Attribute.parser = P.lazy('Attribute', () => {
-  const reify = (mark) => {
-    const id = mark.value;
-    return new Attribute(id).withMark(mark);
+  const reify = (data) => {
+    const id = data;
+    return new Attribute(id);
   };
   return P.string('.').then(Id.parser)
-    .mark()
     .map(reify);
 });
 
 Context.parser = P.lazy('Context', () => {
-  const reify = (mark) => {
-    const path = mark.value;
-    return new Context(path).withMark(mark);
+  const reify = (data) => {
+    const path = data;
+    return new Context(path);
   };
   return P.string('$').then(P.alt(
     Subscript.parser,
     Attribute.parser
   ).many())
-    .mark()
     .map(reify);
 });
 
 Curry.parser = P.lazy('Curry', () => {
-  const reify = (mark) => {
-    return new Curry().withMark(mark);
+  const reify = () => {
+    return new Curry();
   };
-  return P.string('?').mark().map(reify);
+  return P.string('?').map(reify);
 });
 
 Composition.parser = P.lazy('Composition', () => {
-  const reify = (mark) => {
-    const expressions = mark.value;
-    if (expressions.length <= 1) {
+  const reify = (data) => {
+    const expressions = data;
+    if (expressions && expressions.length <= 1) {
       return expressions[0];
     }
     return new Composition(expressions[0], expressions.slice(1));
@@ -110,17 +108,17 @@ Composition.parser = P.lazy('Composition', () => {
     Context.parser,
     Instance.parser,
     List.parser,
+    Apply.parser,
     Expression.parser,
     Eval.parser
   ), ignore(P.string('|'))))
-    .mark()
     .map(reify);
 });
 
 List.parser = P.lazy('List', () => {
-  const reify = mark => {
-    const elements = mark.value;
-    return new List(elements).withMark(mark);
+  const reify = data => {
+    const elements = data;
+    return new List(elements);
   };
   return P.string('[')
     .then(ignore(
@@ -129,7 +127,6 @@ List.parser = P.lazy('List', () => {
         ignore(P.string(','))
       )))
     .skip(P.string(']'))
-    .mark()
     .map(reify);
 });
 
@@ -141,51 +138,70 @@ const argumentParser = P.lazy('Argument', () => {
     Eval.parser,
     Expression.parser,
     Context.parser,
-    Curry.parser,
     Keyword.parser, // eslint-disable-line no-use-before-define
     Parameter.parser, // eslint-disable-line no-use-before-define
     Text.parser
   );
 });
 
-Expression.parser = P.lazy('Expression', () => {
-  const expr = Id.parser.mark().chain(mark => { // FIXME: there is something fishy with this mark
-    const id = mark.value;
+Partial.parser = P.lazy('Partial', () => {
+  const expr = P.alt(
+    Id.parser,
+    form(Partial.parser)
+  ).chain(idOrPartial => {
     const reify = arg => {
-      return new Expression(id, arg || null).withMark(mark);
+      return new Partial(idOrPartial, arg || null);
     };
     return P.alt(
-      ignore(argumentParser).map(reify),
+      ignore(P.alt(Curry.parser, argumentParser.desc('Partial.Argument'), Partial.parser)).map(reify),
       P.succeed(reify(null))
     );
   });
-  return P.alt(
-    form(ignore(expr)),
-    ignore(expr)
-  );
+  return ignore(expr);
+});
+
+Apply.parser = P.lazy('Apply', () => {
+  const expr = form(Partial.parser).skip(P.whitespace).chain(partial => {
+    const reify = arg => {
+      return new Apply(partial, arg);
+    };
+    return argumentParser.desc('Apply.Argument').map(reify);
+  });
+  return expr;
+});
+
+Expression.parser = P.lazy('Expression', () => {
+  const expr = Id.parser.chain(id => {
+    const reify = arg => {
+      return new Expression(id, arg || null);
+    };
+    return P.alt(
+      ignore(argumentParser.desc('Expression.Argument')).map(reify),
+      P.succeed(reify(null))
+    );
+  });
+  return ignore(expr);
 });
 
 const cssSelector = P.regex(/-?[_a-zA-Z]+[_a-zA-Z0-9-]*/).desc('CSS selector');
 
 Fragment.parser = P.lazy('Fragment', () => {
-  const reify = (mark) => {
-    const id = mark.value;
-    return new Fragment(id).withMark(mark);
+  const reify = (data) => {
+    const id = data;
+    return new Fragment(id);
   };
   return P.string('#')
     .then(cssSelector)
-    .mark()
     .map(reify);
 });
 
 Tag.parser = P.lazy('Tag', () => {
-  const reify = (mark) => {
-    const id = mark.value;
-    return new Tag(id).withMark(mark);
+  const reify = (data) => {
+    const id = data;
+    return new Tag(id);
   };
   return P.string('.')
     .then(cssSelector)
-    .mark()
     .map(reify);
 });
 
@@ -194,15 +210,7 @@ Eval.parser = P.lazy('Eval', () => {
     return P.alt(Fragment.parser, P.succeed(null)).chain(fragment => {
       return P.alt(P.seq(Tag.parser), P.succeed([])).chain(tags => {
         return P.alt(P.whitespace.then(argumentParser), P.succeed(null)).map(arg => {
-          const fragmentEnd = fragment ? fragment.end : -1;
-          const tagsEnd = tags && tags.length ? tags.slice(-1)[0].end : -1;
-          const argEnd = arg ? arg.end : -1;
-          const end = Math.max([fragmentEnd, tagsEnd, argEnd]);
-          const mark = {
-            start: expression.start,
-            end,
-          };
-          return new Eval(expression, arg, fragment, tags).withMark(mark);
+          return new Eval(expression, arg, fragment, tags);
         });
       });
     });
@@ -210,9 +218,9 @@ Eval.parser = P.lazy('Eval', () => {
 });
 
 Instance.parser = P.lazy('Instance', () => {
-  const reify = mark => {
-    const elements = mark.value;
-    return new Instance(elements).withMark(mark);
+  const reify = data => {
+    const elements = data;
+    return new Instance(elements);
   };
   return P.string('{')
     .then(P.sepBy(ignore(Text.parser).chain(key => {
@@ -221,54 +229,49 @@ Instance.parser = P.lazy('Instance', () => {
       });
     }), P.string(',')))
     .skip(P.string('}'))
-    .mark()
     .map(reify);
 });
 
 Keyword.parser = P.lazy('Keyword', () => {
   return P.string('--').then(P.letters.chain(id => {
-    const reify = (mark) => {
-      const value = mark.value;
-      return new Keyword(id, value).withMark(mark);
+    const reify = (data) => {
+      const value = data;
+      return new Keyword(id, value);
     };
     return P.string('=')
       .then(Composition.parser)
-      .mark()
       .map(reify);
   }));
 });
 
 Parameter.parser = P.lazy('Parameter', () => {
-  const reify = (mark) => {
-    const id = mark.value;
-    return new Parameter(id).withMark(mark);
+  const reify = (data) => {
+    const id = data;
+    return new Parameter(id);
   };
-  const parameterId = P.regex(/[a-z_]*/i);
+  const parameterId = P.regex(/[a-z_]+/i);
   return P.string('?').then(parameterId)
-    .mark()
     .map(reify);
 });
 
 Sink.parser = P.lazy('Sink', () => {
   return Composition.parser.skip(P.optWhitespace).chain(expression => {
-    const reify = (mark) => {
-      const path = mark.value;
-      return new Sink(expression, path).withMark(mark);
+    const reify = (data) => {
+      const path = data;
+      return new Sink(expression, path);
     };
     return ignore(P.string('>')).
       then(Id.parser).
-      mark().
       map(reify);
   });
 });
 
 //
 
+// TODO: you can have a AppliedCompositionElement (no partials) or UnappliedCompositionElement (with partials)
+
 const parse = (text) => {
-  const result = P.alt(
-    Sink.parser,
-    Composition.parser
-  ).parse(text);
+  const result = Composition.parser.parse(text);
   result.text = text;
   return result;
 };

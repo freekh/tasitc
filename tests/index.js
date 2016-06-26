@@ -69,7 +69,7 @@ if (true) {
   fixture.test(`['he', 'wo', 'rld'] | flatmap ifte [regex 'he', [$], []]`,
                ['he'], true);
   // curry:
-  fixture.test(`(regex ?)`, true, true);
+  fixture.test(`regex ?`, true, true);
   fixture.test(`'test' | (regex ?) '[t].*?[t]'`, true, true);
   fixture.test(`['hei', 'du'] | (flatmap ifte [regex ?, [$], []]) 'hei'`, ['hei'], true);
 
@@ -82,6 +82,7 @@ if (true) {
   //                               { absolute: '/grep', name: 'grep' }], true);
   // fixture.test(`['hei', 'du'] | /freekh/grep 'du'`, [1], true);
 }
+fixture.test(`regex ?`, ['hei'], true, true);
 fixture.test(`['hei', 'du'] | (flatmap ifte [regex ?, [$], []]) 'hei'`, ['hei'], true, true);
 
 /* eslint-enable quotes */

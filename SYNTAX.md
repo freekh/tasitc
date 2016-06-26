@@ -1,6 +1,41 @@
 ## TODO
 Only for my eyes, the syntax propositions...
 
+### Destructuring:
+There no variables only context so there's no point in assigning anything, 
+but we can use desctructring to extract new contexts:
+
+[{ne: {st: {value: 'hello'}}, 1] | [
+  [ { ne: {st: {value: $ } } } ] => $ //matches, returns
+  [ { }, $ ] && eq 1 => $ //matches, but pattern above is before
+  $ => $ //default
+]
+
+{ne: {st: {value: 'hello'} } | [
+  [ { ne: {st: {value: $ } } } ] => $
+]
+
+html [:ul 'hello'] | [
+  html [:ul $] || html [:div $] => $ //returns hello for ul or div
+]
+
+ls | [
+  [{ name: $ }] => 'first file, exactly one file in dir'
+  [?, { name: $ }] => 'second file, exactly two files in dir'
+  [?, { name: $ }, ?] => 'second file, X (X >= 2) files in dir'
+  [$] => first element
+  [?] => must be list?
+]
+
+
+TYPES: fn, cbn, stg, text, num, boolean, {}, [], html, js, css, mime
+MIME: fn, cbn, stg: error!404 text/plain
+MIME: text & num & boolean == text/plain
+MIME: {} & [] == application/json
+etc...
+
+EFFECTS: pure, impure
+
 ```js
     // const text = 'ls ~ | div $.path';
     // const text = 'ls /freekh';
@@ -85,3 +120,5 @@ Only for my eyes, the syntax propositions...
     // ls |> [map, ifte [ge [(len $.path) 200], $.path, 'too long']]
     test.done();
 ```
+
+

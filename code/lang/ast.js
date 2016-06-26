@@ -81,7 +81,7 @@ class Expression extends Marked {
   }
 }
 
-class Partial extends Marked {
+class Partial extends Marked { // TODO: rename to combinator?
   constructor(path, arg) {
     super();
     this.type = 'Partial';

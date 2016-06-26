@@ -144,6 +144,27 @@ const argumentParser = P.lazy('Argument', () => {
   );
 });
 
+// TODO: Partial, Apply, etc needs refactoring
+const partialListParser = P.lazy('PartialList', () => {
+  const reify = data => {
+    const elements = data;
+    return new List(elements);
+  };
+  return P.string('[')
+    .then(ignore(
+      P.sepBy(
+        P.alt(
+          Partial.parser,
+          Text.parser,
+          Context.parser,
+          partialListParser
+        ),
+        ignore(P.string(','))
+      )))
+    .skip(P.string(']'))
+    .map(reify);
+});
+
 Partial.parser = P.lazy('Partial', () => {
   const expr = P.alt(
     Id.parser,
@@ -153,7 +174,7 @@ Partial.parser = P.lazy('Partial', () => {
       return new Partial(idOrPartial, arg || null);
     };
     return P.alt(
-      ignore(P.alt(Curry.parser, argumentParser.desc('Partial.Argument'), Partial.parser)).map(reify),
+      ignore(P.alt(Curry.parser, partialListParser, Partial.parser)).map(reify),
       P.succeed(reify(null))
     );
   });
@@ -161,12 +182,17 @@ Partial.parser = P.lazy('Partial', () => {
 });
 
 Apply.parser = P.lazy('Apply', () => {
-  const expr = form(Partial.parser).skip(P.whitespace).chain(partial => {
-    const reify = arg => {
-      return new Apply(partial, arg);
-    };
-    return argumentParser.desc('Apply.Argument').map(reify);
-  });
+  const expr = P.string('(').desc('start apply')
+          .then(Partial.parser)
+          .desc('partial apply')
+          .skip(P.string(')').desc('end apply'))
+          .skip(P.whitespace)
+          .chain(partial => {
+            const reify = arg => {
+              return new Apply(partial, arg);
+            };
+            return argumentParser.desc('Apply.Argument').map(reify);
+          });
   return expr;
 });
 
@@ -268,10 +294,12 @@ Sink.parser = P.lazy('Sink', () => {
 
 //
 
-// TODO: you can have a AppliedCompositionElement (no partials) or UnappliedCompositionElement (with partials)
-
 const parse = (text) => {
-  const result = Composition.parser.parse(text);
+  // FIXME: gross hack: related to https://github.com/jneen/parsimmon/issues/73?
+  let result = Partial.parser.parse(text);
+  if (!result.status) {
+    result = Composition.parser.parse(text);
+  }
   result.text = text;
   return result;
 };

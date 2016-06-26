@@ -2,6 +2,7 @@ const flatmap = (argFun) => {
   return (ctx) => {
     if (ctx && ctx.reduce) {
       const thisArgFun = argFun || (value => value);
+      // less elegant than it could be?
       return Promise.all(ctx.map(element => {
         return thisArgFun(element);
       })).then(resolved => {

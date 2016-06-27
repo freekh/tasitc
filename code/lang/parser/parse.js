@@ -281,10 +281,10 @@ Parameter.parser = P.lazy('Parameter', () => {
 });
 
 Sink.parser = P.lazy('Sink', () => {
-  return Composition.parser.skip(P.optWhitespace).chain(expression => {
+  return P.alt(Partial.parser, Composition.parser).mark().skip(P.optWhitespace).chain(expression => {
     const reify = (data) => {
       const path = data;
-      return new Sink(expression, path);
+      return new Sink(expression.value, path, expression.start.offset, expression.end.offset);
     };
     return ignore(P.string('>')).
       then(Id.parser).
@@ -296,7 +296,7 @@ Sink.parser = P.lazy('Sink', () => {
 
 const parse = (text) => {
   // FIXME: gross hack: related to https://github.com/jneen/parsimmon/issues/73?
-  let result = Partial.parser.parse(text);
+  let result = Sink.parser.parse(text);
   if (!result.status) {
     result = Composition.parser.parse(text);
   }

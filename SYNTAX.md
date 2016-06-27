@@ -27,7 +27,6 @@ ls | [
   [?] => must be list?
 ]
 
-
 TYPES: fn, cbn, stg, text, num, boolean, {}, [], html, js, css, mime
 MIME: fn, cbn, stg: error!404 text/plain
 MIME: text & num & boolean == text/plain

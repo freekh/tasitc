@@ -2,7 +2,7 @@ const fixture = require('./fixture')();
 
 /* eslint-disable quotes */
 
-if (true) {
+if (false) {
   // list:
   fixture.test(`['he', 'wo']`, ['he', 'wo'], true);
 
@@ -71,19 +71,21 @@ if (true) {
   // curry:
   fixture.test(`regex ?`, true, true);
   fixture.test(`'test' | (regex ?) '[t].*?[t]'`, true, true);
-  fixture.test(`['hei', 'du'] | (flatmap ifte [regex ?, [$], []]) 'hei'`, ['hei'], true);
+  fixture.test(`['hei', 'du'] | (flatmap ifte [regex ?, [$], []]) 'hei'`, ['hei'], true, true);
 
   // js:
 
+  // sink:
+  fixture.test(`flatmap ifte [regex ?, [$], []] > /freekh/grep`, '/freekh/grep.tastic', true, true);
 
-  // // request:
-  // fixture.test(`'test' | /freekh/regex '[t].*?[t]'`, true, true, true);
+  // request:
+  fixture.test(`'test' | /freekh/regex '[t].*?[t]'`, true, true, true);
   // fixture.test(`ls '/freekh'`, [{ absolute: '/dir', name: 'dir' },
   //                               { absolute: '/grep', name: 'grep' }], true);
   // fixture.test(`['hei', 'du'] | /freekh/grep 'du'`, [1], true);
 }
-fixture.test(`regex ?`, ['hei'], true, true);
-fixture.test(`['hei', 'du'] | (flatmap ifte [regex ?, [$], []]) 'hei'`, ['hei'], true, true);
+fixture.test(`flatmap ifte [regex ?, [$], []] > /freekh/grep`, '/freekh/grep.tasitc', true, true);
+fixture.test(`'test' | /freekh/grep '[t].*?[t]'`, true, true, true);
 
 /* eslint-enable quotes */
 

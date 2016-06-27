@@ -48,11 +48,7 @@ const write = (fullPath, content) => {
       if (err) {
         reject(err);
       } else {
-        resolve({
-          mime: 'text/plain',
-          status: 200,
-          content: resolvedPath,
-        });
+        resolve(fullPath);
       }
     });
   });
@@ -60,9 +56,12 @@ const write = (fullPath, content) => {
 
 const request = (fullPath) => {
   return argFun => {
-    return (ctx) => {
+    return ctx => {
       if (fullPath === '/tasitc/core/ns/list') {
         return list(argFun && argFun(ctx) || '');
+      } else if (fullPath === '/tasitc/core/ns/sink') {
+        const path = `${argFun()}.tasitc`;
+        return write(path, ctx);
       }
       return read(fullPath);
     };

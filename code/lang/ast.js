@@ -91,10 +91,10 @@ class Partial extends Marked { // TODO: rename to combinator?
 }
 
 class Apply extends Marked {
-  constructor(path, arg) {
+  constructor(partial, arg) {
     super();
     this.type = 'Apply';
-    this.path = path;
+    this.partial = partial;
     this.arg = arg;
   }
 }
@@ -150,11 +150,13 @@ class Parameter extends Marked {
 }
 
 class Sink extends Marked { // TODO: rename to Write? or something else? Assign? Store?
-  constructor(expression, path) {
+  constructor(expression, path, start, end) {
     super();
     this.type = 'Sink';
     this.expression = expression;
     this.path = path;
+    this.start = start;
+    this.end = end;
   }
 }
 

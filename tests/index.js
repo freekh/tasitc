@@ -90,8 +90,8 @@ if (false) {
     new ast.Partial(new ast.Id('regex'), new ast.Curry())), true);
 
   // js:
-  fixture.test(`'slag' | :js ((arg, ctx) => 'a' + arg + ctx;) 'alle'`, new Text('balleslag'), true);
-  fixture.test(`js ((arg, ctx, variant) => 'a' + arg + ctx + variant;) > /freekh/test`, new Text('/freekh/test'), true);
+  fixture.test(`'slag' | :js {(arg, ctx) => 'a' + arg + ctx; } 'alle'`, new Text('balleslag'), true);
+  fixture.test(`js { (arg, ctx, variant) => 'a' + arg + ctx + variant; } > /freekh/test`, new Text('/freekh/test'), true);
   fixture.test(`'slag ' | :/freekh/test[au] 'alle''`, new Text('balleslag au'), true);
 
   // html:
@@ -111,7 +111,7 @@ if (false) {
   fixture.test(`['hei', 'du'] | /freekh/grep '[d].*?'`, new Json(['du']), true);
 }
 
-fixture.test(`'slag' | :js ((arg, ctx) => 'a' + arg + ctx;) 'alle'`, new Text('balleslag'), true, true);
+fixture.test(`'slag' | :js { (arg, ctx) => 'a' + arg + ctx; } 'alle'`, new Text('balleslag'), true, true);
 
 /* eslint-enable quotes */
 

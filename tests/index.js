@@ -1,5 +1,6 @@
 const fixture = require('./fixture')();
 const { Json, Node, Text } = require('../code/lang/primitives');
+const ast = require('../code/lang/ast');
 
 /* eslint-disable quotes */
 
@@ -18,7 +19,7 @@ if (true) {
   fixture.test(`['he', 'wo'] | map $`,
                  new Json(['he', 'wo']), true);
   fixture.test(`[{'path': '/one'}, {'path': '/two'}] | map $.path`,
-               new Json(['/one', '/two']), true, true);
+               new Json(['/one', '/two']), true);
 
   // flatmap:
   fixture.test(`[['hello'], ['world']] | flatmap`,
@@ -60,7 +61,7 @@ if (true) {
                new Json([true, false]), true);
   fixture.test(`ls | map $.name | flatmap ($ | split)`,
                new Json(["d", "i", "r",
-                         "g", "r", "e", "p", '.', 't', 'a', 's', 'i', 't', 'c']), true, true);
+                         "g", "r", "e", "p", '.', 't', 'a', 's', 'i', 't', 'c']), true);
   fixture.test(`ls | flatmap ls`, new Json([
     { absolute: '/freekh/dir', name: 'dir' },
     { absolute: '/freekh/grep.tasitc', name: 'grep.tasitc' },
@@ -79,10 +80,11 @@ if (true) {
   ]`, new Json(['yes', 'no']), true);
 
   // curry:
-  // //fixture.test(`regex ?`, true, true);
   fixture.test(`'test' | (regex ?) '[t].*?[t]'`, new Text('true'), true);
   fixture.test(`['hei', 'du'] | (flatmap ifte [regex ?, [$], []]) 'hei'`,
                new Json(['hei']), true);
+  fixture.test(`regex ?`, new Node(
+    new ast.Partial(new ast.Id('regex'), new ast.Curry())), true);
 
   // js:
 
@@ -91,7 +93,7 @@ if (true) {
                new Text('/freekh/grep.tasitc'), true);
 
   // request:
-  fixture.test(`['hei', 'du'] | /freekh/grep '[d].*?'`, new Json(['du']), true, true);
+  fixture.test(`['hei', 'du'] | /freekh/grep '[d].*?'`, new Json(['du']), true);
 }
 
 /* eslint-enable quotes */

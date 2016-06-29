@@ -169,6 +169,8 @@ const transpile = (parseTree) => {
       return promise.then(result => {
         if (result instanceof primitives.Node || result instanceof primitives.Text) {
           return result;
+        } else if (result instanceof Function) {
+          return new primitives.Node(parseTree.value);
         } else if (result instanceof Object || result instanceof Array) {
           return new primitives.Json(result);
         }

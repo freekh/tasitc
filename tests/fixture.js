@@ -27,8 +27,9 @@ const read = (fullPath) => {
 };
 
 const list = (fullPath) => {
+  const user = 'freekh';
   return new Promise((resolve, reject) => {
-    const dir = path.resolve(fullPath && (`./tests/ns${fullPath}`) || './tests/ns/freekh');
+    const dir = path.resolve(fullPath && (`./tests/ns${fullPath}`) || `./tests/ns/${user}`);
     fs.readdir(dir, (err, files) => {
       if (err) {
         reject(err);
@@ -37,7 +38,7 @@ const list = (fullPath) => {
           new ast.List(files.map(file => {
             return new ast.Instance([{
               key: new ast.Text('absolute'),
-              value: new ast.Text(path.resolve(dir, file).replace(dir, '')),
+              value: new ast.Text(path.resolve(dir, file).replace(path.resolve(dir, '..'), '')),
             }, {
               key: new ast.Text('name'),
               value: new ast.Text(file),
@@ -63,7 +64,7 @@ const write = (fullPath, content) => {
 
 const request = (fullPath, arg, ctx) => {
   if (fullPath === '/localhost/ns/ls.tasitc') {
-    return list(arg);
+    return list(arg, ctx);
   } else if (fullPath === '/localhost/ns/sink.tasitc') {
     const path = `${arg}.tasitc`;
     return write(path, ctx);
@@ -116,7 +117,6 @@ module.exports = () => {
           const expr = transpile(parseTree);
 
           expr({}, Promise.resolve(aliases), request).then(result => {
-            console.log('res', result);
             test.deepEqual(result, expected);
             test.done();
           }).catch(err => {

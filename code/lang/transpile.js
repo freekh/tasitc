@@ -108,6 +108,7 @@ const transpile = (parseTree) => {
           return fun;
         }
         const argFun = node.arg ? recurse(node.arg, partialFun) : null;
+        console.log(fun)
         return fun(argFun);
       } else if (node.type === 'Apply') {
         const argFun = node.arg ? recurse(node.arg, partialFun) : null;
@@ -174,7 +175,7 @@ const transpile = (parseTree) => {
         } else if (result instanceof Object || result instanceof Array) {
           return new primitives.Json(result);
         }
-        return new primitives.Text(result.toString());
+        return new primitives.Text(result ? result.toString() : '');
       });
     });
   };

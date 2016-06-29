@@ -75,25 +75,10 @@ router.get('/freekh*', (req, res) => {
 
 const fs = require('fs');
 const transpile = require('../../lang/transpile');
+const parse = require('../../lang/parser/parse');
 const aliases = require('../../../tests/aliases'); // TODO: remove
-
-const list = (fullPath) => {
-  return new Promise((resolve, reject) => {
-    const dir = path.resolve(fullPath && (`./tests/ns${fullPath}`) || './tests/ns/freekh');
-    fs.readdir(dir, (err, files) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(files.map(file => {
-          return {
-            absolute: path.resolve(dir, file).replace(dir, ''),
-            name: file,
-          };
-        }));
-      }
-    });
-  });
-};
+const ast = require('../../lang/ast');
+const primitives = require('../../lang/primitives');
 
 const read = (fullPath) => {
   return new Promise((resolve, reject) => {
@@ -101,21 +86,64 @@ const read = (fullPath) => {
       if (err) {
         reject(err);
       } else {
-        resolve(content.toString());
+        resolve(new primitives.Text(content.toString()));
       }
     });
   });
 };
 
-const request = (fullPath) => {
-  return argFun => {
-    return (ctx) => {
-      if (fullPath === '/tasitc/core/ns/list') {
-        return list(argFun ? argFun(ctx) : '/freekh');
+const list = (fullPath) => {
+  const user = 'freekh';
+  return new Promise((resolve, reject) => {
+    const dir = path.resolve(fullPath && (`./tests/ns${fullPath}`) || `./tests/ns/${user}`);
+    fs.readdir(dir, (err, files) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(new primitives.Node(
+          new ast.List(files.map(file => {
+            return new ast.Instance([{
+              key: new ast.Text('absolute'),
+              value: new ast.Text(path.resolve(dir, file).replace(path.resolve(dir, '..'), '')),
+            }, {
+              key: new ast.Text('name'),
+              value: new ast.Text(file),
+            }]);
+          }))));
       }
-      return read(fullPath);
-    };
-  };
+    });
+  });
+};
+
+const write = (fullPath, content) => {
+  return new Promise((resolve, reject) => {
+    const resolvedPath = path.resolve(`./tests/ns${(fullPath || '')}`);
+    fs.writeFile(resolvedPath, content, (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(new primitives.Text(fullPath));
+      }
+    });
+  });
+};
+
+const request = (fullPath, arg, ctx) => {
+  if (fullPath === '/localhost/ns/ls.tasitc') {
+    return list(arg, ctx);
+  } else if (fullPath === '/localhost/ns/sink.tasitc') {
+    const path = `${arg}.tasitc`;
+    return write(path, ctx);
+  } else if (fullPath.endsWith('.tasitc')) {
+    return read(fullPath).then(text => {
+      const parseTree = parse(text.value);
+      if (parseTree.status) {
+        return new primitives.Node(parseTree.value);
+      }
+      return Promise.reject(new primitives.Node(null, parseTree));
+    });
+  }
+  return read(fullPath);
 };
 
 router.post('/tasitc/term/execute', jsonParser, (req, res) => {
@@ -123,6 +151,7 @@ router.post('/tasitc/term/execute', jsonParser, (req, res) => {
   if (!parseTree) {
     res.json([]);
   }
+  console.log('parseTree', JSON.stringify(parseTree, null, 2));
   const expr = transpile(parseTree);
   expr({}, Promise.resolve(aliases), request).then(result => {
     log.info(parseTree.text, result);

@@ -4,7 +4,7 @@ const ast = require('../code/lang/ast');
 
 /* eslint-disable quotes */
 
-if (true) {
+if (false) {
   // list:
   fixture.test(`['he', 'wo']`, new Json(['he', 'wo']), true);
 
@@ -34,6 +34,9 @@ if (true) {
                new Json([['he'], ['wo'], ['rld']]), true);
 
   // ls:
+  fixture.test(`ls`,
+               new Json([{ absolute: '/freekh/dir', name: 'dir' },
+                         { absolute: '/freekh/grep.tasitc', name: 'grep.tasitc' }]), true);
   fixture.test(`ls '/freekh'`,
                new Json([{ absolute: '/freekh/dir', name: 'dir' },
                          { absolute: '/freekh/grep.tasitc', name: 'grep.tasitc' }]), true);
@@ -87,6 +90,18 @@ if (true) {
     new ast.Partial(new ast.Id('regex'), new ast.Curry())), true);
 
   // js:
+  fixture.test(`'slag' | :js ((arg, ctx) => 'a' + arg + ctx;) 'alle'`, new Text('balleslag'), true);
+  fixture.test(`js ((arg, ctx, variant) => 'a' + arg + ctx + variant;) > /freekh/test`, new Text('/freekh/test'), true);
+  fixture.test(`'slag ' | :/freekh/test[au] 'alle''`, new Text('balleslag au'), true);
+
+  // html:
+  fixture.test(`html :h1[#foo] 'test'`,
+               new Html([
+                 new DomElement('head'),
+                 new DomElement('body', {}, [
+                   new DomElement('test', { id: 'foo' }, []),
+                 ]),
+               ]), true);
 
   // sink:
   fixture.test(`flatmap ifte [regex ?, [$], []] > /freekh/grep`,
@@ -95,6 +110,8 @@ if (true) {
   // request:
   fixture.test(`['hei', 'du'] | /freekh/grep '[d].*?'`, new Json(['du']), true);
 }
+
+fixture.test(`'slag' | :js ((arg, ctx) => 'a' + arg + ctx;) 'alle'`, new Text('balleslag'), true, true);
 
 /* eslint-enable quotes */
 

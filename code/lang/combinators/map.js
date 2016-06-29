@@ -3,7 +3,7 @@ const map = (argFun) => {
     if (ctx && ctx.map) {
       if (!argFun) {
          // TODO: this is actually an optimization but id (v => v) is more 'correct'?
-        return Promise.all(ctx);
+        return ctx;
       }
       return Promise.all(ctx.map(element => {
         return argFun(element);

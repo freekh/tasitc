@@ -4,12 +4,27 @@ const parse = require('../code/lang/parser/parse');
 const parserError = require('../code/lang/parser/error');
 const transpile = require('../code/lang/transpile');
 
+const primitives = require('../code/lang/primitives');
+const ast = require('../code/lang/ast');
+
 const app = require('../code/backend/app');
 const testEnv = require('./env');
 const aliases = require('./aliases');
 
 const fs = require('fs');
 const path = require('path');
+
+const read = (fullPath) => {
+  return new Promise((resolve, reject) => {
+    fs.readFile(path.resolve(`./tests/ns${fullPath || ''}`), (err, content) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(new primitives.Text(content.toString()));
+      }
+    });
+  });
+};
 
 const list = (fullPath) => {
   return new Promise((resolve, reject) => {
@@ -18,24 +33,16 @@ const list = (fullPath) => {
       if (err) {
         reject(err);
       } else {
-        resolve(files.map(file => {
-          return {
-            absolute: path.resolve(dir, file).replace(dir, ''),
-            name: file,
-          };
-        }));
-      }
-    });
-  });
-};
-
-const read = (fullPath) => {
-  return new Promise((resolve, reject) => {
-    fs.readFile(path.resolve(`./tests/ns${fullPath || ''}`), (err, content) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(content.toString());
+        resolve(new primitives.Node(
+          new ast.List(files.map(file => {
+            return new ast.Instance([{
+              key: new ast.Text('absolute'),
+              value: new ast.Text(path.resolve(dir, file).replace(dir, '')),
+            }, {
+              key: new ast.Text('name'),
+              value: new ast.Text(file),
+            }]);
+          }))));
       }
     });
   });
@@ -48,24 +55,28 @@ const write = (fullPath, content) => {
       if (err) {
         reject(err);
       } else {
-        resolve(fullPath);
+        resolve(new primitives.Text(fullPath));
       }
     });
   });
 };
 
-const request = (fullPath) => {
-  return argFun => {
-    return ctx => {
-      if (fullPath === '/tasitc/core/ns/list') {
-        return list(argFun && argFun(ctx) || '');
-      } else if (fullPath === '/tasitc/core/ns/sink') {
-        const path = `${argFun()}.tasitc`;
-        return write(path, ctx);
+const request = (fullPath, arg, ctx) => {
+  if (fullPath === '/localhost/ns/ls.tasitc') {
+    return list(arg);
+  } else if (fullPath === '/localhost/ns/sink.tasitc') {
+    const path = `${arg}.tasitc`;
+    return write(path, ctx);
+  } else if (fullPath.endsWith('.tasitc')) {
+    return read(fullPath).then(text => {
+      const parseTree = parse(text.value);
+      if (parseTree.status) {
+        return new primitives.Node(parseTree.value);
       }
-      return read(fullPath);
-    };
-  };
+      return Promise.reject(new primitives.Node(null, parseTree));
+    });
+  }
+  return read(fullPath);
 };
 
 module.exports = () => {
@@ -105,6 +116,7 @@ module.exports = () => {
           const expr = transpile(parseTree);
 
           expr({}, Promise.resolve(aliases), request).then(result => {
+            console.log('res', result);
             test.deepEqual(result, expected);
             test.done();
           }).catch(err => {

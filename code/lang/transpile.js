@@ -1,6 +1,6 @@
-const parse = require('./parser/parse');
 const transduce = require('./transduce');
 const builtins = require('./combinators');
+const primitives = require('./primitives');
 
 const lift = (node) => { // FIXME: feels very unefficient, but perhaps it is best?
   if (node.type === 'Expression') {
@@ -38,7 +38,7 @@ const normalize = (id, aliases) => {
   return alias || path;
 };
 
-const transpileFun = (node, aliases, request, partialFun) => {
+const transpileFun = (node, aliases, request) => {
   const fullPath = normalize(node.path, aliases);
   const builtin = builtins[fullPath];
 
@@ -54,14 +54,39 @@ const transpileFun = (node, aliases, request, partialFun) => {
 
 const transpile = (parseTree) => {
   const init = (node, aliases, request) => {
-    const recurse = (node, partialFun) => {
+    const recurse = (node, partialFun) => { // TODO: rename partialFun to applyArgFun
       if (node.type === 'Expression') {
-        const fun = transpileFun(node, aliases, request, partialFun);
-        if (node.arg && node.arg.type === 'Curry') {
-          return fun;
+        const fullPath = normalize(node.path, aliases);
+        const builtin = builtins[fullPath];
+
+        if (builtin) {
+          if (node.arg && node.arg.type === 'Curry') {
+            return builtin;
+          }
         }
         const argFun = node.arg ? recurse(node.arg, partialFun) : null;
-        return fun(argFun);
+        if (builtin) {
+          return ctx => {
+            const result = builtin(argFun)(ctx);
+            return result;
+          };
+        }
+
+        return (ctx) => {
+          const maybePromise = argFun ? argFun(ctx) : null;
+          const argPromise = maybePromise instanceof Promise ?
+                  maybePromise : Promise.resolve(maybePromise);
+          return argPromise.then(arg => {
+            return request(`${fullPath}.tasitc`, arg, ctx).then(result => {
+              if (result instanceof primitives.Node) {
+                return recurse(result.data, argFun)(ctx);
+              } else if (result instanceof primitives.Text) {
+                return result.value;
+              }
+              throw new Error(`TODO: ${JSON.stringify(result)}`);
+            });
+          });
+        };
       } else if (node.type === 'Composition') {
         return ctx => {
           // FIXME: [{'a': 'foo'}, {'a': 'bar'}] | map ($.a | regex 'foo') fails if the 2 lines below are outside of this closure!?!?!?!?!?!?!?!?!?!?!?!?
@@ -75,7 +100,7 @@ const transpile = (parseTree) => {
           return elements.map(element => element(ctx));
         };
       } else if (node.type === 'Partial') {
-        const fun = transpileFun(node, aliases, request, partialFun);
+        const fun = transpileFun(node, aliases, request);
         if (node.arg && node.arg.type === 'Curry') {
           if (partialFun) {
             return fun(partialFun);
@@ -107,9 +132,8 @@ const transpile = (parseTree) => {
       } else if (node.type === 'Sink') {
         return () => {
           const content = parseTree.text.slice(node.start, node.end);
-          return request('/tasitc/core/ns/sink')(() => {
-            return node.path.value;
-          })(content);
+          const path = node.path.value;
+          return request('/localhost/ns/sink.tasitc', path, content);
         };
       } else if (node.type === 'Context') {
         const scope = (ctx, paths) => {
@@ -139,7 +163,17 @@ const transpile = (parseTree) => {
 
   return (ctx, aliases, request) => {
     return aliases.then(aliases => {
-      return init(parseTree.value, aliases, request)(ctx);
+      const maybePromise = init(parseTree.value, aliases, request)(ctx);
+      const promise = maybePromise instanceof Promise ?
+              maybePromise : Promise.resolve(maybePromise);
+      return promise.then(result => {
+        if (result instanceof primitives.Node || result instanceof primitives.Text) {
+          return result;
+        } else if (result instanceof Object || result instanceof Array) {
+          return new primitives.Json(result);
+        }
+        return new primitives.Text(result.toString());
+      });
     });
   };
 };

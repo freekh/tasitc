@@ -14,8 +14,8 @@ module.exports = {
   text: '/tasitc/core/combinators/text',
   html: '/tasitc/core/combinators/html',
   //
-  ls: '/tasitc/core/ns/list',
-  write: '/tasitc/core/ns/write',
+  ls: '/localhost/ns/ls',
+  sink: '/localhost/ns/sink',
   //
   li: '/tasitc/dom/li',
 };

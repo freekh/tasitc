@@ -296,11 +296,11 @@ Sink.parser = P.lazy('Sink', () => {
 
 const parse = (text) => {
   // FIXME: gross hack: related to https://github.com/jneen/parsimmon/issues/73?
-  let result = Sink.parser.parse(text);
+  let result = Composition.parser.parse(text);
   if (!result.status) {
-    result = Partial.parser.parse(text);
+    result = Sink.parser.parse(text);
     if (!result.status) {
-      result = Composition.parser.parse(text);
+      result = Partial.parser.parse(text);
     }
   }
   result.text = text;

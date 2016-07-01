@@ -100,27 +100,20 @@ class Apply extends Marked {
 }
 
 class Eval extends Marked {
-  constructor(expression, arg, fragment, tags) { // FIXME: decide on fragment and tags!
+  constructor(expression, arg, modifier) {
     super();
     this.type = 'Eval';
     this.expression = expression;
     this.arg = arg;
+    this.modifier = modifier;
   }
 }
 
-class Fragment extends Marked {
-  constructor(id) {
+class Modifier extends Marked {
+  constructor(value) {
     super();
-    this.type = 'Fragment';
-    this.id = id;
-  }
-}
-
-class Tag extends Marked {
-  constructor(id) {
-    super();
-    this.type = 'Tag';
-    this.id = id;
+    this.type = 'Modifier';
+    this.value = value;
   }
 }
 
@@ -166,9 +159,8 @@ module.exports = {
   Expression,
   Partial,
   Apply,
-  Eval, // TODO: delete?
-  Fragment,  // TODO: delete?
-  Tag,  // TODO: delete?
+  Eval,
+  Modifier,
   Keyword,
   Parameter,
   Context,

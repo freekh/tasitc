@@ -20,7 +20,7 @@ const read = (fullPath) => {
       if (err) {
         reject(err);
       } else {
-        resolve(new primitives.Text(content.toString()));
+        resolve(content.toString());
       }
     });
   });
@@ -69,15 +69,21 @@ const request = (fullPath, arg, ctx) => {
     const path = `${arg}.tasitc`;
     return write(path, ctx);
   } else if (fullPath.endsWith('.tasitc')) {
-    return read(fullPath).then(text => {
-      const parseTree = parse(text.value);
+    return read(fullPath).then(content => {
+      const parseTree = parse(content);
       if (parseTree.status) {
         return new primitives.Node(parseTree.value);
       }
       return Promise.reject(new primitives.Node(null, parseTree));
     });
+  } else if (fullPath.endsWith('.js')) {
+    return read(fullPath).then(content => {
+      return new primitives.Js(content);
+    });
   }
-  return read(fullPath);
+  return read(fullPath).then(content => {
+    return new primitives.Text(content);
+  }) ;
 };
 
 module.exports = () => {
@@ -118,6 +124,8 @@ module.exports = () => {
 
           expr({}, Promise.resolve(aliases), request).then(result => {
             test.deepEqual(result, expected);
+            test.equal(result.constructor.name, expected.constructor.name,
+                       `${JSON.stringify(result)} not same class as ${JSON.stringify(expected)}`);
             test.done();
           }).catch(err => {
             if (err.stack) {

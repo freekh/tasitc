@@ -52,6 +52,13 @@ const transpileFun = (node, aliases, request) => {
   return fun;
 };
 
+const asPromise = maybePromise => {
+  if (maybePromise instanceof Promise) {
+    return maybePromise;
+  }
+  return Promise.resolve(maybePromise);
+};
+
 const transpile = (parseTree) => {
   const init = (node, aliases, request) => {
     const recurse = (node, partialFun) => { // TODO: rename partialFun to applyArgFun
@@ -73,9 +80,7 @@ const transpile = (parseTree) => {
         }
 
         return (ctx) => {
-          const maybePromise = argFun ? argFun(ctx) : null;
-          const argPromise = maybePromise instanceof Promise ?
-                  maybePromise : Promise.resolve(maybePromise);
+          const argPromise = asPromise(argFun ? argFun(ctx) : null);
           return argPromise.then(arg => {
             return request(`${fullPath}.tasitc`, arg, ctx).then(result => {
               if (result instanceof primitives.Node) {
@@ -155,6 +160,16 @@ const transpile = (parseTree) => {
         return ctx => {
           return scoped(ctx);
         };
+      } else if (node.type === 'Eval') {
+        const argFun = node.arg ? recurse(node.arg, partialFun) : null;
+        return ctx => {
+          return request(`${node.expression.value}.js`).then(content => {
+            const argPromise = asPromise(argFun ? argFun(ctx) : null);
+            return argPromise.then(arg => {
+              return eval(content.value)(ctx, arg, node.modifier.value, { primitives });
+            });
+          });
+        };
       }
 
       throw new Error('TODO '+ JSON.stringify(node));
@@ -168,7 +183,8 @@ const transpile = (parseTree) => {
       const promise = maybePromise instanceof Promise ?
               maybePromise : Promise.resolve(maybePromise);
       return promise.then(result => {
-        if (result instanceof primitives.Node || result instanceof primitives.Text) {
+        // TODO: all primitives
+        if (result instanceof primitives.Node || result instanceof primitives.Text || result instanceof primitives.DomElement || result instanceof primitives.Html) {
           return result;
         } else if (result instanceof Function) {
           return new primitives.Node(parseTree.value);

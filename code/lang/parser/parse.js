@@ -7,8 +7,7 @@ const { Sink,
         Partial,
         Apply,
         Eval,
-        Fragment,
-        Tag,
+        Modifier,
         Keyword,
         Parameter,
         Instance,
@@ -109,8 +108,8 @@ Composition.parser = P.lazy('Composition', () => {
     Instance.parser,
     List.parser,
     Apply.parser,
-    Expression.parser,
-    Eval.parser
+    Eval.parser,
+    Expression.parser
   ), ignore(P.string('|'))))
     .map(reify);
 });
@@ -209,35 +208,25 @@ Expression.parser = P.lazy('Expression', () => {
   return ignore(expr);
 });
 
-const cssSelector = P.regex(/-?[_a-zA-Z]+[_a-zA-Z0-9-]*/).desc('CSS selector');
+const cssSelector = P.regex(/-?[#\._a-zA-Z]+[_a-zA-Z0-9-]*/).desc('CSS selector');
 
-Fragment.parser = P.lazy('Fragment', () => {
+Modifier.parser = P.lazy('Modifier', () => {
   const reify = (data) => {
     const id = data;
-    return new Fragment(id);
+    return new Modifier(id);
   };
-  return P.string('#')
+  return P.string('[')
     .then(cssSelector)
+    .skip(P.string(']'))
     .map(reify);
 });
 
-Tag.parser = P.lazy('Tag', () => {
-  const reify = (data) => {
-    const id = data;
-    return new Tag(id);
-  };
-  return P.string('.')
-    .then(cssSelector)
-    .map(reify);
-});
 
 Eval.parser = P.lazy('Eval', () => {
-  return P.string(':').then(P.alt(Id.parser, Expression.parser).chain(expression => {
-    return P.alt(Fragment.parser, P.succeed(null)).chain(fragment => {
-      return P.alt(P.seq(Tag.parser), P.succeed([])).chain(tags => {
-        return P.alt(P.whitespace.then(argumentParser), P.succeed(null)).map(arg => {
-          return new Eval(expression, arg, fragment, tags);
-        });
+  return P.string(':').then(P.alt(Id.parser).chain(expression => {
+    return P.alt(Modifier.parser, P.succeed(null)).chain(modifier => {
+      return P.alt(P.whitespace.then(argumentParser), P.succeed(null)).map(arg => {
+        return new Eval(expression, arg, modifier);
       });
     });
   }));
@@ -297,12 +286,19 @@ Sink.parser = P.lazy('Sink', () => {
 const parse = (text) => {
   // FIXME: gross hack: related to https://github.com/jneen/parsimmon/issues/73?
   let result = Composition.parser.parse(text);
-  if (!result.status) {
-    result = Sink.parser.parse(text);
-    if (!result.status) {
-      result = Partial.parser.parse(text);
-    }
-  }
+  // const expected = [];
+  // if (!result.status) {
+  //   expected.push(result.expected.slice());
+  //   result = Sink.parser.parse(text);
+  //   if (!result.status) {
+  //     expected.push(result.expected.slice());
+  //     result = Partial.parser.parse(text);
+  //   }
+  // }
+  // if (!result.status) {
+  //   expected.push(result.expected.slice());
+  //   result.expected = expected;
+  // }
   result.text = text;
   return result;
 };

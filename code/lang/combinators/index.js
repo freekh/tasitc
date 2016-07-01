@@ -7,6 +7,7 @@ const sort = require('./sort');
 const reverse = require('./reverse');
 const split = require('./split');
 const join = require('./join');
+const html = require('./html'); // TODO: move from combinators?
 
 module.exports = {
   '/tasitc/core/combinators/apply': apply,
@@ -22,4 +23,6 @@ module.exports = {
   '/tasitc/core/combinators/reverse': reverse,
   '/tasitc/core/combinators/split': split,
   '/tasitc/core/combinators/join': join,
+
+  '/tasitc/core/combinators/html': html,
 };

@@ -4,7 +4,7 @@ const ast = require('../code/lang/ast');
 
 /* eslint-disable quotes */
 
-if (false) {
+if (true) {
   // list:
   fixture.test(`['he', 'wo']`, new Json(['he', 'wo']), true);
 
@@ -36,10 +36,12 @@ if (false) {
   // ls:
   fixture.test(`ls`,
                new Json([{ absolute: '/freekh/dir', name: 'dir' },
-                         { absolute: '/freekh/grep.tasitc', name: 'grep.tasitc' }]), true);
+                         { absolute: '/freekh/grep.tasitc', name: 'grep.tasitc' },
+                         { absolute: '/freekh/h1.js', name: 'h1.js' }]), true);
   fixture.test(`ls '/freekh'`,
                new Json([{ absolute: '/freekh/dir', name: 'dir' },
-                         { absolute: '/freekh/grep.tasitc', name: 'grep.tasitc' }]), true);
+                         { absolute: '/freekh/grep.tasitc', name: 'grep.tasitc' },
+                         { absolute: '/freekh/h1.js', name: 'h1.js' }]), true);
 
   // regex:
   // there is no mime type for Boolean, which is why it is text, but...
@@ -64,12 +66,18 @@ if (false) {
                new Json([true, false]), true);
   fixture.test(`ls | map $.name | flatmap ($ | split)`,
                new Json(["d", "i", "r",
-                         "g", "r", "e", "p", '.', 't', 'a', 's', 'i', 't', 'c']), true);
+                         "g", "r", "e", "p", '.', 't', 'a', 's', 'i', 't', 'c',
+                         "h", "1", ".", "j", "s"]), true);
   fixture.test(`ls | flatmap ls`, new Json([
     { absolute: '/freekh/dir', name: 'dir' },
     { absolute: '/freekh/grep.tasitc', name: 'grep.tasitc' },
+    { absolute: '/freekh/h1.js', name: 'h1.js' },
     { absolute: '/freekh/dir', name: 'dir' },
     { absolute: '/freekh/grep.tasitc', name: 'grep.tasitc' },
+    { absolute: '/freekh/h1.js', name: 'h1.js' },
+    { absolute: '/freekh/dir', name: 'dir' },
+    { absolute: '/freekh/grep.tasitc', name: 'grep.tasitc' },
+    { absolute: '/freekh/h1.js', name: 'h1.js' },
   ]), true);
   fixture.test(`['he', 'wo', 'rld'] | flatmap ifte [regex 'he', [$], []]`,
                new Json(['he']), true);
@@ -90,19 +98,19 @@ if (false) {
     new ast.Partial(new ast.Id('regex'), new ast.Curry())), true);
 
   // js:
-  fixture.test(`'slag' | :js {(arg, ctx) => 'a' + arg + ctx; } 'alle'`, new Text('balleslag'), true);
-  fixture.test(`js { (arg, ctx, variant) => 'a' + arg + ctx + variant; } > /freekh/test`, new Text('/freekh/test'), true);
-  fixture.test(`'slag ' | :/freekh/test[au] 'alle''`, new Text('balleslag au'), true);
-
+  // fixture.test(`'slag' | :js {(arg, ctx) => 'a' + arg + ctx; } 'alle'`,
+  //              new Text('balleslag'), true);
+  // fixture.test(`js { (arg, ctx, variant) => 'a' + arg + ctx + variant; } > /freekh/test`,
+  //              new Text('/freekh/test'), true);
+  fixture.test(`:/freekh/h1[#au] 'balle'`,
+               new DomElement('h1', { id: 'au' }, 'balle'), true);
   // html:
-  fixture.test(`html :h1[#foo] 'test'`,
+  fixture.test(`html [:/freekh/h1[#foo] 'test']`,
                new Html([
-                 new DomElement('head'),
                  new DomElement('body', {}, [
-                   new DomElement('test', { id: 'foo' }, []),
+                   new DomElement('h1', { id: 'foo' }, 'test'),
                  ]),
                ]), true);
-
   // sink:
   fixture.test(`flatmap ifte [regex ?, [$], []] > /freekh/grep`,
                new Text('/freekh/grep.tasitc'), true);
@@ -111,14 +119,6 @@ if (false) {
   fixture.test(`['hei', 'du'] | /freekh/grep '[d].*?'`, new Json(['du']), true);
 }
 
-fixture.test(`:/freekh/h1[#au] 'balle'`,
-             new DomElement('h1', { id: 'au' }, 'balle'), true, true);
-fixture.test(`html [:/freekh/h1[#foo] 'test']`,
-             new Html([
-               new DomElement('body', {}, [
-                 new DomElement('h1', { id: 'foo' }, 'test'),
-               ]),
-             ]), true);
 /* eslint-enable quotes */
 
 

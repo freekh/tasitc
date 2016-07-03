@@ -286,19 +286,19 @@ Sink.parser = P.lazy('Sink', () => {
 const parse = (text) => {
   // FIXME: gross hack: related to https://github.com/jneen/parsimmon/issues/73?
   let result = Composition.parser.parse(text);
-  // const expected = [];
-  // if (!result.status) {
-  //   expected.push(result.expected.slice());
-  //   result = Sink.parser.parse(text);
-  //   if (!result.status) {
-  //     expected.push(result.expected.slice());
-  //     result = Partial.parser.parse(text);
-  //   }
-  // }
-  // if (!result.status) {
-  //   expected.push(result.expected.slice());
-  //   result.expected = expected;
-  // }
+  const expected = [];
+  if (!result.status) {
+    expected.push(result.expected.slice());
+    result = Sink.parser.parse(text);
+    if (!result.status) {
+      expected.push(result.expected.slice());
+      result = Partial.parser.parse(text);
+    }
+  }
+  if (!result.status) {
+    expected.push(result.expected.slice());
+    result.expected = expected;
+  }
   result.text = text;
   return result;
 };

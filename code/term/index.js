@@ -267,7 +267,8 @@ const enter = () => {
       { mime: 'application/json', type: 'POST', data: parseTree }
     ).then(res => {
       let resElem = h('div');
-      if (res.mime === 'text/html') {
+      console.log('RES!!!', res, res.mime);
+      if (res.mime.indexOf('text/html') !== -1) {
         const shadowRoot = resElem.createShadowRoot();
         shadowRoot.innerHTML = res.content;
       } else {

@@ -13,9 +13,13 @@ module.exports = {
   //
   text: '/tasitc/core/combinators/text',
   html: '/tasitc/core/combinators/html',
+  // dom
+  h1: '/tasitc/dom/h1',
+  div: '/tasitc/dom/div',
+  li: '/tasitc/dom/li',
+  ul: '/tasitc/dom/ul',
   //
   ls: '/localhost/ns/ls',
+  rm: '/localhost/ns/rm',
   sink: '/localhost/ns/sink',
-  //
-  li: '/tasitc/dom/li',
 };

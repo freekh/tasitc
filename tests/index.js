@@ -114,9 +114,21 @@ if (true) {
   // sink:
   fixture.test(`flatmap ifte [regex ?, [$], []] > /freekh/grep`,
                new Text('/freekh/grep.tasitc'), true);
-
+  fixture.test(`ls /freekh | map $.name > /example`,
+               new Text('/example.tasitc'), true);
   // request:
   fixture.test(`['hei', 'du'] | /freekh/grep '[d].*?'`, new Json(['du']), true);
+
+  // ??: TODO Figure out what this tests or remove? associativity     0?
+  // fixture.test(`ls | flatmap ($.name | ifte [regex 'dir', [$], []])`, new Json(['dir']), true);
+  // fixture.test(`ls | flatmap (($.name | ?) (ifte [regex 'dir', [$], []]))`, new Json(['dir']), true, true);
+  // fixture.test(`ls | flatmap (($.name | ?) grepish)`, new Json(['dir']), true, true); // where grepish == ifte [regex 'dir', [$], []]
+  // fixture.test(`ls | flatmap (($.name | ?) (grepish2 'dir'))`, new Json(['dir']), true, true); // where grepish2 == ifte [regex ?, [$], []]
+  // fixture.test(`ls | flatmap (($.name | ?) (ifte [regex 'dir', [$], []]) | $.absolute)`, new Json(['dir']), true, true); // should be the same as: ls | flatmap ($.name | (ifte [regex 'dir', [$], []] | $.absolute))
+
+  // TODO:
+  // ls | map ($.name | /freekh/grep ?) 'test'
+  // ls | flatmap ($.name | ifte [regex 'test', [$], []])
 }
 
 /* eslint-enable quotes */

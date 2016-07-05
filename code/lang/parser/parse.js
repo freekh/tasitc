@@ -270,7 +270,7 @@ Parameter.parser = P.lazy('Parameter', () => {
 });
 
 Sink.parser = P.lazy('Sink', () => {
-  return P.alt(Partial.parser, Composition.parser).mark().skip(P.optWhitespace).chain(expression => {
+  return Composition.parser.mark().chain(expression => {
     const reify = (data) => {
       const path = data;
       return new Sink(expression.value, path, expression.start.offset, expression.end.offset);
@@ -281,6 +281,17 @@ Sink.parser = P.lazy('Sink', () => {
   });
 });
 
+const sinkPartialHack = P.lazy('Sink', () => {
+  return Partial.parser.mark().chain(expression => {
+    const reify = (data) => {
+      const path = data;
+      return new Sink(expression.value, path, expression.start.offset, expression.end.offset);
+    };
+    return ignore(P.string('>')).
+      then(Id.parser).
+      map(reify);
+  });
+});
 //
 
 const parse = (text) => {
@@ -293,6 +304,10 @@ const parse = (text) => {
     if (!result.status) {
       expected.push(result.expected.slice());
       result = Partial.parser.parse(text);
+      if (!result.status) {
+        expected.push(result.expected.slice());
+        result = sinkPartialHack.parse(text);
+      }
     }
   }
   if (!result.status) {

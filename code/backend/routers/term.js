@@ -115,6 +115,19 @@ const list = (fullPath) => {
   });
 };
 
+const remove = (fullPath) => {
+  return new Promise((resolve, reject) => {
+    const resolvedPath = path.resolve(`./tests/ns${(fullPath || '')}`);
+    fs.unlink(resolvedPath, (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(new primitives.Text(fullPath));
+      }
+    });
+  });
+};
+
 const write = (fullPath, content) => {
   return new Promise((resolve, reject) => {
     const resolvedPath = path.resolve(`./tests/ns${(fullPath || '')}`);
@@ -131,6 +144,9 @@ const write = (fullPath, content) => {
 const request = (fullPath, arg, ctx) => {
   if (fullPath === '/localhost/ns/ls.tasitc') {
     return list(arg, ctx);
+  } else if (fullPath === '/localhost/ns/rm.tasitc') {
+    const path = `${arg}.tasitc`;
+    return remove(path);
   } else if (fullPath === '/localhost/ns/sink.tasitc') {
     const path = `${arg}.tasitc`;
     return write(path, ctx);
@@ -156,17 +172,27 @@ router.post('/tasitc/term/execute', jsonParser, (req, res) => {
   expr({}, Promise.resolve(aliases), request).then(result => {
     log.info(parseTree.text, result);
     if (result) {
-      res.json(result);
+      if (result instanceof primitives.Html || result instanceof primitives.DomElement) {
+        res.contentType('text/html').send(result.toString());
+      } else if (result instanceof primitives.Text) {
+        res.contentType('text/plain').send(result.value);
+      } else if (result instanceof primitives.Json) {
+        res.json(result.value);
+      } else {
+        res.send(result);
+      }
     } else {
       res.send('');
     }
   }).catch(err => {
+    let errorMsg = 'ERROR: ';
     if (err.stack) {
-      log.error(err.stack.toString());
+      errorMsg += err.stack.toString();
     } else {
-      log.error(`ERROR: '${err}' (${JSON.stringify(err)})`);
+      errorMsg += `'${err}' (${JSON.stringify(err)})`;
     }
-    res.status(500).send(err.toString());
+    log.error(errorMsg);
+    res.status(500).send(errorMsg);
   });
 });
 

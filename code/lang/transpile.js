@@ -58,6 +58,14 @@ const asPromise = maybePromise => {
   }
   return Promise.resolve(maybePromise);
 };
+const flattenPromises = maybePromise => {
+  return asPromise(maybePromise).then(value => {
+    if (value instanceof Array) {
+      return Promise.all(value.map(flattenPromises));
+    }
+    return value;
+  });
+};
 
 const transpile = (parseTree) => {
   const init = (node, aliases, request) => {
@@ -162,11 +170,13 @@ const transpile = (parseTree) => {
         };
       } else if (node.type === 'Eval') {
         const argFun = node.arg ? recurse(node.arg, partialFun) : null;
+        const fullPath = normalize(node.expression, aliases); // TODO: rename expression to path?
+        const modifier = (node.modifier && node.modifier.value) ? node.modifier.value : null;
         return ctx => {
-          return request(`${node.expression.value}.js`).then(content => {
-            const argPromise = asPromise(argFun ? argFun(ctx) : null);
+          return request(`${fullPath}.js`).then(content => {
+            const argPromise = flattenPromises(argFun ? argFun(ctx) : null);
             return argPromise.then(arg => {
-              return eval(content.value)(ctx, arg, node.modifier.value, { primitives });
+              return eval(content.value)(ctx, arg, modifier, { primitives });
             });
           });
         };

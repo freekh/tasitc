@@ -123,6 +123,11 @@ module.exports = () => {
           const expr = transpile(parseTree);
 
           expr({}, Promise.resolve(aliases), request).then(result => {
+            if (debug) {
+              console.log('""""');
+              console.log(result.toString());
+              console.log('""""');
+            }
             test.deepEqual(result, expected);
             test.equal(result.constructor.name, expected.constructor.name,
                        `${JSON.stringify(result)} not same class as ${JSON.stringify(expected)}`);

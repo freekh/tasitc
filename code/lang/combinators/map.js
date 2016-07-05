@@ -9,7 +9,7 @@ const map = (argFun) => {
         return argFun(element);
       }));
     }
-    return Promise.reject(`Cannot map: ${JSON.stringify(ctx)}`);
+    return Promise.reject(`Cannot map: ${JSON.stringify(ctx, null, 2)}`);
   };
 };
 

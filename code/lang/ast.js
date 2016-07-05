@@ -48,7 +48,7 @@ class Context extends Marked { // $
   }
 }
 
-class Curry extends Marked {
+class Curry extends Marked { // TODO: rename to unknown argument
   constructor() {
     super();
     this.type = 'Curry';

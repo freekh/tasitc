@@ -135,3 +135,14 @@ Uhm... I am not sure. The idea came to me while thinking that it should be easie
 `{ prod: false } > ../staging/env`
 `ln -r . ../prod`
 `{ prod: true } > ../prod/env`
+
+
+## More thoughts
+Could composition be a monoid?: x | (y | z) == (x | y) | z && $ | x == x && x | $ == x???
+
+x | ($ | y | z) == (x | y) | $ | z
+
+
+a b c === c | b | a == c | a b
+
+Types... 

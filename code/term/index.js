@@ -101,6 +101,7 @@ const elems = {
 };
 
 root.appendChild(parent);
+
 parent.appendChild(history);
 parent.appendChild(ps1(global.cwd, global.value));
 root.appendChild(completion);
@@ -267,10 +268,11 @@ const enter = () => {
       { mime: 'application/json', type: 'POST', data: parseTree }
     ).then(res => {
       let resElem = h('div');
-      console.log('RES!!!', res, res.mime);
       if (res.mime.indexOf('text/html') !== -1) {
         const shadowRoot = resElem.createShadowRoot();
         shadowRoot.innerHTML = res.content;
+      } else if (res.mime.indexOf('text/plain') !== -1) {
+        resElem = h('div', res.content);
       } else {
         resElem = h('div', JSON.stringify(res.content));
       }
@@ -281,12 +283,6 @@ const enter = () => {
       complete();
       throw err;
     });
-  // } else if (parseTree.expected.indexOf("']'") !== -1 ||
-  //            parseTree.expected.indexOf("')'") !== -1) {
-  //   const { value, cursor } = insertText(global.value, global.cursor, '\n');
-  //   global.cursor = cursor;
-  //   global.value = value;
-  //   updateView();
   } else {
     global.block = true;
     appendLastToHistory();
@@ -302,6 +298,10 @@ const space = () => {
   global.value = value;
   updateView();
 };
+
+// -------------------------- Key/operation buffer ----------------------------//
+
+
 
 // ------------------------------ Events --------------------------------------//
 

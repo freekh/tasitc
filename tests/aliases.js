@@ -20,6 +20,7 @@ module.exports = {
   ul: '/tasitc/dom/ul',
   //
   ls: '/localhost/ns/ls',
+  cat: '/localhost/ns/cat',
   rm: '/localhost/ns/rm',
   sink: '/localhost/ns/sink',
 };

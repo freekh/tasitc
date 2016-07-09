@@ -90,7 +90,12 @@ const transpile = (parseTree) => {
         return (ctx) => {
           const argPromise = asPromise(argFun ? argFun(ctx) : null);
           return argPromise.then(arg => {
-            return request(`${fullPath}.tasitc`, arg, ctx).then(result => {
+            return request(`${fullPath}.tasitc`, arg, ctx).catch(err => {
+              if (!arg) {
+                return new primitives.Text(fullPath);
+              }
+              return Promise.reject(err);
+            }).then(result => {
               if (result instanceof primitives.Node) {
                 return recurse(result.data, argFun)(ctx);
               } else if (result instanceof primitives.Text) {
@@ -121,7 +126,6 @@ const transpile = (parseTree) => {
           return fun;
         }
         const argFun = node.arg ? recurse(node.arg, partialFun) : null;
-        
         return fun(argFun);
       } else if (node.type === 'Apply') {
         const argFun = node.arg ? recurse(node.arg, partialFun) : null;

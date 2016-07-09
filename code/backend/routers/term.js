@@ -24,6 +24,18 @@ const term = {
   },
 };
 
+const editor = {
+  dir: path.resolve('./code/editor'),
+  js: {
+    path: '/tasitc/editor/js',
+    index: 'index.js',
+  },
+  css: {
+    path: '/tasitc/editor/css',
+    scss: 'index.scss',
+  },
+};
+
 router.use('/tasitc/term/assets', express.static(path.resolve('./assets')));
 
 router.get(term.js.path, (req, res) => {
@@ -40,35 +52,75 @@ router.get(term.css.path, (req, res) => {
   });
 });
 
+router.get(editor.js.path, (req, res) => {
+  const stream = res.contentType('application/json');
+  browserify(editor.dir, editor.js.index, stream);
+});
+
+router.get(editor.css.path, (req, res) => {
+  scss(path.resolve(editor.dir, editor.css.scss)).then(css => {
+    res.contentType('text/css').send(css.toString());
+  }).catch(err => {
+    log.error(err);
+    res.sendStatus(500);
+  });
+});
+
 router.get('/', (req, res) => {
   res.redirect('freekh/');
 });
 
-router.get('/freekh*', (req, res) => {
+router.get('/freekh/editor', (req, res) => {
   const username = 'freekh';
   const path = `/${username}${req.params[0]}`;
   log.info('user', username, 'cwd: ', path);
 
   const page = h('html', [
-    h('header', [
+    h('head', [
       h('link', {
         rel: 'stylesheet',
         type: 'text/css',
-        href: term.css.path,
+        href: '/freekh/editor/lib/codemirror.css',
+      }),
+      h('link', {
+        rel: 'stylesheet',
+        type: 'text/css',
+        href: '/freekh/editor/theme/monokai',
+      }),
+      h('link', {
+        rel: 'stylesheet',
+        type: 'text/css',
+        href: editor.css.path,
       }),
     ]),
     h('body', [
-      h('div#term'),
+      h('div#editor'),
       h('script', {
         type: 'application/javascript',
-        defer: 'defer',
-        src: term.js.path,
+        src: editor.js.path,
       }),
     ]),
   ]);
   const html = page.outerHTML;
   res.contentType('text/html').send(html);
 });
+
+router.get('/freekh/editor/theme/:name', (req, res) => {
+  const name = req.params.name;
+  res.sendFile(path.resolve(`./node_modules/codemirror/theme/${name}.css`));
+});
+
+router.get('/freekh/editor/lib/:name', (req, res) => {
+  const name = req.params.name;
+  res.sendFile(path.resolve(`./node_modules/codemirror/lib/${name}`));
+});
+
+
+router.get('/freekh/editor/keymap/:name', (req, res) => {
+  const name = req.params.name;
+  res.sendFile(path.resolve(`./node_modules/codemirror/keymap/${name}.js`));
+});
+
 
 
 // TODO: REMOVE FROM HERE
@@ -79,10 +131,11 @@ const parse = require('../../lang/parser/parse');
 const aliases = require('../../../tests/aliases'); // TODO: remove
 const ast = require('../../lang/ast');
 const primitives = require('../../lang/primitives');
+const root = path.resolve('./tests/ns'); // TODO: shoudl not be refering to tests
 
-const read = (fullPath) => {
+const read = (fullPath) => { // FIXME: fullPath is not full path it is relative to root! change name everywhere!
   return new Promise((resolve, reject) => {
-    fs.readFile(path.resolve(`./tests/ns${fullPath || ''}`), (err, content) => {
+    fs.readFile(path.resolve(root, fullPath), (err, content) => {
       if (err) {
         reject(err);
       } else {
@@ -93,9 +146,8 @@ const read = (fullPath) => {
 };
 
 const list = (fullPath) => {
-  const user = 'freekh';
   return new Promise((resolve, reject) => {
-    const dir = path.resolve(fullPath && (`./tests/ns${fullPath}`) || `./tests/ns/${user}`);
+    const dir = path.resolve(root, fullPath);
     fs.readdir(dir, (err, files) => {
       if (err) {
         reject(err);
@@ -117,7 +169,7 @@ const list = (fullPath) => {
 
 const remove = (fullPath) => {
   return new Promise((resolve, reject) => {
-    const resolvedPath = path.resolve(`./tests/ns${(fullPath || '')}`);
+    const resolvedPath = path.resolve(root, fullPath);
     fs.unlink(resolvedPath, (err) => {
       if (err) {
         reject(err);
@@ -130,7 +182,7 @@ const remove = (fullPath) => {
 
 const write = (fullPath, content) => {
   return new Promise((resolve, reject) => {
-    const resolvedPath = path.resolve(`./tests/ns${(fullPath || '')}`);
+    const resolvedPath = path.resolve(root, fullPath);
     fs.writeFile(resolvedPath, content, (err) => {
       if (err) {
         reject(err);
@@ -141,12 +193,26 @@ const write = (fullPath, content) => {
   });
 };
 
+const stat = (fullPath) => {
+  return new Promise((resolve, reject) => {
+    fs.stat(path.resolve(root, fullPath), (err, stat) => { 
+      if (err) {
+        reject(err);
+      } else {
+        resolve(stat);
+      }
+    });
+  });
+};
+
 const request = (fullPath, arg, ctx) => {
   if (fullPath === '/localhost/ns/ls.tasitc') {
-    return list(arg, ctx);
+    return list(arg);
   } else if (fullPath === '/localhost/ns/rm.tasitc') {
     const path = `${arg}.tasitc`;
     return remove(path);
+  } else if (fullPath === '/localhost/ns/cat.tasitc') {
+    return read(arg);
   } else if (fullPath === '/localhost/ns/sink.tasitc') {
     const path = `${arg}.tasitc`;
     return write(path, ctx);
@@ -159,8 +225,60 @@ const request = (fullPath, arg, ctx) => {
       return Promise.reject(new primitives.Node(null, parseTree));
     });
   }
-  return read(fullPath);
+  return new primitives.Text(fullPath);
 };
+
+router.post('/:username*', bodyParser.text(), (req, res) => {
+  const username = req.params.username;
+  const path = `/${username}${req.params[0]}`;
+  write(path.slice(1), req.body).then(() => { // FIXME: slicing is done because /freekh/grep.tasitc is absloute but it should not be
+    res.sendStatus(200);
+  }).catch(err => {
+    log.error(err);
+    res.sendStatus(500);
+  });
+});
+
+router.get('/:username*', (req, res) => {
+  const username = req.params.username;
+  const path = `/${username}${req.params[0]}`;
+  log.info('user', username, 'path: ', path);
+  stat(path.slice(1)).then(stat => { // FIXME: slicing is done because /freekh/grep.tasitc is absloute but it should not be
+    if (stat.isFile()) {
+      read(path.slice(1)).then(content => { // FIXME: slicing is done because /freekh/grep.tasitc is absloute but it should not be
+        res.send(content.value);
+      }).catch(err => {
+        log.error(err);
+        res.sendStatus(500);
+      });
+    } else if (stat.isDirectory()) {
+      const page = h('html', [
+        h('head', [
+          h('link', {
+            rel: 'stylesheet',
+            type: 'text/css',
+            href: term.css.path,
+          }),
+        ]),
+        h('body', [
+          h('div#term'),
+          h('script', {
+            type: 'application/javascript',
+            defer: 'defer',
+            src: term.js.path,
+          }),
+        ]),
+      ]);
+      const html = page.outerHTML;
+      res.contentType('text/html').send(html);
+    } else {
+      res.status(404).send(`path: '${path}' (root: ${root}) not found`);
+    }
+  }).catch(err => {
+    log.error(err);
+    res.sendStatus(500);
+  });
+});
 
 router.post('/tasitc/term/execute', jsonParser, (req, res) => {
   const parseTree = req.body;

@@ -9,7 +9,7 @@ require('codemirror/mode/htmlmixed/htmlmixed');
 require('codemirror/keymap/emacs');
 
 const CodeMirror = require('codemirror/lib/codemirror');
-const editor = document.getElementById('editor');
+const app = document.getElementById('app');
 
 // TODO: clean up. got it from: http://stackoverflow.com/questions/11582512/how-to-get-url-parameters-with-javascript/11582513#11582513
 function getURLParameter(name) {
@@ -49,7 +49,7 @@ const xhr = new XMLHttpRequest();
 xhr.open('GET', getURLParameter('path'));
 xhr.onload = () => {
   const value = xhr.responseText;
-  const cm = CodeMirror(editor, {
+  const cm = CodeMirror(app, {
     mode: 'text/x-tasitc',
     keyMap: 'emacs',
     theme: 'monokai',

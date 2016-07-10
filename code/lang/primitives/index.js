@@ -4,6 +4,7 @@ const Node = require('./node');
 const Text = require('./text');
 const DomElement = require('./dom-element');
 const Html = require('./html');
+const App = require('./app');
 
 module.exports = {
   Json,
@@ -12,4 +13,5 @@ module.exports = {
   Js,
   DomElement,
   Html,
+  App,
 };

@@ -216,6 +216,8 @@ const request = (fullPath, arg, ctx) => {
   } else if (fullPath === '/localhost/ns/sink.tasitc') {
     const path = `${arg}.tasitc`;
     return write(path, ctx);
+  } else if (fullPath.endsWith('.app.tasitc')) {
+    return Promise.resolve(new primitives.App(fullPath, arg));
   } else if (fullPath.endsWith('.tasitc')) {
     return read(fullPath).then(text => {
       const parseTree = parse(text.value);
@@ -225,8 +227,44 @@ const request = (fullPath, arg, ctx) => {
       return Promise.reject(new primitives.Node(null, parseTree));
     });
   }
-  return new primitives.Text(fullPath);
+  return Promise.resolve(new primitives.Text(fullPath));
 };
+
+router.post('/tasitc/term/execute', jsonParser, (req, res) => {
+  const parseTree = req.body;
+  if (!parseTree) {
+    res.json([]);
+  }
+  console.log('parseTree', JSON.stringify(parseTree, null, 2));
+  const expr = transpile(parseTree);
+  expr({}, Promise.resolve(aliases), request).then(result => {
+    log.info(parseTree.text, result);
+    if (result) {
+      if (result instanceof primitives.Html || result instanceof primitives.DomElement) {
+        res.contentType('text/html').send(result.toString());
+      } else if (result instanceof primitives.Text) {
+        res.contentType('text/plain').send(result.value);
+      } else if (result instanceof primitives.Json) {
+        res.json(result.value);
+      } else if (result instanceof primitives.App) {
+        res.contentType('application/x-tasitc.app').send(result);
+      } else {
+        res.send(result);
+      }
+    } else {
+      res.send('');
+    }
+  }).catch(err => {
+    let errorMsg = 'ERROR: ';
+    if (err.stack) {
+      errorMsg += err.stack.toString();
+    } else {
+      errorMsg += `'${err}' (${JSON.stringify(err)})`;
+    }
+    log.error(errorMsg);
+    res.status(500).send(errorMsg);
+  });
+});
 
 router.post('/:username*', bodyParser.text(), (req, res) => {
   const username = req.params.username;
@@ -277,40 +315,6 @@ router.get('/:username*', (req, res) => {
   }).catch(err => {
     log.error(err);
     res.sendStatus(500);
-  });
-});
-
-router.post('/tasitc/term/execute', jsonParser, (req, res) => {
-  const parseTree = req.body;
-  if (!parseTree) {
-    res.json([]);
-  }
-  console.log('parseTree', JSON.stringify(parseTree, null, 2));
-  const expr = transpile(parseTree);
-  expr({}, Promise.resolve(aliases), request).then(result => {
-    log.info(parseTree.text, result);
-    if (result) {
-      if (result instanceof primitives.Html || result instanceof primitives.DomElement) {
-        res.contentType('text/html').send(result.toString());
-      } else if (result instanceof primitives.Text) {
-        res.contentType('text/plain').send(result.value);
-      } else if (result instanceof primitives.Json) {
-        res.json(result.value);
-      } else {
-        res.send(result);
-      }
-    } else {
-      res.send('');
-    }
-  }).catch(err => {
-    let errorMsg = 'ERROR: ';
-    if (err.stack) {
-      errorMsg += err.stack.toString();
-    } else {
-      errorMsg += `'${err}' (${JSON.stringify(err)})`;
-    }
-    log.error(errorMsg);
-    res.status(500).send(errorMsg);
   });
 });
 

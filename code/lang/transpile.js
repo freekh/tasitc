@@ -100,6 +100,8 @@ const transpile = (parseTree) => {
                 return recurse(result.data, argFun)(ctx);
               } else if (result instanceof primitives.Text) {
                 return result.value;
+              } else if (result instanceof primitives.App) {
+                return result;
               }
               throw new Error(`TODO: ${JSON.stringify(result)}`);
             });
@@ -198,7 +200,7 @@ const transpile = (parseTree) => {
               maybePromise : Promise.resolve(maybePromise);
       return promise.then(result => {
         // TODO: all primitives
-        if (result instanceof primitives.Node || result instanceof primitives.Text || result instanceof primitives.DomElement || result instanceof primitives.Html) {
+        if (result instanceof primitives.Node || result instanceof primitives.Text || result instanceof primitives.DomElement || result instanceof primitives.Html || result instanceof primitives.App) {
           return result;
         } else if (result instanceof Function) {
           return new primitives.Node(parseTree.value);

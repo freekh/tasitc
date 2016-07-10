@@ -121,3 +121,30 @@ EFFECTS: pure, impure
 ```
 
 
+App sceleton:
+app/init ~/foo
+
+({ h, requests, parameter }) => {
+  return requests([
+  ], (ctx, arg, parameters, [config, write, read]) => {
+    const execute = ([], []) => {
+    };
+
+    const exit = () => {
+    };
+
+    return {
+      docs: '',
+      offline: false, // must be present && fails if offline: true and http(s) in scripts/styles
+      scripts: [
+        '',
+      ],
+      styles: [
+        '',
+      ],
+      elements: [],
+      execute,
+      exit,
+    };
+  });
+};

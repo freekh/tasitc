@@ -23,4 +23,6 @@ module.exports = {
   cat: '/localhost/ns/cat',
   rm: '/localhost/ns/rm',
   sink: '/localhost/ns/sink',
+  //
+  edit: '/localhost/codemirror.app',
 };

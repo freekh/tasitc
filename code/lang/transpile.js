@@ -70,6 +70,9 @@ const flattenPromises = maybePromise => {
 const transpile = (parseTree) => {
   const init = (node, aliases, request) => {
     const recurse = (node, partialFun) => { // TODO: rename partialFun to applyArgFun
+      if (!node) {
+        throw new Error(`Cannot transpile empty node. Parse tree: ${JSON.stringify(parseTree, null, 2)}`);
+      }
       if (node.type === 'Expression') {
         const fullPath = normalize(node.path, aliases);
         const builtin = builtins[fullPath];
@@ -99,6 +102,10 @@ const transpile = (parseTree) => {
               if (result instanceof primitives.Node) {
                 return recurse(result.data, argFun)(ctx);
               } else if (result instanceof primitives.Text) {
+                return result.value;
+              } else if (result instanceof primitives.Css) {
+                return result.value;
+              } else if (result instanceof primitives.Js) {
                 return result.value;
               } else if (result instanceof primitives.App) {
                 return result;
@@ -182,6 +189,7 @@ const transpile = (parseTree) => {
           return request(`${fullPath}.js`).then(content => {
             const argPromise = flattenPromises(argFun ? argFun(ctx) : null);
             return argPromise.then(arg => {
+              console.log('!!', content.value)
               return eval(content.value)(ctx, arg, modifier, { primitives });
             });
           });
@@ -200,7 +208,7 @@ const transpile = (parseTree) => {
               maybePromise : Promise.resolve(maybePromise);
       return promise.then(result => {
         // TODO: all primitives
-        if (result instanceof primitives.Node || result instanceof primitives.Text || result instanceof primitives.DomElement || result instanceof primitives.Html || result instanceof primitives.App) {
+        if (result instanceof primitives.Node || result instanceof primitives.Text || result instanceof primitives.DomElement || result instanceof primitives.Html || result instanceof primitives.App || result instanceof primitives.Css) {
           return result;
         } else if (result instanceof Function) {
           return new primitives.Node(parseTree.value);

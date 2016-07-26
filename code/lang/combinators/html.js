@@ -21,7 +21,6 @@ const html = (argFun) => {
 
     return Promise.all(argPromises).then(args => {
       const value = args || ctx;
-      console.log('!!', JSON.stringify(value))
       // TODO: not sure auto-injection is smart, but garantueeing body is probably not dumb
       const hasBody = startsWithType('body', value);
       let children = value instanceof Array ? value : [value];

@@ -1,5 +1,6 @@
 const Json = require('./json');
 const Js = require('./js');
+const Css = require('./css');
 const Node = require('./node');
 const Text = require('./text');
 const DomElement = require('./dom-element');
@@ -11,6 +12,7 @@ module.exports = {
   Node,
   Text,
   Js,
+  Css,
   DomElement,
   Html,
   App,

@@ -7,7 +7,7 @@ const path = require('path');
 
 const env = require('./env');
 
-module.exports = (dir, file, stream, options) => {
+module.exports = (files, options) => {
   // inc compile doesnt work on my macs ... set to true if this stops being the case
   const incremental = process.platform !== 'darwin';
   const compress = process.env.NODE_ENV === 'production';
@@ -16,11 +16,10 @@ module.exports = (dir, file, stream, options) => {
     xtend(browserifyInc.args, options || {
       fullPaths: !compress,
       sourcemaps: !compress,
+      standalone: 'tasitc',
       debug,
-      paths: [dir],
     })
   ).transform(babelify.configure({
-    sourceMapRelative: dir,
   }));
 
   if (incremental) {
@@ -29,23 +28,30 @@ module.exports = (dir, file, stream, options) => {
     });
   }
 
-  b.add(path.resolve(dir, file));
+  files.forEach(file => {
+    b.add(path.resolve(file));
+  });
 
+  b.transform('babelify', { presets: ['es2015'] });
   if (compress) {
     b.transform({
       global: true,
     }, 'uglifyify');
   }
+  return new Promise((resolve, reject) => {
+    const bundle = b.bundle();
 
-  const bundle = b.bundle();
+    bundle.on('error', (err) => {
+      reject(err);
+    });
 
-  bundle.on('error', (err) => {
-    stream.emit('error', err);
-  });
+    const buffers = [];
+    bundle.on('data', buffer => {
+      buffers.push(buffer); // This is better? than buffer = Buffer.concat...?
+    });
 
-  bundle.pipe(stream);
-
-  bundle.on('end', () => {
-    stream.emit('end');
+    bundle.on('end', () => {
+      resolve(Buffer.concat(buffers));
+    });
   });
 };

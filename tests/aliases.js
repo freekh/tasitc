@@ -25,4 +25,7 @@ module.exports = {
   sink: '/localhost/ns/sink',
   //
   edit: '/localhost/codemirror.app',
+  //
+  scss: '/scss',
+  browserify: '/browserify',
 };

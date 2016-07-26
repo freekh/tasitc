@@ -195,7 +195,7 @@ const write = (fullPath, content) => {
 
 const stat = (fullPath) => {
   return new Promise((resolve, reject) => {
-    fs.stat(path.resolve(root, fullPath), (err, stat) => { 
+    fs.stat(path.resolve(root, fullPath), (err, stat) => {
       if (err) {
         reject(err);
       } else {
@@ -216,8 +216,11 @@ const request = (fullPath, arg, ctx) => {
   } else if (fullPath === '/localhost/ns/sink.tasitc') {
     const path = `${arg}.tasitc`;
     return write(path, ctx);
-  } else if (fullPath.endsWith('.app.tasitc')) {
-    return Promise.resolve(new primitives.App(fullPath, arg));
+  } else if (fullPath.endsWith('.app.js')) {
+    return read(fullPath).then(content => {
+      console.log('-->', content);
+      return new primitives.App(fullPath, arg);
+    });
   } else if (fullPath.endsWith('.tasitc')) {
     return read(fullPath).then(text => {
       const parseTree = parse(text.value);
@@ -247,7 +250,9 @@ router.post('/tasitc/term/execute', jsonParser, (req, res) => {
       } else if (result instanceof primitives.Json) {
         res.json(result.value);
       } else if (result instanceof primitives.App) {
-        res.contentType('application/x-tasitc.app').send(result);
+        res
+          .contentType('application/json;x-tasitc.app')
+          .send(JSON.stringify(result));
       } else {
         res.send(result);
       }

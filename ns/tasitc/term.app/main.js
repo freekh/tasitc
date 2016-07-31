@@ -1,3 +1,4 @@
+const xtend = require('xtend');
 const h = require('hyperscript');
 
 const log = require('../../../code/dev-utils/log');
@@ -125,6 +126,7 @@ const moveCharLeft = () => {
     global.cursor = global.cursor - 1;
     updateView();
   }
+  return true;
 };
 
 const moveCharRight = () => {
@@ -132,6 +134,7 @@ const moveCharRight = () => {
     global.cursor = global.cursor + 1;
     updateView();
   }
+  return true;
 };
 
 const backspace = () => {
@@ -140,6 +143,7 @@ const backspace = () => {
   global.cursor = global.cursor - 1;
   global.value = value;
   updateView();
+  return true;
 };
 
 const deleteWord = () => {
@@ -157,21 +161,25 @@ const deleteWord = () => {
     global.value.slice(global.cursor, global.value.length);
   global.cursor = cursor;
   updateView();
+  return true;
 };
 
 const moveLineEnd = () => {
   global.cursor = global.value.length + 1;
   updateView();
+  return true;
 };
 
 const moveLineBegin = () => {
   global.cursor = 0;
   updateView();
+  return true;
 };
 
 const killLine = () => {
   global.value = global.value.slice(0, global.cursor);
   updateView();
+  return true;
 };
 
 const historyUp = () => {
@@ -185,6 +193,7 @@ const historyUp = () => {
   }
   global.cursor = global.value.length + 1;
   updateView();
+  return true;
 };
 
 const historyDown = () => {
@@ -199,6 +208,7 @@ const historyDown = () => {
   }
   global.cursor = global.value.length + 1;
   updateView();
+  return true;
 };
 
 const moveWordRight = () => {
@@ -213,6 +223,7 @@ const moveWordRight = () => {
   }
   global.cursor = cursor;
   updateView();
+  return true;
 };
 
 const moveWordLeft = () => {
@@ -226,12 +237,14 @@ const moveWordLeft = () => {
   }
   global.cursor = cursor;
   updateView();
+  return true;
 };
 
 const appendLastToHistory = () => {
   historyMem.push({ cwd: global.cwd, value: global.value });
   historyIndex = historyMem.length;
   elems.history.appendChild(ps1(global.cwd, global.value));
+  return true;
 };
 
 const enter = () => {
@@ -270,6 +283,7 @@ const enter = () => {
     parseError(parseTree).forEach(line => elems.history.appendChild(line));
     complete();
   }
+  return true;
 };
 
 const space = () => {
@@ -278,62 +292,51 @@ const space = () => {
   global.cursor = cursor;
   global.value = value;
   updateView();
+  return true;
 };
 
 // -------------------------- Key/operation buffer ----------------------------//
 
-const execute = (key) => {
-  if (key.char) {
-    const { value, cursor } = insertText(global.value, global.cursor, key.char);
+const shortcutsMac = {
+  'alt=true;shift=false;ctrl=false;code=8': deleteWord,
+
+};
+
+const shortcutsPc = {
+  'alt=false;shift=false;ctrl=true;code=8': deleteWord,
+};
+
+const shortcuts = xtend({
+  'alt=true;shift=false;ctrl=false;code=66': moveWordRight,
+  'alt=true;shift=false;ctrl=false;code=70': moveWordLeft,
+
+  'alt=false;shift=false;ctrl=true;code=65': moveLineBegin,
+  'alt=false;shift=false;ctrl=true;code=69': moveLineEnd,
+  'alt=false;shift=false;ctrl=true;code=75': killLine,
+
+  'alt=false;shift=true;ctrl=false;code=8': true, // chrome: prevent nav
+  'alt=false;shift=true;ctrl=false;code=32': space, // chrome: prevent scroll
+
+  'alt=false;shift=false;ctrl=false;code=8': backspace,
+  'alt=false;shift=false;ctrl=false;code=13': enter,
+  'alt=false;shift=false;ctrl=false;code=32': space,
+  'alt=false;shift=false;ctrl=false;code=37': moveCharLeft,
+  'alt=false;shift=false;ctrl=false;code=38': historyUp,
+  'alt=false;shift=false;ctrl=false;code=39': moveCharRight,
+  'alt=false;shift=false;ctrl=false;code=40': historyDown,
+}, isMac ? shortcutsMac : shortcutsPc);
+
+const execute = (op) => {
+  if (typeof op === 'string') {
+    const { value, cursor } = insertText(global.value, global.cursor, op);
     global.cursor = cursor;
     global.value = value;
     updateView();
-  } else if (key.code) {
-    if (key.alt) {
-      if (isMac) {
-        switch (key.code) {
-          case 8: deleteWord(); break;
-          default: break;
-        }
-      }
-      switch (key.code) {
-        case 66: moveWordRight(); break;
-        case 70: moveWordLeft(); break;
-        default: break;
-      }
-    } else if (key.ctrl) {
-      if (!isMac) {
-        switch (key.code) {
-          case 8: deleteWord(); break;
-          default: break;
-        }
-      }
-      switch (key.code) {
-        case 65: moveLineBegin(); break;
-        case 69: moveLineEnd(); break;
-        case 75: killLine(); break;
-        default: break;
-      }
-    } else if (key.shift) {
-      switch (key.code) {
-        case 8: break; // avoid chrome nav
-        case 32: space(); break; // avoid chrome scroll
-        default: break;
-      }
-    } else {
-      switch (key.code) {
-        case 8: backspace(); break;
-        case 13: enter(); break;
-        case 37: moveCharLeft(); break;
-        case 38: historyUp(); break;
-        case 39: moveCharRight(); break;
-        case 40: historyDown(); break;
-        default: break;
-      }
-    }
-  } else {
-    throw new Error(`Cannot execute key: ${JSON.stringify(key)}`);
+    return true;
+  } else if (op instanceof Function) {
+    return op();
   }
+  throw new Error(`Cannot execute op: ${JSON.stringify(op)}`);
 };
 
 let keyBuffer = [];
@@ -346,14 +349,15 @@ const operationLoop = () => {
 
 window.addEventListener('keypress', ev => {
   const char = String.fromCharCode(ev.keyCode);
-  keyBuffer.push({ char });
+  keyBuffer.push(char);
   ev.preventDefault();
 });
 
 window.addEventListener('keydown', ev => {
-  const op = { ctrl: ev.ctrlKey, shift: ev.shiftKey, alt: ev.altKey, code: ev.keyCode };
-  if (op.keyCode || op.ctrl || op.alt || op.code === 8) {
-    keyBuffer.push(op);
+  const shortcut = shortcuts[`alt=${ev.altKey};shift=${ev.shiftKey};` +
+                             `ctrl=${ev.ctrlKey};code=${ev.keyCode}`];
+  if (shortcut) {
+    keyBuffer.push(shortcut);
     ev.preventDefault();
   }
 });

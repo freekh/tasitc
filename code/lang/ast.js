@@ -24,6 +24,16 @@ class Id extends Marked { // TODO: rename to Path?
   }
 }
 
+class Uri extends Marked { // TODO: rename to Path?
+  constructor(protocol, path, params) {
+    super();
+    this.path = path;
+    this.protocol = protocol;
+    this.params = params;
+    this.value = protocol + ':/' + path;
+  }
+}
+
 class Subscript extends Marked { // [1][0]
   constructor(index) {
     super();
@@ -170,6 +180,7 @@ module.exports = {
   List,
   Instance, // TODO: would like to rename to Object, but can't so find some other better name
   Id,
+  Uri,
   Text,
   Num,
   // TODO: add Boolean

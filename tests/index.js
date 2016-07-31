@@ -118,6 +118,7 @@ if (true) {
                new Text('/example.tasitc'), true);
   // request:
   fixture.test(`['hei', 'du'] | /freekh/grep '[d].*?'`, new Json(['du']), true);
+  fixture.test(`request http://google.com`, new Html(''), true);
 
   // ??: TODO Figure out what this tests or remove? associativity     0?
   // fixture.test(`ls | flatmap ($.name | ifte [regex 'dir', [$], []])`, new Json(['dir']), true);

@@ -17,6 +17,7 @@ const { Sink,
         Attribute,
         Subscript,
         Id,
+        Uri,
         Text,
         Num,
       } = require('../ast');
@@ -49,6 +50,14 @@ Num.parser = P.lazy('Num', () => {
 });
 
 Id.parser = P.lazy('Id', () => {
+  const reify = data => {
+    const id = data;
+    return new Id(id);
+  };
+  return P.regex(/[\.~\/a-z\-0-9_]+/i).desc('URL safe character').map(reify);
+});
+
+Uri.parser = P.lazy('Uri', () => {
   const reify = data => {
     const id = data;
     return new Id(id);

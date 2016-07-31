@@ -1,4 +1,6 @@
 module.exports = {
+  request: '/tasitc/core/request',
+  //
   apply: '/tasitc/core/combinators/apply',
   //
   map: '/tasitc/core/combinators/map',

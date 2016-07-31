@@ -29,8 +29,6 @@ const global = {
   cwd: '~',
   user: 'freekh', // FIXME: hardcoded
   cursor: 0,
-  // FIXME: Replace block with keybuffer
-  block: false,
 };
 
 let historyIndex = 0;
@@ -96,21 +94,6 @@ const elems = {
   cursor: pre('cursor'),
   postCursor: pre('post-cursor'),
   tooltip: tooltip().hide(),
-};
-
-module.exports = (arg, ctx) => {
-  const root = document.getElementById('term');
-  root.appendChild(parent);
-
-  parent.appendChild(history);
-  parent.appendChild(ps1(global.cwd, global.value));
-  root.appendChild(completion);
-
-  elems.parent.appendChild(elems.tooltip);
-  elems.parent.appendChild(elems.preCursor);
-  elems.parent.appendChild(elems.cursor);
-  elems.cursor.innerText = ' ';
-  elems.parent.appendChild(elems.postCursor);
 };
 
 // ------------------------------ Update --------------------------------------//
@@ -253,7 +236,6 @@ const appendLastToHistory = () => {
 
 const enter = () => {
   const complete = () => {
-    global.block = false;
     global.value = '';
     global.cursor = 0;
     updateView();
@@ -262,7 +244,6 @@ const enter = () => {
 
   const parseTree = parse(global.value);
   if (parseTree.status) {
-    global.block = true;
     appendLastToHistory();
     request(
       '/tasitc/core/eval',
@@ -285,7 +266,6 @@ const enter = () => {
       throw err;
     });
   } else {
-    global.block = true;
     appendLastToHistory();
     parseError(parseTree).forEach(line => elems.history.appendChild(line));
     complete();
@@ -302,67 +282,79 @@ const space = () => {
 
 // -------------------------- Key/operation buffer ----------------------------//
 
-
-
-// ------------------------------ Events --------------------------------------//
-
-window.addEventListener('keypress', ev => {
-  if (!global.block) {
-    if (!ev.ctrlKey && !ev.altKey && !ev.metaKey) {
-      const char = String.fromCharCode(ev.keyCode);
-      const { value, cursor } = insertText(global.value, global.cursor, char);
-      global.cursor = cursor;
-      global.value = value;
-      updateView();
-    }
-  }
-});
-
-
-window.addEventListener('keydown', ev => {
-  if (!global.block) {
-    if (ev.altKey) {
+const execute = (key) => {
+  if (key.char) {
+    const { value, cursor } = insertText(global.value, global.cursor, key.char);
+    global.cursor = cursor;
+    global.value = value;
+    updateView();
+  } else if (key.code) {
+    if (key.alt) {
       if (isMac) {
-        switch (ev.keyCode) {
-          case 8: deleteWord(); ev.preventDefault(); break;
+        switch (key.code) {
+          case 8: deleteWord(); break;
           default: break;
         }
       }
-      switch (ev.keyCode) {
-        case 66: moveWordRight(); ev.preventDefault(); break;
-        case 70: moveWordLeft(); ev.preventDefault(); break;
+      switch (key.code) {
+        case 66: moveWordRight(); break;
+        case 70: moveWordLeft(); break;
         default: break;
       }
-    } else if (ev.ctrlKey) {
+    } else if (key.ctrl) {
       if (!isMac) {
-        switch (ev.keyCode) {
-          case 8: deleteWord(); ev.preventDefault(); break;
+        switch (key.code) {
+          case 8: deleteWord(); break;
           default: break;
         }
       }
-      switch (ev.keyCode) {
-        case 65: moveLineBegin(); ev.preventDefault(); break;
-        case 69: moveLineEnd(); ev.preventDefault(); break;
-        case 75: killLine(); ev.preventDefault(); break;
+      switch (key.code) {
+        case 65: moveLineBegin(); break;
+        case 69: moveLineEnd(); break;
+        case 75: killLine(); break;
         default: break;
       }
-    } else if (ev.shiftKey) {
-      switch (ev.keyCode) {
-        case 8: ev.preventDefault(); break; // avoid chrome nav
-        case 32: space(); ev.preventDefault(); break; // avoid chrome scroll
+    } else if (key.shift) {
+      switch (key.code) {
+        case 8: break; // avoid chrome nav
+        case 32: space(); break; // avoid chrome scroll
         default: break;
       }
     } else {
-      switch (ev.keyCode) {
-        case 8: backspace(); ev.preventDefault(); break;
-        case 13: enter(); ev.preventDefault(); break;
-        case 37: moveCharLeft(); ev.preventDefault(); break;
-        case 38: historyUp(); ev.preventDefault(); break;
-        case 39: moveCharRight(); ev.preventDefault(); break;
-        case 40: historyDown(); ev.preventDefault(); break;
+      switch (key.code) {
+        case 8: backspace(); break;
+        case 13: enter(); break;
+        case 37: moveCharLeft(); break;
+        case 38: historyUp(); break;
+        case 39: moveCharRight(); break;
+        case 40: historyDown(); break;
         default: break;
       }
     }
+  } else {
+    throw new Error(`Cannot execute key: ${JSON.stringify(key)}`);
+  }
+};
+
+let keyBuffer = [];
+const operationLoop = () => {
+  const current = keyBuffer.slice();
+  keyBuffer = [];
+  current.forEach(execute);
+  window.requestAnimationFrame(operationLoop);
+};
+
+window.addEventListener('keypress', ev => {
+  const char = String.fromCharCode(ev.keyCode);
+  keyBuffer.push({ char });
+  ev.preventDefault();
+});
+
+window.addEventListener('keydown', ev => {
+  const op = { ctrl: ev.ctrlKey, shift: ev.shiftKey, alt: ev.altKey, code: ev.keyCode };
+  if (op.keyCode || op.ctrl || op.alt || op.code === 8) {
+    keyBuffer.push(op);
+    ev.preventDefault();
   }
 });
 
@@ -378,3 +370,21 @@ window.addEventListener('paste', ev => {
   global.cursor = cursor;
   updateView();
 });
+
+// -------------------------- Module ----------------------------//
+
+module.exports = (arg, ctx) => {
+  const root = document.getElementById('term');
+  root.appendChild(parent);
+
+  parent.appendChild(history);
+  parent.appendChild(ps1(global.cwd, global.value));
+  root.appendChild(completion);
+
+  elems.parent.appendChild(elems.tooltip);
+  elems.parent.appendChild(elems.preCursor);
+  elems.parent.appendChild(elems.cursor);
+  elems.cursor.innerText = ' ';
+  elems.parent.appendChild(elems.postCursor);
+  window.requestAnimationFrame(operationLoop);
+};

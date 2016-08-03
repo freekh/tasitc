@@ -1,4 +1,0 @@
-CREATE TABLE ns_nodes (
-  path TEXT PRIMARY KEY NOT NULL,
-  text TEXT NOT NULL
-);

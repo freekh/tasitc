@@ -4,7 +4,7 @@ const ast = require('../code/lang/ast');
 
 /* eslint-disable quotes */
 
-if (true) {
+if (false) {
   // list:
   fixture.test(`['he', 'wo']`, new Json(['he', 'wo']), true);
 

@@ -27,10 +27,11 @@ class Id extends Marked { // TODO: rename to Path?
 class Uri extends Marked { // TODO: rename to Path?
   constructor(protocol, path, params) {
     super();
+    this.type = 'Uri';
     this.path = path;
     this.protocol = protocol;
     this.params = params;
-    this.value = protocol + ':/' + path;
+    this.value = `${protocol}://${path}`;
   }
 }
 

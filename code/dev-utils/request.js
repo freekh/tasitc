@@ -12,7 +12,9 @@ module.exports = (url, options) => {
   }
   const req = new XHR();
   req.open(type, url);
-  req.setRequestHeader('Content-Type', mime);
+  if (mime) {
+    req.setRequestHeader('Content-Type', mime);
+  }
   const promise = new Promise((resolve, reject) => {
     req.onload = () => {
       const mime = req.getResponseHeader('Content-Type');
@@ -31,7 +33,7 @@ module.exports = (url, options) => {
     };
   });
   if (type === 'POST') {
-    if (mime.indexOf('application/json' !== -1)) {
+    if (mime && mime.indexOf('application/json' !== -1)) {
       req.send(JSON.stringify(data));
     } else {
       req.send(data);

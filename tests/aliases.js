@@ -1,5 +1,5 @@
 module.exports = {
-  request: '/tasitc/core/request',
+  request: '/tasitc/core/combinators/request', // TODO: not in combinators?
   //
   apply: '/tasitc/core/combinators/apply',
   //

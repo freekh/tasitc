@@ -57,12 +57,15 @@ Id.parser = P.lazy('Id', () => {
   return P.regex(/[\.~\/a-z\-0-9_]+/i).desc('URL safe character').map(reify);
 });
 
+
 Uri.parser = P.lazy('Uri', () => {
-  const reify = data => {
-    const id = data;
-    return new Id(id);
-  };
-  return P.regex(/[\.~\/a-z\-0-9_]+/i).desc('URL safe character').map(reify);
+  return P.regex(/http|https/).chain(protocol => {
+    const reify = id => {
+      const path = id.value;
+      return new Uri(protocol, path);
+    };
+    return P.string('://').then(Id.parser).map(reify);
+  });
 });
 
 Subscript.parser = P.lazy('Subscript', () => {
@@ -143,6 +146,7 @@ const argumentParser = P.lazy('Argument', () => {
     form(Composition.parser),
     Instance.parser,
     List.parser,
+    Uri.parser,
     Eval.parser,
     Expression.parser,
     Context.parser,

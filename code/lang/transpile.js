@@ -194,6 +194,8 @@ const transpile = (parseTree) => {
             });
           });
         };
+      } else if (node.type === 'Uri') {
+        return () => node; // TODO: not correct
       }
 
       throw new Error('TODO '+ JSON.stringify(node));

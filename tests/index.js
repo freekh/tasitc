@@ -4,7 +4,7 @@ const ast = require('../code/lang/ast');
 
 /* eslint-disable quotes */
 
-if (false) {
+if (true) {
   // list:
   fixture.test(`['he', 'wo']`, new Json(['he', 'wo']), true);
 
@@ -118,7 +118,10 @@ if (false) {
                new Text('/example.tasitc'), true);
   // request:
   fixture.test(`['hei', 'du'] | /freekh/grep '[d].*?'`, new Json(['du']), true);
-  fixture.test(`request http://google.com`, new Html(''), true);
+  fixture.test(`request http://echo.jsontest.com/key/value/one/two`, new Json({
+    one: 'two',
+    key: 'value',
+  }), true, true);
 
   // ??: TODO Figure out what this tests or remove? associativity     0?
   // fixture.test(`ls | flatmap ($.name | ifte [regex 'dir', [$], []])`, new Json(['dir']), true);

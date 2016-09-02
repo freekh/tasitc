@@ -1,1 +1,1 @@
-1.0 | [ ?, ?: Type ] | { foo:'foo' : String(String) } : Obj | regex 'test' | $.foo[1]
+[{pair: 'of shoes'}] | $.pair

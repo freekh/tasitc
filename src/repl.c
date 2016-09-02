@@ -1,11 +1,18 @@
+// c99
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <editline/readline.h>
 #include <string.h>
 
+// static deps
+#include <editline/readline.h>
+
+// source deps
 #include "../mpc/mpc.h"
 
+// tasitc deps 
+#include "eval.h"
+
+//
 #define HISTORY ".tasitc.repl.history"
 
 int main(int argc, char** argv) {
@@ -46,7 +53,7 @@ int main(int argc, char** argv) {
     vector      : '[' <composition> (',' <composition>)* ']';                 \
     obj         : '{' (<objpath>) ':' (<composition>) '}';                    \
     type        : /[A-Z][a-zA-Z]*/( '(' <type> ')' )*;                        \
-    tasitc      : /^/ <composition> /$/ ;                                     \
+    tasitc      : <composition> ;                                             \
    ",  Path, String, Number, Int, 
        SymCtx, SymArg, SymCompose, SymType, 
        ObjPath, Ctx, Expr, Composition, Vector, Obj, Type, Tasitc);
@@ -57,8 +64,9 @@ int main(int argc, char** argv) {
     mpc_result_t r;
 
     if (mpc_parse_file(path, file, Tasitc, &r)) {
-
       mpc_ast_print(r.output);
+      eval(r.output);
+
       mpc_ast_delete(r.output);
     } else {
       mpc_err_print(r.error);

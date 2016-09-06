@@ -29,7 +29,7 @@ tasitc_val_t* tasitc_err(char* msg, int code) {
 
   tasitc_err_t *err = malloc(sizeof(tasitc_err_t));
   err->code = code;
-  err->msg = malloc(sizeof(msg) + 1);
+  err->msg = malloc(strlen(msg) + 1);
   strcpy(err->msg, msg);
 
   val->error = err;
@@ -66,7 +66,7 @@ int tasitc_ast_skip_tag(mpc_ast_t* ast) {
 tasitc_val_t* tasitc_vector(mpc_ast_t* ast) {
   tasitc_val_t *val = malloc(sizeof(tasitc_val_t)); // TODO: hmm.. how does unions really work?
 
-  struct tasitc_vec_t *vec = malloc(sizeof(tasitc_vec_t));
+  tasitc_vec_t *vec = malloc(sizeof(tasitc_vec_t));
 
   int capacity = ast->children_num;
   for (int i = 0; i < ast->children_num; i++) {
@@ -81,12 +81,13 @@ tasitc_val_t* tasitc_vector(mpc_ast_t* ast) {
   int val_index = 0;
   for (int i = 0; i < ast->children_num; i++) {
     mpc_ast_t *child = ast->children[i];
-    if (tasitc_ast_skip_tag(child) > 0) {
+    if (tasitc_ast_skip_tag(child) == 0) {
       tasitc_val_t* val  = tasitc_str(child);
-      printf("!?!?!?%s", val->str);
+      vec->vals[val_index] = val;
       val_index++;
     }
   }
+
   val->vec = vec;
   return val;
 }
@@ -95,7 +96,10 @@ void tasitc_vector_print(struct tasitc_vec_t *vec) {
   printf("!!!%i!!!", vec->capacity);
   printf("[");
   for (int i = 0; i < vec->capacity; i++) {
-    printf("%s,", vec->vals[i]->str);
+    printf("'%s'", vec->vals[i]->str);
+    if (i < vec->capacity - 1) {
+      printf(",");
+    }
   }
   printf("]");
 };

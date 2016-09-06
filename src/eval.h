@@ -23,9 +23,9 @@ typedef struct tasitc_vec_t {
 
 typedef union tasitc_val_t {
   char *str;
-  struct tastic_vec_t *vec;
 
   struct tasitc_err_t *error;
+  struct tastic_vec_t *vec;
 } tasitc_val_t;
 
 typedef struct tasitc_res_t {

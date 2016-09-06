@@ -16,6 +16,9 @@
 #define HISTORY ".tasitc.repl.history"
 
 int main(int argc, char** argv) {
+  mpc_parser_t* Ws = mpc_new("ws");
+  mpc_parser_t* WsOpt = mpc_new("wsopt");
+
   mpc_parser_t* Path = mpc_new("path");
   mpc_parser_t* String = mpc_new("string");
   mpc_parser_t* Number = mpc_new("number");
@@ -27,36 +30,59 @@ int main(int argc, char** argv) {
   mpc_parser_t* ObjPath = mpc_new("objpath");
   mpc_parser_t* Ctx = mpc_new("ctx");
   mpc_parser_t* Expr = mpc_new("expr");
+  mpc_parser_t* Form = mpc_new("form");
   mpc_parser_t* Composition = mpc_new("composition");
   mpc_parser_t* Vector = mpc_new("vector");
+  mpc_parser_t* ObjPair = mpc_new("objpair") ;
   mpc_parser_t* Obj = mpc_new("obj");
   mpc_parser_t* Type = mpc_new("type");
   mpc_parser_t* Tasitc = mpc_new("tasitc");
 
   // grammar:
   mpca_lang(
-            MPCA_LANG_DEFAULT, 
+            MPCA_LANG_WHITESPACE_SENSITIVE,
             "                                                                 \
+    ws          : /[ \n\r\t]+/ ;                                              \
+    wsopt       : /[ \n\r\t]*/ ;                                              \
+                                                                              \
     path        : /[\\/~a-z]+/ ;                                              \
     string      : /'(\\\\.|[^'])*'/ ;                                         \
+                                                                              \
     number      : /[0-9]+(\\.[0-9]+)?/ ;                                      \
     int         : /[0-9]+/ ;                                                  \
+                                                                              \
     symctx      : '$' ;                                                       \
     symarg      : '?' ;                                                       \
     symcompose  : '|' ;                                                       \
     symtype     : ':' ;                                                       \
+                                                                              \
     objpath     : /[a-z0-9A-Z]+/;                                             \
-    ctx         : <symctx>(('.'<objpath>) | ('['<int>']'))* ;                 \
-    expr        : (<path> <expr> | <path> | <ctx> | <symarg> | <vector> |     \
-                   <obj> | <string> | <number>) (<symtype> <type>)? ;         \
-    composition : <expr> (<symcompose> <expr>)* ;                             \
-    vector      : '[' <composition> (',' <composition>)* ']';                 \
-    obj         : '{' (<objpath>) ':' (<composition>) '}';                    \
+                                                                              \
+    ctx         : <symctx>(('.' <objpath>) | ('[' <int> ']'))* ;              \
+                                                                              \
+    expr        : ( <form> <ws> <expr> | <form> | <path> <ws> <expr> |        \
+                    <path> |  <ctx> | <symarg> | <vector> |  <obj> |          \
+                    <string> | <number>) (<symtype> <ws> <type>)? ;           \
+                                                                              \
+    form        : '(' <wsopt> <expr> <wsopt> ')' ;                            \
+                                                                              \
+    composition : <expr> (<ws> <symcompose> <ws> <expr>)* ;                   \
+                                                                              \
+    vector      : '[' <wsopt> ']' | '[' <wsopt> <composition> <wsopt>         \
+                  (',' <wsopt> <composition> <wsopt>)* ']';                   \
+                                                                              \
+    objpair     : <objpath> <wsopt> ':' <wsopt> <composition>;                \
+                                                                              \
+    obj         : '{' <wsopt> <objpair>                                       \
+                  (',' <wsopt> <objpair> <wsopt>)* <wsopt>'}';                \
+                                                                              \
     type        : /[A-Z][a-zA-Z]*/( '(' <type> ')' )*;                        \
-    tasitc      : <composition> ;                                             \
-   ",  Path, String, Number, Int, 
+                                                                              \
+    tasitc      : /^/ <composition> <wsopt> /$/ ;                             \
+   ",  Ws, WsOpt, Path, String, Number, Int, 
        SymCtx, SymArg, SymCompose, SymType, 
-       ObjPath, Ctx, Expr, Composition, Vector, Obj, Type, Tasitc);
+       ObjPath, Ctx, Expr, Form, Composition, Vector,
+       ObjPair, Obj, Type, Tasitc);
   
   if (argc == 2) {
     const char* path = argv[1];
@@ -65,7 +91,15 @@ int main(int argc, char** argv) {
 
     if (mpc_parse_file(path, file, Tasitc, &r)) {
       mpc_ast_print(r.output);
-      eval(r.output);
+      tasitc_res_t *res = eval(r.output);
+      if (res->type == TASITC_ERROR) {
+        printf("ERROR! %s\n", res->val->error->msg);
+      } else if (res->type == TASITC_STRING) {
+        printf("STRING: %s\n", res->val->str);
+      } else if (res->type == TASITC_VECTOR) {
+        printf("VECTOR:");
+        tasitc_vector_print(res->val->vec);
+      }
 
       mpc_ast_delete(r.output);
     } else {

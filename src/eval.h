@@ -25,7 +25,7 @@ typedef union tasitc_val_t {
   char *str;
 
   struct tasitc_err_t *error;
-  struct tastic_vec_t *vec;
+  struct tasitc_vec_t *vec;
 } tasitc_val_t;
 
 typedef struct tasitc_res_t {
@@ -37,4 +37,3 @@ typedef struct tasitc_res_t {
 tasitc_res_t* eval(mpc_ast_t *ast);
 
 // TODO: move
-void tasitc_vector_print(struct tasitc_vec_t *vec);

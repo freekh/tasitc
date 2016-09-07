@@ -99,6 +99,9 @@ int main(int argc, char** argv) {
       } else if (res->type == TASITC_VECTOR) {
         printf("VECTOR:");
         tasitc_vector_print(res->val->vec);
+      } else if (res->type == TASITC_OBJECT) {
+        printf("OBJECT:");
+        tasitc_obj_print(res->val->obj);
       }
 
       mpc_ast_delete(r.output);

@@ -1,1 +1,1 @@
-['test1', 'test2', 'test3']
+{foo: 'test', test: 'balÅeFF'}

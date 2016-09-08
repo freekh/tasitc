@@ -86,7 +86,7 @@ void tasitc_mpc_convert_dic(mpc_ast_t* ast, tasitc_token_t* token) {
   token->type = TASITC_DICTIONARY;
   token->val = malloc(sizeof(tasitc_token_val_t));
   
-  uint32_t size = 0;
+  size_t size = 0;
   for (int i = 0; i < ast->children_num; i++) {
     mpc_ast_t *child = ast->children[i];
     if (!tasitc_mpc_skip_tag(child)) {
@@ -100,7 +100,7 @@ void tasitc_mpc_convert_dic(mpc_ast_t* ast, tasitc_token_t* token) {
   dic->size = size;
   dic->elems = elems;
 
-  uint32_t dic_idx = 0;
+  size_t dic_idx = 0;
   for (int i = 0; i < ast->children_num; i++) {
     mpc_ast_t *child = ast->children[i];
     if (strstr(child->tag, "dickeyval")) {
@@ -116,7 +116,7 @@ void tasitc_mpc_convert_vec(mpc_ast_t* ast, tasitc_token_t* token) {
   token->type = TASITC_VECTOR;
   token->val = malloc(sizeof(tasitc_token_val_t));
 
-  uint32_t size = 0;
+  size_t size = 0;
   for (int i = 0; i < ast->children_num; i++) {
     mpc_ast_t *child = ast->children[i];
     if (!tasitc_mpc_skip_tag(child)) {
@@ -130,7 +130,7 @@ void tasitc_mpc_convert_vec(mpc_ast_t* ast, tasitc_token_t* token) {
   vec->size = size;
   vec->elems = elems;
 
-  uint32_t vec_idx = 0;
+  size_t vec_idx = 0;
   for (int i = 0; i < ast->children_num; i++) {
     mpc_ast_t *child = ast->children[i];
     if (!tasitc_mpc_skip_tag(child)) {

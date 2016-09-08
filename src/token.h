@@ -1,9 +1,10 @@
 /*
-  Internal tasitc representation
+  Tasitc tokens
 */
 #ifndef TOKEN_H
 #define TOKEN_H
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdbool.h>
 
 typedef enum { 
@@ -64,13 +65,13 @@ typedef struct tasitc_dic_keyval_t {
 } tasitc_dic_keyval_t;
 
 typedef struct tasitc_dic_t {
-  uint32_t size;
+  size_t size;
   struct tasitc_dic_keyval_t **elems;
 } tasitc_dic_t;
 
 // FIXME: this 'vector' is not a vector
 typedef struct tasitc_vec_t {
-  uint32_t size;
+  size_t size;
   struct tasitc_token_t **elems;
 } tasitc_vec_t;
 

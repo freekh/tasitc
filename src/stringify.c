@@ -19,7 +19,7 @@ char* tasitc_stringify_str(tasitc_str_t str) {
 
 char* tasitc_stringify_dic(tasitc_dic_t* dic, uint8_t indent) {
   char* res = "{";
-  for (uint32_t i = 0; i < dic->size; i++) {
+  for (size_t i = 0; i < dic->size; i++) {
     char* key_str = dic->elems[i]->key;
     res = str_concat(res, "'");
     res = str_concat(res, key_str);
@@ -39,7 +39,7 @@ char* tasitc_stringify_dic(tasitc_dic_t* dic, uint8_t indent) {
 
 char* tasitc_stringify_vec(tasitc_vec_t* vec, uint8_t indent) {
   char* res = "[";
-  for (uint32_t i = 0; i < vec->size; i++) {
+  for (size_t i = 0; i < vec->size; i++) {
     char* val_str = tasitc_stringify(vec->elems[i], indent);
     if (val_str != NULL) {
       res = str_concat(res, val_str);

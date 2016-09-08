@@ -50,21 +50,21 @@ bool tasitc_mpc_skip_tag(mpc_ast_t* ast) {
       strstr(ast->tag, "wsopt") || strstr(ast->tag, "ws");
 }
 
-void tasitc_repr_err(tasitc_repr_t* repr, char* msg, tasitc_error_type_e type) {
+void tasitc_token_err(tasitc_token_t* token, char* msg, tasitc_error_type_e type) {
   tasitc_err_t *err = malloc(sizeof(tasitc_err_t));
   err->type = type;
   err->msg = malloc(strlen(msg) + 1);
   strcpy(err->msg, msg);
 
-  repr->type = TASITC_ERROR;
-  repr->val = malloc(sizeof(tasitc_repr_val_t));
-  repr->val->err = err;
+  token->type = TASITC_ERROR;
+  token->val = malloc(sizeof(tasitc_token_val_t));
+  token->val->err = err;
 }
 
 /*
 ** MPC AST converters
 */
-void tasitc_mpc_convert(mpc_ast_t* ast, tasitc_repr_t* repr);
+void tasitc_mpc_convert(mpc_ast_t* ast, tasitc_token_t* token);
 
 void tasitc_mpc_convert_dic_keyval(mpc_ast_t* ast, tasitc_dic_keyval_t* keyval) {
   for (int i = 0; i < ast->children_num; i++) {
@@ -76,15 +76,15 @@ void tasitc_mpc_convert_dic_keyval(mpc_ast_t* ast, tasitc_dic_keyval_t* keyval) 
       keyval->key = malloc(strlen(child->contents) + 1);
       strcpy(keyval->key, child->contents);
     } else {
-      keyval->val = malloc(sizeof(tasitc_repr_t));
+      keyval->val = malloc(sizeof(tasitc_token_t));
       tasitc_mpc_convert(child, keyval->val);
     }
   }
 }
 
-void tasitc_mpc_convert_dic(mpc_ast_t* ast, tasitc_repr_t* repr) {
-  repr->type = TASITC_DICTIONARY;
-  repr->val = malloc(sizeof(tasitc_repr_val_t));
+void tasitc_mpc_convert_dic(mpc_ast_t* ast, tasitc_token_t* token) {
+  token->type = TASITC_DICTIONARY;
+  token->val = malloc(sizeof(tasitc_token_val_t));
   
   uint32_t size = 0;
   for (int i = 0; i < ast->children_num; i++) {
@@ -95,7 +95,7 @@ void tasitc_mpc_convert_dic(mpc_ast_t* ast, tasitc_repr_t* repr) {
   }   
   
   tasitc_dic_t *dic = malloc(sizeof(tasitc_dic_t));
-  repr->val->dic = dic;
+  token->val->dic = dic;
   tasitc_dic_keyval_t** elems = malloc(sizeof(tasitc_dic_keyval_t) * size);
   dic->size = size;
   dic->elems = elems;
@@ -112,9 +112,9 @@ void tasitc_mpc_convert_dic(mpc_ast_t* ast, tasitc_repr_t* repr) {
   }
 }
 
-void tasitc_mpc_convert_vec(mpc_ast_t* ast, tasitc_repr_t* repr) {
-  repr->type = TASITC_VECTOR;
-  repr->val = malloc(sizeof(tasitc_repr_val_t));
+void tasitc_mpc_convert_vec(mpc_ast_t* ast, tasitc_token_t* token) {
+  token->type = TASITC_VECTOR;
+  token->val = malloc(sizeof(tasitc_token_val_t));
 
   uint32_t size = 0;
   for (int i = 0; i < ast->children_num; i++) {
@@ -125,8 +125,8 @@ void tasitc_mpc_convert_vec(mpc_ast_t* ast, tasitc_repr_t* repr) {
   }   
   
   tasitc_vec_t *vec = malloc(sizeof(tasitc_vec_t));
-  repr->val->vec = vec;
-  tasitc_repr_t** elems = malloc(sizeof(tasitc_repr_t) * size);
+  token->val->vec = vec;
+  tasitc_token_t** elems = malloc(sizeof(tasitc_token_t) * size);
   vec->size = size;
   vec->elems = elems;
 
@@ -135,54 +135,54 @@ void tasitc_mpc_convert_vec(mpc_ast_t* ast, tasitc_repr_t* repr) {
     mpc_ast_t *child = ast->children[i];
     if (!tasitc_mpc_skip_tag(child)) {
       assert(vec_idx < size);
-      elems[vec_idx] = malloc(sizeof(tasitc_repr_t));
+      elems[vec_idx] = malloc(sizeof(tasitc_token_t));
       tasitc_mpc_convert(child, elems[vec_idx]);
       vec_idx++;
     }
   }
 }
 
-void tasitc_mpc_convert_string(mpc_ast_t* ast, tasitc_repr_t* repr) {
-  repr->type = TASITC_STRING;
-  repr->val = malloc(sizeof(tasitc_repr_val_t));
+void tasitc_mpc_convert_string(mpc_ast_t* ast, tasitc_token_t* token) {
+  token->type = TASITC_STRING;
+  token->val = malloc(sizeof(tasitc_token_val_t));
   size_t len = strlen(ast->contents) - 2; //trim
   // TODO: mpc unescape
-  repr->val->string = malloc(len + 1);
-  strncpy(repr->val->string, ast->contents + 1, len);
-  repr->val->string[len] = '\0';
+  token->val->string = malloc(len + 1);
+  strncpy(token->val->string, ast->contents + 1, len);
+  token->val->string[len] = '\0';
 }
 
-void tasitc_mpc_convert(mpc_ast_t* ast, tasitc_repr_t* repr) {
+void tasitc_mpc_convert(mpc_ast_t* ast, tasitc_token_t* token) {
   if (tasitc_mpc_skip_tag(ast)) {
     return;
   }
   
   if (strstr(ast->tag, "string")) {
-    return tasitc_mpc_convert_string(ast, repr);
+    return tasitc_mpc_convert_string(ast, token);
   } else if (strstr(ast->tag, "dic")) {
-    return tasitc_mpc_convert_dic(ast, repr);
+    return tasitc_mpc_convert_dic(ast, token);
   } else if (strstr(ast->tag, "vector")) {
-    return tasitc_mpc_convert_vec(ast, repr);
+    return tasitc_mpc_convert_vec(ast, token);
   }
 
-  return tasitc_repr_err(repr, "Unexpected tag for parser", TASITC_PARSER_ERROR);
+  return tasitc_token_err(token, "Unexpected tag for parser", TASITC_PARSER_ERROR);
 }
 
-void tasitc_mpc_convert_root(mpc_ast_t* ast, tasitc_repr_t* repr) {
+void tasitc_mpc_convert_root(mpc_ast_t* ast, tasitc_token_t* token) {
   assert(ast->children_num != 1 && strcmp(">", ast->tag) == 0);
   // TODO: iterate and find composition
   mpc_ast_t *root = ast->children[1];
-  tasitc_mpc_convert(root, repr);
+  tasitc_mpc_convert(root, token);
 }
 
 /*
 ** Parsers
 */
-int tasitc_parse(const char *filename, const char *string, tasitc_repr_t *repr) {
+int tasitc_parse(const char *filename, const char *string, tasitc_token_t *token) {
   assert(false); //FIXME: NOT IMPLEMENTED
 }
 
-int tasitc_parse_file(const char *filename, FILE *file, tasitc_repr_t *repr) {
+int tasitc_parse_file(const char *filename, FILE *file, tasitc_token_t *token) {
   mpc_parser_t* Ws = mpc_new("ws");
   mpc_parser_t* WsOpt = mpc_new("wsopt");
 
@@ -218,12 +218,12 @@ int tasitc_parse_file(const char *filename, FILE *file, tasitc_repr_t *repr) {
   int res_val = -1;
   if (mpc_parse_contents(filename, Tasitc, &ast_res)) {
     mpc_ast_print(ast_res.output);
-    tasitc_mpc_convert_root(ast_res.output, repr);
+    tasitc_mpc_convert_root(ast_res.output, token);
     mpc_ast_delete(ast_res.output);
 
     res_val = 0;
   } else {
-    tasitc_repr_err(repr, "Parse error!", TASITC_PARSER_ERROR);
+    tasitc_token_err(token, "Parse error!", TASITC_PARSER_ERROR);
     mpc_err_print(ast_res.error);
     mpc_err_delete(ast_res.error);
     res_val = -1;

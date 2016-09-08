@@ -1,8 +1,8 @@
 /*
   Internal tasitc representation
 */
-#ifndef REPR_H
-#define REPR_H
+#ifndef TOKEN_H
+#define TOKEN_H
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -11,7 +11,7 @@ typedef enum {
   TASITC_STRING,
   TASITC_ERROR, 
   TASITC_DICTIONARY, TASITC_VECTOR, 
-} tasitc_repr_type_e;
+} tasitc_token_type_e;
 
 /*
   Internal errors
@@ -60,7 +60,7 @@ typedef struct tasitc_err_t {
 
 typedef struct tasitc_dic_keyval_t {
   char *key;
-  struct tasitc_repr_t *val;
+  struct tasitc_token_t *val;
 } tasitc_dic_keyval_t;
 
 typedef struct tasitc_dic_t {
@@ -71,7 +71,7 @@ typedef struct tasitc_dic_t {
 // FIXME: this 'vector' is not a vector
 typedef struct tasitc_vec_t {
   uint32_t size;
-  struct tasitc_repr_t **elems;
+  struct tasitc_token_t **elems;
 } tasitc_vec_t;
 
 /*
@@ -82,7 +82,7 @@ typedef uint64_t tasitc_int_t;
 typedef double tasitc_num_t;
 typedef bool tasitc_bool_t;
 
-typedef union tasitc_repr_val_t {
+typedef union tasitc_token_val_t {
   tasitc_int_t integer;
   tasitc_num_t number;
   tasitc_bool_t boolean;
@@ -96,16 +96,16 @@ typedef union tasitc_repr_val_t {
   struct tasitc_file_t *file;
   struct tasitc_sink_t *sink;
 
-} tasitc_repr_val_t;
+} tasitc_token_val_t;
 
-typedef struct tasitc_repr_t {
-  tasitc_repr_type_e type;
-  tasitc_repr_val_t *val;
-} tasitc_repr_t;
+typedef struct tasitc_token_t {
+  tasitc_token_type_e type;
+  tasitc_token_val_t *val;
+} tasitc_token_t;
 
 /* 
    Functions
 */
-void tasitc_repr_delete(tasitc_repr_t *repr);
+void tasitc_token_delete(tasitc_token_t *token);
 
 #endif

@@ -15,13 +15,13 @@
 
 int main(int argc, char** argv) {
   if (argc == 2) {
-    tasitc_repr_t repr;
+    tasitc_token_t token;
     const char* path = argv[1];
     FILE* file = fopen(path, "r");
 
-    int ret = tasitc_parse_file(path, file, &repr);
-    printf("%s\n", tasitc_stringify(&repr, 2));
-    tasitc_repr_delete(&repr);
+    int ret = tasitc_parse_file(path, file, &token);
+    printf("%s\n", tasitc_stringify(&token, 2));
+    tasitc_token_delete(&token);
     return ret;
   } else {
     puts("tasitc(0.0.3)");
@@ -32,10 +32,10 @@ int main(int argc, char** argv) {
     read_history(HISTORY);
     while ((input = readline(prompt)) != NULL) {
       add_history(input);
-      tasitc_repr_t repr;
-      tasitc_parse("<stdin>", input, &repr);
-      printf("%s", tasitc_stringify(&repr, 2));
-      tasitc_repr_delete(&repr);
+      tasitc_token_t token;
+      tasitc_parse("<stdin>", input, &token);
+      printf("%s", tasitc_stringify(&token, 2));
+      tasitc_token_delete(&token);
       free(input);
     }
     write_history(HISTORY);

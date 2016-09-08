@@ -1,4 +1,4 @@
-#include "repr.h"
+#include "token.h"
 
-char* tasitc_stringify(tasitc_repr_t *repr, uint8_t indent);
+char* tasitc_stringify(tasitc_token_t *token, uint8_t indent);
 

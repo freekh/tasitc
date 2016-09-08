@@ -52,19 +52,19 @@ char* tasitc_stringify_vec(tasitc_vec_t* vec, uint8_t indent) {
   return res;
 }
 
-char* tasitc_stringify(tasitc_repr_t *repr, uint8_t indent) {
-  if (repr->val == NULL) {
+char* tasitc_stringify(tasitc_token_t *token, uint8_t indent) {
+  if (token->val == NULL) {
     return NULL;
   }
-  if (repr->type == TASITC_ERROR) {
-    return repr->val->err->msg;
-  } else if (repr->type == TASITC_STRING) {
-    return tasitc_stringify_str(repr->val->string);
-  } else if (repr->type == TASITC_VECTOR) {
-    return tasitc_stringify_vec(repr->val->vec, indent);
-  } else if (repr->type == TASITC_DICTIONARY) {
-    return tasitc_stringify_dic(repr->val->dic, indent);
+  if (token->type == TASITC_ERROR) {
+    return token->val->err->msg;
+  } else if (token->type == TASITC_STRING) {
+    return tasitc_stringify_str(token->val->string);
+  } else if (token->type == TASITC_VECTOR) {
+    return tasitc_stringify_vec(token->val->vec, indent);
+  } else if (token->type == TASITC_DICTIONARY) {
+    return tasitc_stringify_dic(token->val->dic, indent);
   }
-  assert(true && "FATAL: cannot stringify repr with a non-null val of unknown type");
+  assert(false && "FATAL: cannot stringify token with a non-null val of unknown type");
   return ""; // never reached
 }

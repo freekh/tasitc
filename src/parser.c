@@ -122,7 +122,7 @@ void tasitc_mpc_convert_vec(mpc_ast_t* ast, tasitc_token_t* token) {
     if (!tasitc_mpc_skip_tag(child)) {
       size++;
     }
-  }   
+  }
   
   tasitc_vec_t *vec = malloc(sizeof(tasitc_vec_t));
   token->val->vec = vec;
@@ -152,6 +152,75 @@ void tasitc_mpc_convert_string(mpc_ast_t* ast, tasitc_token_t* token) {
   token->val->string[len] = '\0';
 }
 
+void tasitc_mpc_convert_comp(mpc_ast_t* ast, tasitc_token_t* token) {
+  // TODO: refactor vec & comp codebases into one?
+  token->type = TASITC_COMPOSITION;
+  token->val = malloc(sizeof(tasitc_token_val_t));
+
+  size_t size = 1;
+  for (int i = 0; i < ast->children_num; i++) {
+    mpc_ast_t *child = ast->children[i];
+    if (strstr(child->tag, "symcompose")) {
+      size++;
+    }
+  }
+
+  tasitc_comp_t *comp = malloc(sizeof(tasitc_comp_t));
+  token->val->comp = comp;
+  tasitc_token_t** elems = malloc(sizeof(tasitc_token_t) * size);
+  comp->size = size;
+  comp->elems = elems;
+
+  size_t comp_idx = 0;
+  for (int i = 0; i < ast->children_num; i++) {
+    mpc_ast_t *child = ast->children[i];
+    if (!tasitc_mpc_skip_tag(child) && !strstr(child->tag, "symcompose")) {
+      assert(comp_idx < size);
+      elems[comp_idx] = malloc(sizeof(tasitc_token_t));
+      tasitc_mpc_convert(child, elems[comp_idx]);
+      comp_idx++;
+    }
+  }
+}
+
+void tasitc_mpc_convert_ctx(mpc_ast_t* ast, tasitc_token_t* token) {
+  token->type = TASITC_CTX;
+  token->val = malloc(sizeof(tasitc_token_val_t));
+
+  size_t size = 0;
+  for (int i = 0; i < ast->children_num; i++) {
+    mpc_ast_t *child = ast->children[i];
+    if (strstr(child->tag, "dicpath") || strstr(child->tag, "int")) {
+      size++;
+    }
+  }
+  
+  tasitc_ctx_t *ctx = malloc(sizeof(tasitc_ctx_t));
+  token->val->ctx = ctx;
+  tasitc_ctx_attr_t** attrs = malloc(sizeof(tasitc_ctx_attr_t) * size);
+  ctx->size = size;
+  ctx->attrs = attrs;
+
+  size_t attr_idx = 0;
+  for (int i = 0; i < ast->children_num; i++) {
+    mpc_ast_t *child = ast->children[i];
+    if (strstr(child->tag, "dicpath") || strstr(child->tag, "int")) {
+      assert(attr_idx < size);
+      attrs[attr_idx] = malloc(sizeof(tasitc_ctx_attr_t));
+      if (strstr(child->tag, "dicpath")) {
+        attrs[attr_idx]->path = malloc(sizeof(strlen(child->contents) + 1));
+        strcpy(attrs[attr_idx]->path, child->contents);
+        attrs[attr_idx]->path[strlen(child->contents)] = '\0';
+      } else if (strstr(child->tag, "int")) {
+        attrs[attr_idx]->num = atoi(child->contents);
+      } else {
+        assert(false && "Tried to parse an unexpected token in ctx");
+      }
+      attr_idx++;
+    }
+  }
+}
+
 void tasitc_mpc_convert(mpc_ast_t* ast, tasitc_token_t* token) {
   if (tasitc_mpc_skip_tag(ast)) {
     return;
@@ -163,9 +232,13 @@ void tasitc_mpc_convert(mpc_ast_t* ast, tasitc_token_t* token) {
     return tasitc_mpc_convert_dic(ast, token);
   } else if (strstr(ast->tag, "vector")) {
     return tasitc_mpc_convert_vec(ast, token);
+  } else if (strstr(ast->tag, "ctx")) {
+    return tasitc_mpc_convert_ctx(ast, token);
+  } else if (strstr(ast->tag, "composition")) {
+    return tasitc_mpc_convert_comp(ast, token);
   }
 
-  return tasitc_token_err(token, "Unexpected tag for parser", TASITC_PARSER_ERROR);
+  return tasitc_token_err(token, str_concat("Unexpected tag for parser: ", ast->tag), TASITC_PARSER_ERROR);
 }
 
 void tasitc_mpc_convert_root(mpc_ast_t* ast, tasitc_token_t* token) {

@@ -11,7 +11,8 @@ typedef enum {
   TASITC_INTEGER, TASITC_NUMBER, TASITC_BOOLEAN,
   TASITC_STRING,
   TASITC_ERROR, 
-  TASITC_DICTIONARY, TASITC_VECTOR, 
+  TASITC_DICTIONARY, TASITC_VECTOR,
+  TASITC_COMPOSITION, TASITC_CTX
 } tasitc_token_type_e;
 
 /*
@@ -75,6 +76,11 @@ typedef struct tasitc_vec_t {
   struct tasitc_token_t **elems;
 } tasitc_vec_t;
 
+typedef struct tasitc_comp_t {
+  size_t size;
+  struct tasitc_token_t **elems;
+} tasitc_comp_t;
+
 /*
   Primitive literals
 */
@@ -82,6 +88,17 @@ typedef char* tasitc_str_t;
 typedef uint64_t tasitc_int_t;
 typedef double tasitc_num_t;
 typedef bool tasitc_bool_t;
+
+typedef union tasitc_ctx_attr_t {
+  tasitc_str_t path;
+  tasitc_int_t num;
+} tasitc_ctx_attr_t;
+
+typedef struct tasitc_ctx_t {
+  size_t size;
+  union tasitc_ctx_attr_t **attrs;
+} tasitc_ctx_t;
+
 
 typedef union tasitc_token_val_t {
   tasitc_int_t integer;
@@ -92,6 +109,9 @@ typedef union tasitc_token_val_t {
   struct tasitc_err_t *err;
   struct tasitc_vec_t *vec;
   struct tasitc_dic_t *dic;
+
+  struct tasitc_comp_t *comp;
+  struct tasitc_ctx_t *ctx;
 
   struct tasitc_req_t *req;
   struct tasitc_file_t *file;

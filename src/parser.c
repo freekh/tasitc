@@ -46,7 +46,7 @@ static char* grammar = "                                                      \
 ";
 
 bool tasitc_mpc_skip_tag(mpc_ast_t* ast) {
-  return strcmp("char", ast->tag) == 0 ||  strcmp("regex", ast->tag) == 0 || 
+  return strcmp("char", ast->tag) == 0 ||  strcmp("regex", ast->tag) == 0 ||
       strstr(ast->tag, "wsopt") || strstr(ast->tag, "ws");
 }
 
@@ -85,15 +85,15 @@ void tasitc_mpc_convert_dic_keyval(mpc_ast_t* ast, tasitc_dic_keyval_t* keyval) 
 void tasitc_mpc_convert_dic(mpc_ast_t* ast, tasitc_token_t* token) {
   token->type = TASITC_DICTIONARY;
   token->val = malloc(sizeof(tasitc_token_val_t));
-  
+
   size_t size = 0;
   for (int i = 0; i < ast->children_num; i++) {
     mpc_ast_t *child = ast->children[i];
     if (!tasitc_mpc_skip_tag(child)) {
       size++;
     }
-  }   
-  
+  }
+
   tasitc_dic_t *dic = malloc(sizeof(tasitc_dic_t));
   token->val->dic = dic;
   tasitc_dic_keyval_t** elems = malloc(sizeof(tasitc_dic_keyval_t) * size);
@@ -123,7 +123,7 @@ void tasitc_mpc_convert_vec(mpc_ast_t* ast, tasitc_token_t* token) {
       size++;
     }
   }
-  
+
   tasitc_vec_t *vec = malloc(sizeof(tasitc_vec_t));
   token->val->vec = vec;
   tasitc_token_t** elems = malloc(sizeof(tasitc_token_t) * size);
@@ -194,7 +194,7 @@ void tasitc_mpc_convert_ctx(mpc_ast_t* ast, tasitc_token_t* token) {
       size++;
     }
   }
-  
+
   tasitc_ctx_t *ctx = malloc(sizeof(tasitc_ctx_t));
   token->val->ctx = ctx;
   tasitc_ctx_attr_t** attrs = malloc(sizeof(tasitc_ctx_attr_t) * size);
@@ -225,7 +225,7 @@ void tasitc_mpc_convert(mpc_ast_t* ast, tasitc_token_t* token) {
   if (tasitc_mpc_skip_tag(ast)) {
     return;
   }
-  
+
   if (strstr(ast->tag, "string")) {
     return tasitc_mpc_convert_string(ast, token);
   } else if (strstr(ast->tag, "dic")) {
@@ -281,12 +281,12 @@ int tasitc_parse_file(const char *filename, FILE *file, tasitc_token_t *token) {
 
   mpc_parser_t* Tasitc = mpc_new("tasitc");
 
-  mpca_lang(MPCA_LANG_WHITESPACE_SENSITIVE, grammar,  
-            Ws, WsOpt, Path, String, Number, Int, 
-            SymCtx, SymArg, SymCompose, SymType, 
+  mpca_lang(MPCA_LANG_WHITESPACE_SENSITIVE, grammar,
+            Ws, WsOpt, Path, String, Number, Int,
+            SymCtx, SymArg, SymCompose, SymType,
             DicPath, Ctx, Expr, Form, Composition, Vector,
             DicKeyval, Dic, Type, Tasitc);
-  
+
   mpc_result_t ast_res;
   int res_val = -1;
   if (mpc_parse_contents(filename, Tasitc, &ast_res)) {
@@ -301,9 +301,9 @@ int tasitc_parse_file(const char *filename, FILE *file, tasitc_token_t *token) {
     mpc_err_delete(ast_res.error);
     res_val = -1;
   }
-  mpc_cleanup(20, 
-              Ws, WsOpt, Path, String, Number, Int, 
-              SymCtx, SymArg, SymCompose, SymType, 
+  mpc_cleanup(20,
+              Ws, WsOpt, Path, String, Number, Int,
+              SymCtx, SymArg, SymCompose, SymType,
               DicPath, Ctx, Expr, Form, Composition, Vector,
               DicKeyval, Dic, Type, Tasitc);
   return res_val;

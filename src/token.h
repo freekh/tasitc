@@ -99,7 +99,6 @@ typedef struct tasitc_ctx_t {
   union tasitc_ctx_attr_t **attrs;
 } tasitc_ctx_t;
 
-
 typedef union tasitc_token_val_t {
   tasitc_int_t integer;
   tasitc_num_t number;

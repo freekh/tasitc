@@ -1,0 +1,5 @@
+
+{'for interpolation': 'read on'} | 'inside \' we can use"' + "inside \" we can use: '" +
+  '$["for interpolation"] use "' + "$['for interpolation'] for next example"
+##:
+TODO

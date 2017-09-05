@@ -1,0 +1,22 @@
+what's unique about a spreadsheet?
+operations works on a table
+can "lock values"
+a cell might be a function or a value of some type
+can reference a value 
+
+    A    B      C
+1   one  1      =$A$2
+2   two  2
+3   six  6
+4   ten  10
+
+[ [one, two, size, ten ], [1, 2, 6, 10] ] | let [$A$2] #: [ [one, two, size, ten ], [1, 2, 6, 10], [two] ] 
+
+[ [one, two, size, ten ], [1, 2, 6, 10] ] | let [$A + $B]
+
+OR
+
+
+[ { A: one, B: 1 }, { A: two, B: 2 }, { A: six, B: 6 }, { A: ten, B: 10 } ] | let [ { C: $[1].A } ]
+[ { A: one, B: 1 }, { A: two, B: 2 }, { A: six, B: 6 }, { A: ten, B: 10 } ] | map $.A + $.B
+

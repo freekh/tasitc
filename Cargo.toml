@@ -1,0 +1,6 @@
+[package]
+name = "tasitc"
+version = "0.1.0"
+authors = ["Fredrik Ekholdt <freekh@gmail.com>"]
+
+[dependencies]

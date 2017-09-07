@@ -1,198 +1,117 @@
 #[derive(Clone, Debug)]
 pub enum TokenType {
-  TASExpr,
-  TASDocs,
-  TASLineEnd,
-  TASDot, // .
-  TASCom, // ,
-  TASCtx, // $
-  TASBar, // |
-  TASCol, // :
-  TASSel, // [
-  TASSer, // ]
-  TASKel, // {
-  TASKer, // }
-  TASPal, // (
-  TASPar, // )
-  TASSpace,
-  TASGap,
-  TASComment
+  Start,
+  Dot, // .
+  Com, // ,
+  Ctx, // $
+  Bar, // |
+  Col, // :
+  Sel, // [
+  Ser, // ]
+  Kel, // {
+  Ker, // }
+  Pal, // (
+  Par, // )
+  Space,
+  Gap,
+  Docs,
+  Comment,
+  Expr,
+  End
+}
+
+#[derive(Clone, Debug)]
+pub struct TokenContent {
+  text: String,
+  pos_end: usize
 }
 
 #[derive(Clone, Debug)]
 pub struct Token {
-  pub token_type: TokenType,
-  pub text: String,
-  pub start: usize,
-  pub end: usize
+  token_type: TokenType,
+  pos: usize,
+  content: Option<TokenContent>,
 }
 
-fn token_type(content: &String, start: usize, end: usize) -> Option<Token> {
-  let string = content.to_owned(); // TODO: no idea if this is OK for perf
-  if string.starts_with("{{") && string.ends_with("}}") {
-    Some(Token {
-      token_type: TokenType::TASDocs,
-      text: content.clone(),
-      start: start,
-      end: end
-    })
-  } else if string.starts_with("##") && string.len() > 3 {
-    Some(Token {
-      token_type: TokenType::TASComment,
-      text: string[2 .. string.len()].to_string(),
-      start: start,
-      end: end
-    })
-  } else if string == "\n" {
-    Some(Token {
-      token_type: TokenType::TASLineEnd,
-      text: content.clone(),
-      start: start,
-      end: end
-    })
-  } else if string == "|" {
-    Some(Token {
-      token_type: TokenType::TASBar,
-      text: content.clone(),
-      start: start,
-      end: end
-    })
-  } else if string == "$" {
-    Some(Token {
-      token_type: TokenType::TASCtx,
-      text: content.clone(),
-      start: start,
-      end: end
-    })
-  } else if string == "." {
-    Some(Token {
-      token_type: TokenType::TASDot,
-      text: content.clone(),
-      start: start,
-      end: end
-    })
-  } else if string == "," {
-    Some(Token {
-      token_type: TokenType::TASCom,
-      text: content.clone(),
-      start: start,
-      end: end
-    })
-  } else if string == ":" {
-    Some(Token {
-      token_type: TokenType::TASCol,
-      text: content.clone(),
-      start: start,
-      end: end
-    })
-  } else if string == "{" {
-    Some(Token {
-      token_type: TokenType::TASKel,
-      text: content.clone(),
-      start: start,
-      end: end
-    })
-  } else if string == "}" {
-    Some(Token {
-      token_type: TokenType::TASKer,
-      text: content.clone(),
-      start: start,
-      end: end
-    })
-  } else if string == "(" {
-    Some(Token {
-      token_type: TokenType::TASPar,
-      text: content.clone(),
-      start: start,
-      end: end
-    })
-  } else if string == ")" {
-    Some(Token {
-      token_type: TokenType::TASPal,
-      text: content.clone(),
-      start: start,
-      end: end
-    })
-  } else if string == "[" {
-    Some(Token {
-      token_type: TokenType::TASSel,
-      text: content.clone(),
-      start: start,
-      end: end
-    })
-  } else if string == "]" {
-    Some(Token {
-      token_type: TokenType::TASSer,
-      text: content.clone(),
-      start: start,
-      end: end
-    })
-  } else if string == " " {
-    Some(Token {
-      token_type: TokenType::TASSpace,
-      text: content.clone(),
-      start: start,
-      end: end
-    })
-  } else if content.len() > 2 && content.trim().len() == 0 {
-    Some(Token {
-      token_type: TokenType::TASGap,
-      text: content.clone(),
-      start: start,
-      end: end
-    })
-  } else {
-    None
+enum TokenResult {
+  Token(Token),
+  Peek,
+  Slurp(bool, TokenType)
+}
+
+fn eval(c: char, pos: usize, peek_chars: Vec<char>) -> TokenResult {
+  match c {
+    _ => TokenResult::Peek
   }
 }
 
-pub struct TokenError {
-  pub pos: usize
-}
-
-// TODO: replace String with str for perf
-pub fn tokenize(string: &String) -> Result<Vec<Token>, TokenError> {
+pub fn tokenize(input: &str) -> Vec<Token> { // TODO: Vec => Iterator
   let mut tokens: Vec<Token> = vec!();
-  let mut curr_content = String::new();
-  let mut curr_expr = String::new();
-  let mut curr_start = 0;
-  for (pos, char) in string.chars().enumerate() { // TODO: return iter instead
-    curr_content.push(char);
-    match token_type(&curr_content, curr_start, pos) {
-      Some(token) => {
-        if !curr_expr.is_empty() {
-          tokens.push(Token {
-            token_type: TokenType::TASExpr,
-            start: curr_start,
-            end: pos,
-            text: curr_expr.clone()
-          });
-          curr_expr = String::new();
+  tokens.push(Token {
+    token_type: TokenType::Start,
+    pos: 0,
+    content: None,
+  });
+  let mut slurp_token: Option<Token> = None;
+  let mut peek_chars: Vec<char> = vec!();
+  for (pos, c) in input.chars().enumerate() {
+    // for each char: 
+    //   - this is a token on it's own; or
+    //   - we must peek; and either
+    //      - convert chars and push as tokens; or
+    //      - create a new token
+    //   - we must start slurping until end slurp
+    //     
+
+    match (eval(c, pos, peek_chars.clone()), slurp_token) {
+      (TokenResult::Token(token), None) =>
+        tokens.push(token.clone()),
+      (TokenResult::Peek, None) => {
+        peek_chars.push(c);
+      }
+      (TokenResult::Slurp(stop, _), Some(token)) => {
+        let slurp_content = match token.content {
+          Some(curr) => {
+            let mut text = curr.text;
+            text.push(c);
+            TokenContent {
+              text: text,
+              pos_end: pos,
+            }
+          }
+          None => TokenContent {
+            text: c.to_string(),
+            pos_end: pos,
+          }
+        };
+        let curr_token = Token {
+          pos: token.pos,
+          content: Some(slurp_content),
+          token_type: token.token_type
+        };
+        if stop {
+          tokens.push(curr_token);
+        } else {
+          slurp_token = Some(curr_token);
         }
-        tokens.push(token);
-        curr_content = String::new();
-        curr_start = pos;
       }
-      None => {
-        curr_content = String::new();
-        curr_expr.push(char);
+      (TokenResult::Slurp(stop, token_type, ), None) => {
+        let content = Some(TokenContent {
+          pos_end: pos,
+          text: c.to_string(),
+        });
+        if stop {
+          tokens.push();
+        } else {
+          slurp_token = Some(Token {
+            pos: pos,
+            content: content,
+            token_type: token_type
+          });
+        }
       }
     }
+    
   }
-  
-  let maybe_last_token = tokens.clone().pop();
-  match maybe_last_token {
-    Some(last_token) => {
-      if last_token.end + 1 == string.len() {
-        Ok(tokens.clone())
-      } else {
-        Err(TokenError {
-          pos: last_token.end
-        })
-      }
-    }
-    None => {
-      Ok(vec![])
-    }
-  }
+  tokens
 }

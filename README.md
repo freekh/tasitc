@@ -146,3 +146,25 @@ x | ($ | y | z) == (x | y) | $ | z
 a b c === c | b | a == c | a b
 
 Types... 
+
+
+On requests:
+
+
+/products/:id/:name
+
+-products.tas:
+$: { id: number, name: string }
+../psql "select products where id = $.id and name = $.name"
+$: [{ product: { id: number, name: string, email: string } }]
+
+products.tas:
+$$: get { path: /:(id: number)/:(name: string), params: { page: number } } | -products
+
+$$: post { files: [1;] } | $.file >> ../images
+
+../images.tas
+
+$$: get { params: { w: number, h: number } } | imgx ../images
+
+Use '$>' to define tas files?

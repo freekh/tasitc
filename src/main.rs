@@ -8,7 +8,7 @@ fn main() {
   // TODO: clean up?
   match io::stdin().read_to_string(&mut buf) {
     Ok(_) => {
-    	parser::parse(&buf);
+    	parser::parse(&buf.to_owned());
     }
     Err(why) => {
       panic!("Could not read from stdin: {}", why);

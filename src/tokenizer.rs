@@ -124,7 +124,7 @@ fn token_type(c: char) -> TokenType  {
   }
 }
 
-fn valid_sue_token(token_type: TokenType) -> bool {
+fn slurp_into_sue(token_type: TokenType) -> bool {
   token_type == TokenType::Sue || 
   token_type == TokenType::Dot || 
   token_type == TokenType::Sig || 
@@ -213,13 +213,14 @@ pub fn tokenize(input: &str) -> Vec<Token> { // TODO: Vec => Iterator
       // Slurp Hax (comment)
       (TokenType::New, _, TokenType::Hax) => { // hax slurp ends
         tokens.push(last_token);
-        peek_prev_type = None;
         last_token = token!(TokenType::New);
+        peek_prev_type = None;
       }
       (TokenType::Hax, _, _) => {
+        tokens.push(last_token);
         last_token = token!(TokenType::Hax);
-        peek_prev_type = Some(token_type);
         last_token.push_content(c, pos, line, column);
+        peek_prev_type = Some(token_type);
       }
       (_, _, TokenType::Hax) => {
         last_token.push_content(c, pos, line, column);
@@ -256,7 +257,7 @@ pub fn tokenize(input: &str) -> Vec<Token> { // TODO: Vec => Iterator
       }
       // Slurps Sue
       (_, _, TokenType::Sue) => {
-        if valid_sue_token(token_type.clone()) {
+        if slurp_into_sue(token_type.clone()) {
           last_token.push_content(c, pos, line, column);
         } else {
           tokens.push(last_token.clone());

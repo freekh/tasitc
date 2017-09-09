@@ -1,4 +1,4 @@
 #*
   Bibi
 *#
-map $.a
+map  $['#hei'] # test

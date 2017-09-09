@@ -146,7 +146,7 @@ pub fn tokenize(input: &str) -> Vec<Token> { // TODO: Vec => Iterator
     content: None,
   };
 
-  let mut look_ahead_type: Option<TokenType> = None;
+  let mut look_ahead: Option<TokenType> = None;
 
   for (pos, c) in input.chars().enumerate() {
     macro_rules! token {
@@ -162,48 +162,48 @@ pub fn tokenize(input: &str) -> Vec<Token> { // TODO: Vec => Iterator
       }
     }
     let token_type = token_type(c);
-    match (token_type.clone(), look_ahead_type.clone(), last_token.token_type.clone()) {
+    match (token_type.clone(), look_ahead.clone(), last_token.token_type.clone()) {
       // Slurp Soq
       (TokenType::Soq, Some(TokenType::Bas), TokenType::Soq) => { // ignore escape
         last_token.push_content(c, pos, line, column);
-        look_ahead_type = None
+        look_ahead = None
       }
       (TokenType::Soq, _, TokenType::Soq) => {
         tokens.push(last_token.clone());
         last_token = token!(TokenType::New);
-        look_ahead_type = None;
+        look_ahead = None;
       }      
       (_, _, TokenType::Soq) => {
         last_token.push_content(c, pos, line, column);
-        look_ahead_type = None;
+        look_ahead = None;
       }
       // Slurp Doq
       (TokenType::Doq, Some(TokenType::Bas), TokenType::Doq) => { // ignore escape
         last_token.push_content(c, pos, line, column);
-        look_ahead_type = None
+        look_ahead = None
       }
       (TokenType::Doq, _, TokenType::Doq) => {
         tokens.push(last_token.clone());
         last_token = token!(TokenType::New);
-        look_ahead_type = None;
+        look_ahead = None;
       }      
       (_, _, TokenType::Doq) => {
         last_token.push_content(c, pos, line, column);
-        look_ahead_type = None;
+        look_ahead = None;
       }
       // Slurp Doc
       (TokenType::New, None, TokenType::Doc) => { // doc slurp pushed
         tokens.push(last_token.clone());
         last_token = token!(TokenType::New);
-        look_ahead_type = None;
+        look_ahead = None;
       }
       (TokenType::Hax, Some(TokenType::Tar), TokenType::Doc) => { // doc slurp after
         last_token.push_content(c, pos, line, column);
-        look_ahead_type = None;
+        look_ahead = None;
       }
       (_, _, TokenType::Doc) => {
         last_token.push_content(c, pos, line, column);
-        look_ahead_type = Some(token_type);
+        look_ahead = Some(token_type);
       }
       (TokenType::Tar, _, TokenType::Hax) => { // doc slurp starts
         last_token = Token {
@@ -212,31 +212,31 @@ pub fn tokenize(input: &str) -> Vec<Token> { // TODO: Vec => Iterator
           token_type: TokenType::Doc,
         };
         last_token.push_content(c, pos, line, column);
-        look_ahead_type = Some(token_type);
+        look_ahead = Some(token_type);
       }
       // Slurp Hax (comment)
       (TokenType::New, _, TokenType::Hax) => { // hax slurp ends
         tokens.push(last_token);
         last_token = token!(TokenType::New);
-        look_ahead_type = None;
+        look_ahead = None;
       }
       (TokenType::Hax, _, _) => {
         tokens.push(last_token);
         last_token = token!(TokenType::Hax);
         last_token.push_content(c, pos, line, column);
-        look_ahead_type = Some(token_type);
+        look_ahead = Some(token_type);
       }
       (_, _, TokenType::Hax) => {
         last_token.push_content(c, pos, line, column);
-        look_ahead_type = Some(token_type);
+        look_ahead = Some(token_type);
       }
       // Escapes
       (TokenType::Bas, Some(TokenType::Bas), _) => { // escape escape
         last_token.push_content(c, pos, line, column);
-        look_ahead_type = None;
+        look_ahead = None;
       }
       (TokenType::Bas, _, _) => { // escape
-        look_ahead_type = Some(TokenType::Bas);
+        look_ahead = Some(TokenType::Bas);
       }
       // Slurps Int into Num
       (TokenType::Dot, _, TokenType::Int) => {
@@ -246,33 +246,33 @@ pub fn tokenize(input: &str) -> Vec<Token> { // TODO: Vec => Iterator
           token_type: TokenType::Num
         };
         last_token.push_content(c, pos, line, column);
-        look_ahead_type = None;
+        look_ahead = None;
       }
       (TokenType::Int, _, TokenType::Num) => {
         last_token.push_content(c, pos, line, column);
-        look_ahead_type = None;
+        look_ahead = None;
       }
       // Slurps Int
       (TokenType::Int, _, TokenType::Int) => {
         last_token.push_content(c, pos, line, column);
-        look_ahead_type = None;
+        look_ahead = None;
       }
       (TokenType::Int, _, _) => {
         tokens.push(last_token.clone());
         last_token = token!(token_type);
         last_token.push_content(c, pos, line, column);
-        look_ahead_type = None;
+        look_ahead = None;
       }
       // Slurps Ace
       (TokenType::Ace, _, TokenType::Ace) => {
         last_token.push_content(c, pos, line, column);
-        look_ahead_type = None;
+        look_ahead = None;
       }
       (TokenType::Ace, _, _) => {
         tokens.push(last_token.clone());
         last_token = token!(TokenType::Ace);
         last_token.push_content(c, pos, line, column);
-        look_ahead_type = None;
+        look_ahead = None;
       }
       // Slurps Sue
       (_, _, TokenType::Sue) => {
@@ -282,19 +282,19 @@ pub fn tokenize(input: &str) -> Vec<Token> { // TODO: Vec => Iterator
           tokens.push(last_token.clone());
           last_token = token!(token_type);
         }
-        look_ahead_type = None;
+        look_ahead = None;
       }
       (TokenType::Sue, _, _) => {
         tokens.push(last_token.clone());
         last_token = token!(token_type);
         last_token.push_content(c, pos, line, column);
-        look_ahead_type = None;
+        look_ahead = None;
       }
       //
       _ => {
         tokens.push(last_token);
         last_token = token!(token_type);
-        look_ahead_type = None;
+        look_ahead = None;
       }
     }
     if c == '\n' {

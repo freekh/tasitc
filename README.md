@@ -161,7 +161,7 @@ $: [{ product: { id: number, name: string, email: string } }]
 products.tas:
 $$: get { path: /:(id: number)/:(name: string), params: { page: number } } | -products
 
-$$: post { files: [1;] } | $.file >> ../images
+$$: post { files: [1;] } | $.files | ../s3 ../images
 
 ../images.tas
 

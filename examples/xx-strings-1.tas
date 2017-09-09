@@ -1,0 +1,14 @@
+#*
+  # Welcome to tasitc examples
+  
+  tasitc is a shell language aimed for the 'cloud'
+  - let's dive into what that means later after 
+  covering the basics.
+
+  As you might see this documentation is written
+  in a markdown-ish format.
+
+  Below you have the proverbial hello world,
+  which in of itself is not very interesting.
+*#
+"\"heisann\""

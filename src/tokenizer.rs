@@ -108,9 +108,9 @@ fn token_type(c: char) -> TokenType  {
     '=' => TokenType::Tis,
     '+' => TokenType::Lus,
     '?' => TokenType::Wut,
+    '~' => TokenType::Sig,
     // valid sue chars:
     '.' => TokenType::Dot,
-    '~' => TokenType::Sig,
     '/' => TokenType::Fas,
     '-' => TokenType::Hep,
     // slurps:

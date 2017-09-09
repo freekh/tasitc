@@ -146,7 +146,7 @@ pub fn tokenize(input: &str) -> Vec<Token> { // TODO: Vec => Iterator
     content: None,
   };
 
-  let mut look_ahead: Option<TokenType> = None;
+  let mut look_ahead: Option<TokenType> = None; // TODO: feels unecessary
 
   for (pos, c) in input.chars().enumerate() {
     macro_rules! token {
@@ -224,11 +224,11 @@ pub fn tokenize(input: &str) -> Vec<Token> { // TODO: Vec => Iterator
         tokens.push(last_token);
         last_token = token!(TokenType::Hax);
         last_token.push_content(c, pos, line, column);
-        look_ahead = Some(token_type);
+        look_ahead = Some(token_type); // TODO: not needed?
       }
       (_, _, TokenType::Hax) => {
         last_token.push_content(c, pos, line, column);
-        look_ahead = Some(token_type);
+        look_ahead = Some(token_type); // TODO: not needed?
       }
       // Escapes
       (TokenType::Bas, Some(TokenType::Bas), _) => { // escape escape
@@ -236,7 +236,7 @@ pub fn tokenize(input: &str) -> Vec<Token> { // TODO: Vec => Iterator
         look_ahead = None;
       }
       (TokenType::Bas, _, _) => { // escape
-        look_ahead = Some(TokenType::Bas);
+        look_ahead = Some(TokenType::Bas); // TODO: check Bas outside Doq/Soq
       }
       // Slurps Int into Num
       (TokenType::Dot, _, TokenType::Int) => {

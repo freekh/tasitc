@@ -29,7 +29,7 @@ pub enum TokenType {
   Fas, // /
   Hep, // -
   Lus, // +
-  Ace, // <1 space>
+  Ace, // <1+ space>
 }
 
 #[derive(Clone, Debug)]
@@ -127,7 +127,6 @@ fn token_type(c: char) -> TokenType  {
 fn slurp_into_sue(token_type: TokenType) -> bool {
   token_type == TokenType::Sue || 
   token_type == TokenType::Dot || 
-  token_type == TokenType::Sig || 
   token_type == TokenType::Fas || 
   token_type == TokenType::Hep 
 }
@@ -239,7 +238,7 @@ pub fn tokenize(input: &str) -> Vec<Token> { // TODO: Vec => Iterator
       (TokenType::Bas, _, _) => { // escape
         look_ahead_type = Some(TokenType::Bas);
       }
-      // Slurps Num
+      // Slurps Int into Num
       (TokenType::Dot, _, TokenType::Int) => {
         last_token = Token {
           pos: last_token.pos,
@@ -261,6 +260,17 @@ pub fn tokenize(input: &str) -> Vec<Token> { // TODO: Vec => Iterator
       (TokenType::Int, _, _) => {
         tokens.push(last_token.clone());
         last_token = token!(token_type);
+        last_token.push_content(c, pos, line, column);
+        look_ahead_type = None;
+      }
+      // Slurps Ace
+      (TokenType::Ace, _, TokenType::Ace) => {
+        last_token.push_content(c, pos, line, column);
+        look_ahead_type = None;
+      }
+      (TokenType::Ace, _, _) => {
+        tokens.push(last_token.clone());
+        last_token = token!(TokenType::Ace);
         last_token.push_content(c, pos, line, column);
         look_ahead_type = None;
       }

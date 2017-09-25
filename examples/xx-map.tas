@@ -1,5 +1,6 @@
 #*
-  
+  # Example
+  `[{name: foo}] | map ?.name`
 *#
 reduce (?2 | ?1)
 

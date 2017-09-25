@@ -1,0 +1,10 @@
+#*
+  # Example
+  `[1, 2, 3] | reduce ({curr, prev} | if ($.curr > $.prev) $.curr | else $.prev)`
+  `[1, 2, 3] | reduce (? | {curr, prev} | if ($.curr > $.prev) $.curr | else $.prev)`
+  `[1, 2, 3] | reduce (if (?1 > ?2) ?1 | else ?2)`
+*#
+$: (iter A)
+?: { A, (init $) } | B
+foldl ? (init $)
+$: (iter B)

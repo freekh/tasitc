@@ -1,0 +1,5 @@
+#*
+
+Example:
+curl -X 'POST' http://test.com: [{ value: string }] | map $.value
+*#

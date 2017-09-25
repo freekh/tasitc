@@ -1,5 +1,7 @@
-#*
-  Bibi
-*#
-*|#
-map  $.a #test
+$.name: string > ./name 
+
+{foo:{blah:($ | map ./name)}} > ./test-bar
+[{name:'test'}] | ./test-bar # {foo:{blah:['test']}}
+
+{foo:{blah:(? | map ./name)}} > ./test-wut
+./test-bar [{name:'test}] # {foo:{blah:['test]}}

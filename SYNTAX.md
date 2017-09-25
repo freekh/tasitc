@@ -148,3 +148,106 @@ app/init ~/foo
     };
   });
 };
+
+
+// anotehr day
+max.tas
+reduce (
+  if $.acc > $.prev
+  $.acc
+  else
+  $.prev
+)
+
+Monoidic?
+({ a: 1 } | $.a) | $ + 1
+the same as:
+{ a: 1 } | ($.a | $ + 1)
+?
+expr
+($.a | $ + 1) requires a and increments it (so increment must be present)
+
+./index.tas
+html [
+  style css "
+    .bold {
+      font-weight: bold;
+    }
+  ",
+  body [
+    h1 'Example' | style { color: 'red' },
+    div [
+      span 'hello' | attrs { class: 'bold' },
+      span 'world',
+    ],
+    (node 'marquee') 'Content',
+    form [
+      input | style { name: 'msg' }, # notice 'msg'
+      input | attrs { type: 'submit' },
+    ] | attrs { action: (url ./submit) }, # trailing comma
+  ] # no trailing comma
+] | content-type text/html
+
+./submit.tas
+val { # val means cannot overwrite rows, let means overwrite is ok?
+  rows: ./psql (
+    insert [$.msg] # notice 'msg'
+    into   [messages/value]
+    messages
+  )
+}
+html [
+  body [
+    span (
+      if $.rows / 0
+      "Wrote '$.msg' to messages" | status 200 # | content-type text/html not needed html has this
+      else
+      { error: 'Weird but an example of how to change content type' } 
+      content-type application/json # flows up
+      status 500
+    )
+  ]
+]: { content-type (text/html || application/json), status (200 || 500) }
+
+
+--------
+
+(
+  h1
+  style { color: 'red' }
+) 'Example'
+
+equivalent but not equal to:
+
+h1 'Example'
+style { color: 'red' }
+
+equals:
+h1 'Example' | style { color: 'red' }
+
+
+----
+
+()
+
+html/body.tas
+?: html/element
+"<body>?</body>" <: html/element 
+
+?: _
+'<body/>' <: html/element
+
+html/element.tas
+
+?: (string || number || iter html/element) 
+$: (html/style || html/attrs)
+
+
+git merge --abort
+
+div [(span 'yeah') (span 'blah')]
+
+[
+  { foo: 1 },
+  { foo: 2 },
+] | map $.foo

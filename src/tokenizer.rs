@@ -34,15 +34,15 @@ pub enum TokenType {
 
 #[derive(Clone, Debug)]
 pub struct Pos {
-  file: usize,
-  line: usize,
-  column: usize,
+  pub file: usize,
+  pub line: usize,
+  pub column: usize,
 }
 
 #[derive(Clone, Debug)]
 pub struct TokenContent {
-  text: String,
-  end: Pos,
+  pub text: String,
+  pub end: Pos,
 }
 
 impl Token {
@@ -75,9 +75,9 @@ impl Token {
 
 #[derive(Clone, Debug)]
 pub struct Token {
-  token_type: TokenType,
-  pos: Pos,
-  content: Option<TokenContent>,
+  pub token_type: TokenType,
+  pub pos: Pos,
+  pub content: Option<TokenContent>,
 }
 
 fn token_type(c: char) -> TokenType  {
@@ -166,31 +166,19 @@ pub fn tokenize(input: &str) -> Vec<Token> { // TODO: Vec => Iterator
       // Slurp Soq
       (&TokenType::Soq, &Some(TokenType::Bas), &TokenType::Soq) => { // ignore escape
         last_token.push_content(c, pos, line, column);
-        look_ahead = None
       }
-      (&TokenType::Soq, _, &TokenType::Soq) => {
+      (&TokenType::Soq, &None, _) => {
         tokens.push(last_token.clone());
-        last_token = token!(TokenType::New);
+        last_token = token!(TokenType::Soq);
+        look_ahead = Some(TokenType::Soq);
+      }
+      (&TokenType::Soq, &Some(TokenType::Soq), &TokenType::Soq) => {
         look_ahead = None;
       }      
-      (_, _, &TokenType::Soq) => {
+      (_, &Some(TokenType::Soq), &TokenType::Soq) => {
         last_token.push_content(c, pos, line, column);
-        look_ahead = None;
       }
-      // Slurp Doq
-      (&TokenType::Doq, &Some(TokenType::Bas), &TokenType::Doq) => { // ignore escape
-        last_token.push_content(c, pos, line, column);
-        look_ahead = None
-      }
-      (&TokenType::Doq, _, &TokenType::Doq) => {
-        tokens.push(last_token.clone());
-        last_token = token!(TokenType::New);
-        look_ahead = None;
-      }      
-      (_, _, &TokenType::Doq) => {
-        last_token.push_content(c, pos, line, column);
-        look_ahead = None;
-      }
+      // TODO: Slurp Doq
       // Slurp Doc
       (&TokenType::New, &None, &TokenType::Doc) => { // doc slurp pushed
         tokens.push(last_token.clone());

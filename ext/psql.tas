@@ -1,0 +1,9 @@
+./psql "select email from users where name = ? limit 1": maybe {email: string} > ./email
+
+html (body [
+  h1 'Johns email:',
+  ./email 'john' | map (
+    span ?.email
+  ),
+])
+

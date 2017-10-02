@@ -94,3 +94,87 @@ const simple1 = () => {
 
   return { tokens, expected };
 };
+
+
+const simple3 = () => {
+  // {foo:{bar:'zoo'}}
+  const tokens = [
+    { token_type: 'New', content: '' },
+    { token_type: 'Kel', content: '' },
+    { token_type: 'Sue', content: 'foo' },
+    { token_type: 'Col', content: '' },
+    { token_type: 'Kel', content: '' },
+    { token_type: 'Sue', content: 'bar' },
+    { token_type: 'Col', content: '' },
+    { token_type: 'Soq', content: 'zoo' },
+    { token_type: 'Ker', content: '' },
+    { token_type: 'Ker', content: '' },
+  ];
+
+  const expected = [
+    {
+      kind: 'obj',
+      contains: [
+        {
+          path: 'foo',
+          kind: 'obj',
+          contains: [
+            {
+              path: 'bar',
+              kind: 'str',
+              value: 'zoo',
+            },
+          ],
+        },
+      ],
+    },
+  ];
+
+  return { tokens, expected };
+};
+
+
+const data = () => {
+  // {foo:{bar:'z1',loo:'z2'},ar:'z3'}
+  const tokens = [
+    { token_type: "New", content: "" },
+    { token_type: "Kel", content: "" },
+    { token_type: "Sue", content: "foo" },
+    { token_type: "Col", content: "" },
+    { token_type: "Kel", content: "" },
+    { token_type: "Sue", content: "bar" },
+    { token_type: "Col", content: "" },
+    { token_type: "Soq", content: "z1" },
+    { token_type: "Com", content: "" },
+    { token_type: "Sue", content: "loo" },
+    { token_type: "Col", content: "" },
+    { token_type: "Soq", content: "z2" },
+    { token_type: "Ker", content: "" },
+    { token_type: "Com", content: "" },
+    { token_type: "Sue", content: "ar" },
+    { token_type: "Col", content: "" },
+    { token_type: "Soq", content: "z3" },
+    { token_type: "Ker", content: "" },
+  ];
+
+  const expected = [
+    // {
+    //   kind: 'obj',
+    //   contains: [
+    //     {
+    //       path: 'foo',
+    //       kind: 'obj',
+    //       contains: [
+    //         {
+    //           path: 'bar',
+    //           kind: 'str',
+    //           value: 'zoo',
+    //         },
+    //       ],
+    //     },
+    //   ],
+    // },
+  ];
+
+  return { tokens, expected };
+};

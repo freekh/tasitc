@@ -1,1 +1,1 @@
-{foo:{bar:'z1',loo:'z2'},ar:'z3'}
+[ { one: { two: [1,2] }, three: 3 } ]

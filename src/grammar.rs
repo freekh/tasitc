@@ -20,37 +20,76 @@ grammar![
 
 */
 
-struct int {
+struct int_ {
+
+}
+
+struct str_ {
 
 }
 
 macro_rules! grammar {
-  ( $cont:expr, ($y:expr) ) => {
-    $cont.push($y);
+  ( $cont:expr, ( $($pat:tt)* )+ ) => {
+    $cont.push('(');
+    grammar!($cont, $($pat)*);
+    $cont.push(')');
+    $cont.push('+');
   };
-  ( $cont:expr, ($x:expr) || $($y:tt)* ) => {
-    $cont.push($x);
+  ( $cont:expr, ( $($pat:tt)* )* ) => {
+    $cont.push('(');
+    grammar!($cont, $($pat)*);
+    $cont.push(')');
+    $cont.push('+');
+  };
+  ( $cont:expr, [$y:ident] ) => {
+    $cont.push_str(stringify!($y));
+  };
+  ( $cont:expr, [$y:expr] ) => {
+    $cont.push_str($y);
+  };
+  //
+  ( $cont:expr, [$x:ident] || $($y:tt)* ) => {
+    $cont.push_str(stringify!($x));
     $cont.push_str(" || ");
     grammar!($cont, $($y)*);
   };
-  ( $cont:expr, ($x:expr) && $($y:tt)* ) => {
-    $cont.push($x);
+  ( $cont:expr, [$x:expr] || $($y:tt)* ) => {
+    $cont.push_str($x);
+    $cont.push_str(" || ");
+    grammar!($cont, $($y)*);
+  };
+  //
+  ( $cont:expr, slurp($start:expr, $end:expr) ) => {
+    $cont.push_str(" slrup ");
+  };
+  ( $cont:expr, [$x:ident] && $($y:tt)* ) => {
+    $cont.push_str(stringify!($x));
     $cont.push_str(" && ");
     grammar!($cont, $($y)*);
   };
-  ( $tpe:ty => ( $($pat:tt)* ); ) => {{
+  ( $cont:expr, [$x:expr] && $($y:tt)* ) => {
+    $cont.push_str($x);
+    $cont.push_str(" && ");
+    grammar!($cont, $($y)*);
+  };
+  ( $( $tpe:ident => ( $($pat:tt)* ), transient=$transient:expr; )* )=> {{
     let mut cont = String::new();
-    grammar!(cont, $($pat)*);
+    $(
+      cont.push_str(stringify!($tpe));
+      cont.push_str("->");
+      grammar!(cont, $($pat)*);
+      cont.push_str("<-");
+    )*
     cont
   }};
 }
 
-
-
 pub fn parse_string(input: &str) {
-  let g = grammar! {
-    Int => (('1') || ('2') && ('4') || ('3'));
-  };
+  let g = grammar! [
+    tas_docs => (slurp("#*", "*#")), transient=false;
+    tas_str => ([tas_int] || ["1"]), transient=false;
+    tas_int => ((["1"] || [tas_str])+), transient=false;
+  ];
   println!("{:?}", g);
   // grammar_rules!(('1') || ('2'));
 }

@@ -1,3 +1,5 @@
+use std::collections::{ HashMap };
+
 /*
 doc: slurp...,
 soq: slurp...
@@ -20,78 +22,73 @@ grammar![
 
 */
 
-struct int_ {
-
-}
-
-struct str_ {
-
-}
-
 macro_rules! grammar {
-  ( $cont:expr, ( $($pat:tt)* )+ ) => {
-    $cont.push('(');
-    grammar!($cont, $($pat)*);
-    $cont.push(')');
-    $cont.push('+');
+  ( $cont:expr, $tpe:expr, ( $($pat:tt)* )+ ) => {
+    // $cont.push('(');
+    grammar!($cont, $tpe, $($pat)*);
+    // $cont.push(')');
+    // $cont.push('+');
   };
-  ( $cont:expr, ( $($pat:tt)* )* ) => {
-    $cont.push('(');
-    grammar!($cont, $($pat)*);
-    $cont.push(')');
-    $cont.push('+');
+  ( $cont:expr, $tpe:expr, ( $($pat:tt)* )* ) => {
+    // $cont.push('(');
+    grammar!($cont, $tpe, $($pat)*);
+    // $cont.push(')');
+    // $cont.push('+');
   };
-  ( $cont:expr, [$y:ident] ) => {
-    $cont.push_str(stringify!($y));
+  ( $cont:expr, $tpe:expr, [$y:ident] ) => {
+    // $cont.push_str(stringify!($y));
   };
-  ( $cont:expr, [$y:expr] ) => {
-    $cont.push_str($y);
-  };
-  //
-  ( $cont:expr, [$x:ident] || $($y:tt)* ) => {
-    $cont.push_str(stringify!($x));
-    $cont.push_str(" || ");
-    grammar!($cont, $($y)*);
-  };
-  ( $cont:expr, [$x:expr] || $($y:tt)* ) => {
-    $cont.push_str($x);
-    $cont.push_str(" || ");
-    grammar!($cont, $($y)*);
+  ( $cont:expr, $tpe:expr, [$y:expr] ) => {
+    // $cont.push_str($y);
   };
   //
-  ( $cont:expr, slurp($start:expr, $end:expr) ) => {
-    $cont.push_str(" slrup ");
+  ( $cont:expr, $tpe:expr, [$x:ident] || $($y:tt)* ) => {
+    // $cont.push_str(stringify!($x));
+    // $cont.push_str(" || ");
+    grammar!($cont, $tpe, $($y)*);
   };
-  ( $cont:expr, [$x:ident] && $($y:tt)* ) => {
-    $cont.push_str(stringify!($x));
-    $cont.push_str(" && ");
-    grammar!($cont, $($y)*);
+  ( $cont:expr, $tpe:expr, [$x:expr] || $($y:tt)* ) => {
+    // $cont.push_str($x);
+    // $cont.push_str(" || ");
+    grammar!($cont, $tpe, $($y)*);
   };
-  ( $cont:expr, [$x:expr] && $($y:tt)* ) => {
-    $cont.push_str($x);
-    $cont.push_str(" && ");
-    grammar!($cont, $($y)*);
+  //
+  ( $cont:expr, $tpe:expr, slurp($start:expr, $end:expr) ) => {
+    // $cont.push_str(" slrup ");
+  };
+  ( $cont:expr, $tpe:expr, [$x:ident] && $($y:tt)* ) => {
+    // $cont.push_str(stringify!($x));
+    // $cont.push_str(" && ");
+    grammar!($cont, $tpe, $($y)*);
+  };
+  ( $cont:expr, $tpe:expr, [$x:expr] && $($y:tt)* ) => {
+    // $cont.push_str($x);
+    // $cont.push_str(" && ");
+    grammar!($cont, $tpe, $($y)*);
   };
   ( $( $tpe:ident => ( $($pat:tt)* ), transient=$transient:expr; )* )=> {{
-    let mut cont = String::new();
+    let mut cont: HashMap<&str, &str> = HashMap::new();
     $(
-      cont.push_str(stringify!($tpe));
-      cont.push_str("->");
-      grammar!(cont, $($pat)*);
-      cont.push_str("<-");
+      cont.insert(stringify!($tpe), "");
+      // cont.push_str("->");
+      grammar!(cont, stringify!($tpe), $($pat)*);
+      // cont.push_str("<-");
     )*
     cont
   }};
 }
 
+
 pub fn parse_string(input: &str) {
-  let g = grammar! [
-    tas_docs => (slurp("#*", "*#")), transient=false;
-    tas_str => ([tas_int] || ["1"]), transient=false;
-    tas_int => ((["1"] || [tas_str])+), transient=false;
-  ];
+  
+  // let g = grammar! [
+  //   tas_num => ([tas_int] && ["."] && [tas_int]), transient=false;
+  //   tas_int => ((["1"] || ["2"])+), transient=false;
+  // ];
   println!("{:?}", g);
-  // grammar_rules!(('1') || ('2'));
 }
 
+  // let g = grammar! [
+  //   tas_num => (tas_int then "." then tas_int), transient=false;
+  // ];
 

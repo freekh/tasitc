@@ -70,7 +70,7 @@ const exec = (rules, input) => {
   const marks = [];
   while (i < input.length) {
     const token = input[i];
-    
+
     while (curr_rule.e || curr_rule.r) {
       stack.push(curr_rule);
       if (curr_rule.r) {
@@ -85,7 +85,7 @@ const exec = (rules, input) => {
 
     
     if (!curr_rule || !curr_rule.v) {
-      console.log('No rule here', JSON.stringify(stack, null, 2));
+      console.log('No rule here', token, JSON.stringify(stack, null, 2));
       break;
     } else if (curr_rule.v) {
       if (token === curr_rule.v) {
@@ -94,11 +94,14 @@ const exec = (rules, input) => {
         if (stack[stack.length - 1] && stack[stack.length - 1].e) {
           stack[stack.length - 1] = { e: stack[stack.length - 1].e.slice(1) };
         }
-
+        curr_rule = stack.pop();
+        while (curr_rule.e && curr_rule.e.length === 0) {
+          curr_rule = stack.pop();
+        }
         console.log('next', JSON.stringify(stack, null, 2));
       } else {
         console.log();
-        console.log(`ERROR: token: '${ token }' does not match ${ JSON.stringify(curr_rule) }. Stack: ${ JSON.stringify(stack)}`);
+        console.log(`ERROR: token: '${ token }' does not match ${ JSON.stringify(curr_rule) }. Stack: ${ JSON.stringify(stack) }`);
         console.log();
         console.log(input);
         for (let s = 0; s < i; s++) {

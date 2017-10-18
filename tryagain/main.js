@@ -13,10 +13,9 @@ const { parse } = require('./parser');
 
 const rules = {
   "sue": {
-    // mark: true,
-    e: [
+    a: [
       { v: "a" },
-      // { v: "b" },
+      { v: "b" },
       // { v: "c" },
       // { v: "d" },
       // { v: "e" },
@@ -31,8 +30,7 @@ const rules = {
       { v: ":" },
       { r: "sue", k: "rhs" },
       // {
-      //   mark: true,
-      //   e: [
+      //   a: [
       //     { r: "sue" },
           // { r: "obj" },
       //   ],
@@ -46,8 +44,7 @@ const rules = {
       { r: "obj_val" },
       // {
       //   star: true,
-      //   mark: true,
-      //   e: [
+      //   a: [
       //     { r: "obj_val" },
       //     {
       //       e: [
@@ -63,7 +60,7 @@ const rules = {
 };
 
 // const input = "{a:{b:c},{d:e,f:g}}}";
-const input = "{a:a}";
+const input = "{a:b}";
 
 const exec = (rules, input) => {
   const stack = [{ e: rules.obj.e, i: 0, id: 'obj' }];
@@ -90,13 +87,16 @@ const exec = (rules, input) => {
 
     let id = pos.id;
     let k = pos.k;
-    while (!rule.v) {
+    while (!rule.v && !rule.a) {
       const i = rule.i || 0;
       if (rule.e) {
         rule = { ...rule.e[i] };
       } else if (rule.r) {
         rule = { ...rules[rule.r], id: rule.r };
+      } else if (rule.a) {
+        rule = { ...rules.a };
       } else {
+        console.error('Unknown rule', rule);
         break;
       }
       if (rule.e) {
@@ -114,8 +114,8 @@ const exec = (rules, input) => {
       }
     }
     
-    if (rule.v) {
-      const match = token === rule.v;
+    if (rule.v || rule.a) {
+      const match = (token === rule.v) || !!(rule.a.find((alt) => alt.v === token));
       if (match) {
         if (!pos.e) {
           console.error('ERROR: unexpected rule position', pos);
@@ -124,7 +124,7 @@ const exec = (rules, input) => {
           console.log(id, k || 'value', token);
         }
       } else {
-        console.error(`ERROR: got: '${ token }' at ${ i } expected: ${ rule.v } `, JSON.stringify(stack));
+        console.error(`ERROR: got: '${ token }' at ${ i } expected: ${ rule.v || JSON.stringify(rule.a) } `, JSON.stringify(stack));
         break;
       }
 

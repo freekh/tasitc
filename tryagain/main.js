@@ -16,7 +16,7 @@ const rules = {
     a: [
       { v: "a" },
       { v: "b" },
-      // { v: "c" },
+      { v: "c" },
       // { v: "d" },
       // { v: "e" },
       // { v: "f" },
@@ -28,13 +28,13 @@ const rules = {
     e: [
       { r: "sue", k: "lhs" },
       { v: ":" },
-      { r: "sue", k: "rhs" },
-      // {
-      //   a: [
-      //     { r: "sue" },
-          // { r: "obj" },
-      //   ],
-      // },
+      {
+        k: "rhs",
+        a: [
+          { r: "sue" },
+          { r: "obj" },
+        ],
+      },
     ],
   },
   "obj": {
@@ -60,7 +60,53 @@ const rules = {
 };
 
 // const input = "{a:{b:c},{d:e,f:g}}}";
-const input = "{a:b}";
+const input = "{a:{b:c}}";
+
+const compute_match = (token, pos, rule_input, rules, stack) => {
+  let rule = rule_input;
+  let id = pos.id;
+  let k = pos.k;
+  while (!rule.v && !rule.a) {
+    const i = rule.i || 0;
+    if (rule.e) {
+      rule = { ...rule.e[i] };
+    } else if (rule.r) {
+      rule = { ...rules[rule.r], id: rule.r };
+    } else if (rule.a) {
+      rule = { ...rules.a };
+    } else {
+      console.error('Unknown rule', rule);
+      break;
+    }
+    if (rule.e) {
+      stack.push({ ...rule, i });
+    } else if (rule.r) {
+      stack.push(rule);
+    }
+    // capture id
+    if ((rule.r || rule.id) && rule.intransitive) {
+      id = rule.r || rule.id;
+    }
+    // capture k
+    if (rule.k) {
+      k = rule.k;
+    }
+  }
+
+  const found_match = (token === rule.v) || rule.a && !!(rule.a.find((alt) => {
+    const branch_stack = [];
+    const found_match = compute_match(token, pos, alt, rules, branch_stack);
+    if (found_match.match) {
+      stack.push(...branch_stack);
+      k = found_match.k;
+      id = found_match.id;
+      rule = found_match.rule;
+      return true;
+    }
+  }));
+
+  return { id, k, rule, match: found_match };
+};
 
 const exec = (rules, input) => {
   const stack = [{ e: rules.obj.e, i: 0, id: 'obj' }];
@@ -85,37 +131,11 @@ const exec = (rules, input) => {
       break;
     }
 
-    let id = pos.id;
-    let k = pos.k;
-    while (!rule.v && !rule.a) {
-      const i = rule.i || 0;
-      if (rule.e) {
-        rule = { ...rule.e[i] };
-      } else if (rule.r) {
-        rule = { ...rules[rule.r], id: rule.r };
-      } else if (rule.a) {
-        rule = { ...rules.a };
-      } else {
-        console.error('Unknown rule', rule);
-        break;
-      }
-      if (rule.e) {
-        stack.push({ ...rule, i });
-      } else if (rule.r) {
-        stack.push(rule);
-      }
-      // capture id
-      if ((rule.r || rule.id) && rule.intransitive) {
-        id = rule.r || rule.id;
-      }
-      // capture k
-      if (rule.k) {
-        k = rule.k;
-      }
-    }
+    const result = compute_match(token, pos, rule, rules, stack);
+    const { id, k, match } = result;
+    rule = result.rule;
     
     if (rule.v || rule.a) {
-      const match = (token === rule.v) || !!(rule.a.find((alt) => alt.v === token));
       if (match) {
         if (!pos.e) {
           console.error('ERROR: unexpected rule position', pos);
@@ -146,17 +166,31 @@ const exec = (rules, input) => {
     }
     i++;
   }
+  if (stack.length || input.length !== i) {
+    console.error(`ERROR: Unexpected character at ${ i }`);
+  }
   console.log(nodes);
   console.log({
-    kind: 'obj',
+    id: 'obj',
     values: [
       {
-        kind: 'obj_val',
+        id: 'obj_val',
         lhs: {
           value: 'a',
         },
         rhs: {
-          value: 'a',
+          id: 'obj',
+          values: [
+            {
+              id: 'obj_val',
+              lhs: {
+                value: 'b',
+              },
+              rhs: {
+                value: 'c',
+              },
+            },
+          ],
         },
       },
     ],

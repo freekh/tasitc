@@ -60,143 +60,54 @@ const rules = {
 };
 
 // const input = "{a:{b:c},{d:e,f:g}}}";
-const input = "{a:{b:c}}";
+const input = "{a:b,c:d}";
 
-const compute_match = (token, pos, rule_input, rules, stack) => {
-  let rule = rule_input;
-  let id = pos.id;
-  let k = pos.k;
-  while (!rule.v && !rule.a) {
-    const i = rule.i || 0;
-    if (rule.e) {
-      rule = { ...rule.e[i] };
-    } else if (rule.r) {
-      rule = { ...rules[rule.r], id: rule.r };
-    } else if (rule.a) {
-      rule = { ...rules.a };
-    } else {
-      console.error('Unknown rule', rule);
-      break;
-    }
-    if (rule.e) {
-      stack.push({ ...rule, i });
-    } else if (rule.r) {
-      stack.push(rule);
-    }
-    // capture id
-    if ((rule.r || rule.id) && rule.intransitive) {
-      id = rule.r || rule.id;
-    }
-    // capture k
-    if (rule.k) {
-      k = rule.k;
-    }
-  }
-
-  const found_match = (token === rule.v) || rule.a && !!(rule.a.find((alt) => {
-    const branch_stack = [];
-    const found_match = compute_match(token, pos, alt, rules, branch_stack);
-    if (found_match.match) {
-      stack.push(...branch_stack);
-      k = found_match.k;
-      id = found_match.id;
-      rule = found_match.rule;
-      return true;
-    }
-  }));
-
-  return { id, k, rule, match: found_match };
-};
 
 const exec = (rules, input) => {
-  const stack = [{ e: rules.obj.e, i: 0, id: 'obj' }];
-  const nodes = { };
-  
-  let i = 0;
-  while (stack.length && i < input.length) {
-    const token = input[i];
-    let pos = stack.pop();
-    stack.push(pos);
-    
-    let rule;
-    if (pos.e) {
-      const i = pos.i || 0;
-      rule = { e: pos.e, i };
-    } else if (pos.v) {
-      rule = { v: pos.v };
-    } else if (pos.r) {
-      rule = { r: pos.r };
-    } else {
-      console.error(`ERROR: '${ token }' at ${ JSON.stringify(pos) }`, JSON.stringify(stack, null, 2));
-      break;
-    }
-
-    const result = compute_match(token, pos, rule, rules, stack);
-    const { id, k, match } = result;
-    rule = result.rule;
-    
-    if (rule.v || rule.a) {
-      if (match) {
-        if (!pos.e) {
-          console.error('ERROR: unexpected rule position', pos);
+  const iti = (rule, cursor) => {
+    const token = input[cursor];
+    if (rule.e) {
+      let next_cursor = cursor;
+      let match = true;
+      for (const then_rule of rule.e) {
+        const result = iti(then_rule, next_cursor);
+        if (!result.match) {
+          match = false;
           break;
         } else {
-          console.log(id, k || 'value', token);
+          next_cursor = result.cursor;
         }
-      } else {
-        console.error(`ERROR: got: '${ token }' at ${ i } expected: ${ rule.v || JSON.stringify(rule.a) } `, JSON.stringify(stack));
-        break;
       }
-
-      let next = stack.pop();
-      while (next && (
-          !next.e || // not e
-          (next.e && (next.i + 1) === next.e.length) // end of e
-        )
-      ) {
-        next = stack.pop();
+      return { match, cursor: next_cursor };
+    } else if (rule.r) {
+      return iti(rules[rule.r], cursor);
+    } else if (rule.a) {
+      for (const alt_rule of rule.a) {
+        const result = iti(alt_rule, cursor);
+        if (result.match) {
+          return { match: true, cursor: result.cursor };
+        }
       }
-      if (next) {
-        next.i = next.i + 1;
-        stack.push(next);
-      }
-    } else {
-      console.error('No rule here', JSON.stringify(stack));
-      break;
+      return { match: false, cursor };
+    } else if (rule.v) {
+      const match = token === rule.v;
+      return { match, cursor: cursor + 1 };
     }
-    i++;
-  }
-  if (stack.length || input.length !== i) {
-    console.error(`ERROR: Unexpected character at ${ i }`);
-  }
-  console.log(nodes);
-  console.log({
-    id: 'obj',
-    values: [
-      {
-        id: 'obj_val',
-        lhs: {
-          value: 'a',
-        },
-        rhs: {
-          id: 'obj',
-          values: [
-            {
-              id: 'obj_val',
-              lhs: {
-                value: 'b',
-              },
-              rhs: {
-                value: 'c',
-              },
-            },
-          ],
-        },
-      },
-    ],
-  });
+    throw new Error(`Malformed rule: ${ JSON.stringify(rule) }`);
+  };
+  return iti(rules.obj, 0);
 };
 
-exec(rules, input);
+const { match, cursor } = exec(rules, input);
+if (!match) {
+  console.log('ERROR: unexpected token');
+  console.log(input);
+  for (let i = 0; i < cursor; i++) {
+    process.stdout.write(" ");
+  }
+  process.stdout.write("^\n");
+} else {
+  console.log(input);
+}
 
 

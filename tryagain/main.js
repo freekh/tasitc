@@ -24,35 +24,82 @@ const rules = {
     ],
   },
   "obj_val": {
-    e: [
-      { r: "sue", k: "lhs" },
-      { v: ":" },
+    // e: [
+    //   { r: "sue", k: "lhs" },
+    //   { v: ":" },
+    //   {
+    //     k: "rhs",
+    //     a: [
+    //       { r: "sue" },
+    //       { r: "obj" },
+    //     ],
+    //   },
+    // ],
+    a: [
       {
-        k: "rhs",
-        a: [
-          { r: "sue" },
-          { r: "obj" },
+        e: [
+          { r: "sue", k: "lhs" },
+          { v: ":" },
+          {
+            k: "rhs",
+            r: "sue" ,
+          }
         ],
       },
+      {
+        e: [
+          { r: "sue", k: "lhs" },
+          { v: ":" },
+          {
+            k: "rhs",
+            r: "obj" ,
+          }
+        ],
+      }
     ],
   },
   "obj": {
-    e: [
-      { v: "{" },
+    // e: [
+    //   { v: "{" },
+    //   {
+    //     a: [
+    //       {
+    //         e: [
+    //           { r: "obj_val" },
+    //           { v: "," },
+    //         ],
+    //       },
+    //       { r: "obj_val" },
+    //     ],
+    //   },
+    //   { v: "}" },
+    // ],
+    a: [
       {
-        plus: true,
         e: [
-          { r: "obj_val" },
-          { v: "," },
+          { v: "{" },
+          { r: "obj_val" },          
+          { v: "}" },
         ],
       },
-      { v: "}" },
+      {
+        e: [
+          { v: "{" },
+          {
+            e: [
+              { r: "obj_val" },
+              { v: "," },
+            ],
+          },
+          { v: "}" },
+        ],
+      },
     ],
   },
 };
 
 // const input = "{a:{b:c},{d:e,f:g}}}";
-const input = "{a:b,c:d,}";
+const input = "{a:b,}";
 
 const exec = (rules, input) => {
   const iti = (rule, cursor) => {
@@ -66,16 +113,7 @@ const exec = (rules, input) => {
           match = false;
           break;
         } else {
-          let plus_result = result;
-          while (then_rule.plus) {
-            const result = iti(then_rule, plus_result.cursor);
-            if (result.match) {
-              plus_result = result;
-            } else {
-              break;
-            }
-          }
-          next_cursor = plus_result.cursor;          
+          next_cursor = result.cursor;          
         }
       }
       return { match, cursor: next_cursor };
@@ -88,7 +126,7 @@ const exec = (rules, input) => {
           return { match: true, cursor: result.cursor };
         }
       }
-      return { match: true, cursor };
+      return { match: false, cursor };
     } else if (rule.v) {
       const match = token === rule.v;
       return { match, cursor: cursor + 1 };

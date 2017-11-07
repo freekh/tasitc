@@ -57,26 +57,26 @@ const rules = {
 };
 
 // const input = "{a:{b:c},{d:e,f:g}}}";
-const input = "{a:b,}";
+const input = "{c:d,}";
 
 const exec = (rules, input) => (start) => {
   const trails = new BloomFilter(32 * 256, 16);
 
-  const iti = (rule, cursor, id, trail, complete) => {
+  const iti = (rule, cursor, id, trail) => {
     trails.add(trail.join(''));
     const token = input[cursor];
     if (rule.e) {
-      let next_result = { cursor, id, trail: trail.concat(id + '[' + '0' + ']') };
+      let next_result = { cursor, id, complete: true, trail: trail.concat(id + '[' + '0' + ']') };
       let i = 0;
       for (const then_rule of rule.e) {
-        next_result = iti(then_rule, next_result.cursor, id + '[' + i + ']', next_result.trail, complete);
+        next_result = iti(then_rule, next_result.cursor, id + '[' + i + ']', next_result.trail);
         if (!next_result.match) {
           break;
         }
         i++;
       }
       if (!next_result.match && !next_result.complete) {
-        return iti(rule, cursor, id, trail, complete);
+        return iti(rule, cursor, id, trail);
       } else {
         return next_result;
       }
@@ -84,28 +84,25 @@ const exec = (rules, input) => (start) => {
       return iti(rules[rule.r], cursor, rule.r, trail);
     } else if (rule.a) {
       let i = 0;
-      let skipped = 0;
       for (const alt_rule of rule.a) {
         const alt_trail = trail.concat(id + '(' + i + ')');
         const not_visited = trails.test(alt_trail.join('')) === false; // false if definitely not visited
         if (not_visited) {
-          const result = iti(alt_rule, cursor, id, alt_trail, complete);
+          const result = iti(alt_rule, cursor, id, alt_trail);
           if (result.match) {
-            return result;
+            return { ...result, complete: false };
           }
-        } else {
-          skipped++;
         }
         i++;
       }
-      return { match: false, cursor, complete: skipped === rule.a.length && complete, id, trail };
+      return { match: false, cursor, complete: true, id, trail };
     } else if (rule.v) {
       const match = token === rule.v;
       return { match, cursor: cursor + 1, token, id, trail: trail.concat("token:'"+token+"'") };
     }
     throw new Error(`Malformed rule: ${ JSON.stringify(rule) }`);
   };
-  return iti(rules[start], 0, start, [], false);
+  return iti(rules[start], 0, start, []);
 };
 
 const result = exec(rules, input)("obj");

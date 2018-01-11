@@ -23,8 +23,6 @@ const { BloomFilter } = require('bloomfilter');
 // obj_val: (sue=lhs <&> ":" <&> (sue <|> obj)=rhs)
 // obj:     ("{" <&> (obj_val <|> (obj_val <&> ","))* <&> "}")
 
-
-// e expression, v value, a alternative, k key, s *, p +
 const rules = {
   "sue": {
     a: [
@@ -54,7 +52,7 @@ const rules = {
     e: [
       { v: "{" },
       {
-        s: true,
+        star: true,
         e: [
           {
             a: [
@@ -74,39 +72,44 @@ const rules = {
   },
 };
 
-const exec = (rules, input) => (main) => {
+// const input = "{a:{b:c},{d:e,f:g}}}";
+const input = "{c:d,a:b}";
+
+const exec = (rules, input) => (start) => {
   const trails = new BloomFilter(32 * 256, 16);
 
   const iti = (rule, cursor, id, trail) => {
     trails.add(trail.join(''));
     const token = input[cursor];
     if (rule.e) {
-      let result = {
-        cursor,
-        trail,
-      };
-      let complete = true;
-      let i;
-      for (i = 0; i < rule.e.length; i++) {
-        const sub_id = `${id}[${i}]`;
-        result = iti(rule.e[i], result.cursor, sub_id, result.trail.concat(sub_id));
-        complete = result.complete && complete;
-        if (!result.match) {
+      let next_result = { cursor, id, complete: true, trail: trail.concat(id + '[' + '0' + ']') };
+      let i = 0;
+      for (const then_rule of rule.e) {
+        next_result = iti(then_rule, next_result.cursor, id + '[' + i + ']', next_result.trail);
+        if (!next_result.match) {
           break;
         }
+        i++;
       }
-      if (result.match && i === rule.e.length) {
-        return { ...result, complete };
-      } else if (!complete) {
+      if (!next_result.match && !next_result.complete) {
         return iti(rule, cursor, id, trail);
+      } else if (rule.star) {
+        const star_trail = (next_result.match ? next_result.trail : trail).concat(id + '[*]');
+        const not_visited = trails.test(star_trail.join('')) === false; // false if definitely not visited
+        if (not_visited) {
+          const star_result = iti(rule, next_result.cursor, id + '[*]', star_trail);
+          if (star_result.match) {
+            console.log('here', star_result);
+            return star_result;
+          }
+        }
       }
-      return { ...result, match: false };
+      return next_result;
     } else if (rule.r) {
       return iti(rules[rule.r], cursor, rule.r, trail);
     } else if (rule.a) {
-      let i, visited = 0;
-      for (i = 0; i < rule.a.length; i++) {
-        const alt_rule = rule.a[i];
+      let i = 0;
+      for (const alt_rule of rule.a) {
         const alt_trail = trail.concat(id + '(' + i + ')');
         const not_visited = trails.test(alt_trail.join('')) === false; // false if definitely not visited
         if (not_visited) {
@@ -114,49 +117,31 @@ const exec = (rules, input) => (main) => {
           if (result.match) {
             return { ...result, complete: false };
           }
-        } else {
-          visited++;
         }
+        i++;
       }
-      const complete = i === visited;
-      return { match: false, cursor, complete, id, trail };
+      return { match: false, cursor, complete: true, id, trail };
     } else if (rule.v) {
       const match = token === rule.v;
-      if (match) {
-        return { match, complete: true, cursor: cursor + 1, token, id, trail: trail.concat("token:'"+token+"'") };
-      }
-      return { match, complete: true, cursor: cursor, token, id, trail: trail.concat("!token:'"+rule.v+"'") };
+      return { match, cursor: cursor + 1, token, id, trail: trail.concat("token:'"+token+"'") };
     }
     throw new Error(`Malformed rule: ${ JSON.stringify(rule) }`);
   };
-  return iti(rules[main], 0, main, []);
+  return iti(rules[start], 0, start, []);
 };
 
-
-const test = (input) => {
+const result = exec(rules, input)("obj");
+if (!result.match) {
+  console.log('ERROR: unexpected token', JSON.stringify(result, null, 2));
   console.log(input);
-  const result = exec(rules, input)("obj");
-  if (!result.match) {
-    console.log('ERROR: unexpected token', JSON.stringify(result, null, 2));
-    console.log(input);
-    for (let i = 0; i < result.cursor; i++) {
-      process.stdout.write(" ");
-    }
-    process.stdout.write("^\n");
-  } else {
-    // console.log(JSON.stringify(result, null, 2));
-    console.log('SUCCESS\n');
+  for (let i = 0; i < result.cursor; i++) {
+    process.stdout.write(" ");
   }
-};
+  process.stdout.write("^\n");
+} else {
+  console.log(JSON.stringify(result, null, 2));
+}
 
-[
-  '{a:b}',
-  '{a:b,}',
-  '{a:{b:c}}',
-  '{a:{b:c},}',
-  '{a:{b:c},},',
-  '{a:{b:{c:d}}}',
-].forEach(test);
 
 // Plan:
 // 1.  fix/add star, look-ahead, plus, not operators, slurps?

@@ -32,8 +32,8 @@ const rules = {
       { v: "b" },
       { v: "c" },
       { v: "d" },
-      // { v: "e" },
-      // { v: "f" },
+      { v: "e" },
+      { v: "f" },
       // { v: "g" },
     ],
   },
@@ -54,7 +54,7 @@ const rules = {
     e: [
       { v: "{" },
       {
-        s: true,
+        p: true,
         e: [
           {
             a: [
@@ -80,7 +80,22 @@ const exec = (rules, input) => (main) => {
   const iti = (rule, cursor, id, trail) => {
     trails.add(trail.join(''));
     const token = input[cursor];
-    if (rule.e) {
+    if (rule.p) {
+      let i = 0;
+      const this_rule = { ...rule, p: undefined };
+      let result = iti(this_rule, cursor, id, trail);
+      if (!result.match) {
+        return result;
+      }
+      let last_success;
+      while (result.match) {
+        last_success = result;
+        i++;
+        const sub_id = id + '+' + i;
+        result = iti(this_rule, result.cursor, sub_id, result.trail.concat(sub_id));
+      }
+      return last_success;
+    } else if (rule.e) {
       let result = {
         cursor,
         trail,
@@ -125,13 +140,12 @@ const exec = (rules, input) => (main) => {
       if (match) {
         return { match, complete: true, cursor: cursor + 1, token, id, trail: trail.concat("token:'"+token+"'") };
       }
-      return { match, complete: true, cursor: cursor, token, id, trail: trail.concat("!token:'"+rule.v+"'") };
+      return { match: false, complete: true, cursor: cursor, token, id, trail: trail.concat("!token:'"+rule.v+"'") };
     }
     throw new Error(`Malformed rule: ${ JSON.stringify(rule) }`);
   };
   return iti(rules[main], 0, main, []);
 };
-
 
 const test = ([input, must_pass]) => {
   console.log(input);
@@ -169,6 +183,9 @@ const test = ([input, must_pass]) => {
   ['{a:{b:c},},', true],
   ['{:', false],
   ['{a:', false],
+  ['{a:b,c:d}', true],
+  ['{a:b,c:d,}', true],
+  // ['{a:b,c:d,e:f,}', true],
 ].forEach(test);
 
 // Plan:

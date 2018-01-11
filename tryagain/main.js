@@ -133,29 +133,42 @@ const exec = (rules, input) => (main) => {
 };
 
 
-const test = (input) => {
+const test = ([input, must_pass]) => {
   console.log(input);
   const result = exec(rules, input)("obj");
-  if (!result.match) {
-    console.log('ERROR: unexpected token', JSON.stringify(result, null, 2));
-    console.log(input);
-    for (let i = 0; i < result.cursor; i++) {
-      process.stdout.write(" ");
+  if (must_pass) {
+    if (!result.match) {
+      console.log('ERROR: did not match', JSON.stringify(result, null, 2));
+      console.log(input);
+      for (let i = 0; i < result.cursor; i++) {
+        process.stdout.write(" ");
+      }
+      process.stdout.write("^\n");
+    } else {
+      console.log('SUCCESSFULLY PASSED\n');
     }
-    process.stdout.write("^\n");
   } else {
-    // console.log(JSON.stringify(result, null, 2));
-    console.log('SUCCESS\n');
+    if (result.match) {
+      console.log('ERROR: expected failure:', JSON.stringify(result, null, 2));
+      console.log(input);
+      for (let i = 0; i < result.cursor; i++) {
+        process.stdout.write(" ");
+      }
+      process.stdout.write("^\n");
+    } else {
+      console.log('SUCCESSFULLY FAILED\n');
+    }
   }
 };
 
 [
-  '{a:b}',
-  '{a:b,}',
-  '{a:{b:c}}',
-  '{a:{b:c},}',
-  '{a:{b:c},},',
-  '{a:{b:{c:d}}}',
+  ['{a:b}', true],
+  ['{a:b,}', true],
+  ['{a:{b:c}}', true],
+  ['{a:{b:c},}', true],
+  ['{a:{b:c},},', true],
+  ['{:', false],
+  ['{a:', false],
 ].forEach(test);
 
 // Plan:

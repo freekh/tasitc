@@ -1,0 +1,13 @@
+{
+  "name": "tasitc-on-ohm",
+  "version": "1.0.0",
+  "description": "tasitc experiments on ohm",
+  "main": "index.js",
+  "repository": "git@github.com:freekh/tasitc.git",
+  "author": "Fredrik Ekholdt <freekh@gmail.com>",
+  "license": "UNLICENSED",
+  "private": false,
+  "dependencies": {
+    "ohm-js": "^0.14.0"
+  }
+}

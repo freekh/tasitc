@@ -1,0 +1,100 @@
+TAS {
+  Parser (a valid top-level expression)
+                 = ListOf<Expr, TASTerm>
+
+  -- TAS
+  TASTerm         = "|" | lineTerminator
+
+  -- Expressions
+  Expr (a valid expression) 
+                  = StdExpr | RuleExpr | Block | ObjExpr | ObjBlock | Val
+  ExprId (a path) = Path
+  PropSubscript   = "." Key
+  ArraySubscript  = "[" (Int | DoubleQuoteStr | SingleQuoteStr) "]"
+  Subscript       = ArraySubscript | PropSubscript
+  FunExpr         = "?" Subscript*
+  ObjExpr         = "$" Subscript*
+  CmdExpr         = ExprId (whitespace* (Block | FunBlock | FunExpr | StdExpr))*
+  StdExpr         = CmdExpr
+  FunBlock        = "(" FunExpr ")"
+  ObjBlock        = "(" ObjExpr ")"
+  Block           = "(" StdExpr ")"
+  Val             = whitespace* (
+                    Int
+                  | Number
+                  | DoubleQuoteStr
+                  | SingleQuoteStr
+                  | Path
+                  | ObjLiteral
+                  | ArrayLiteral
+                  ) whitespace*
+  Path            = (letter | "." | "/" | "~") (alnum | "." | "/" | "~")*
+
+  -- Literals
+  Int             = signedInteger
+  Number          = Int "." digit+
+  DoubleQuoteStr  = "\"" alnum* "\""
+  SingleQuoteStr  = "'" alnum* "'"
+  Id              = letter alnum*
+
+  -- Array
+  ArrayLiteral    = "[" (Val ("," Val)* ","?)? "]"
+
+  -- Obj
+  ObjLiteral      = "{" (ObjPair ("," ObjPair)* ","?)? "}"
+  ObjPair         = spaces (Key ":" Val) spaces
+  Key             = KeyPath | DoubleQuoteStr | Id
+  KeyPath         = spaces (letter+ alnum*) spaces
+
+  -- Rules
+  RuleExpr        = whitespace* "parse" whitespace* "{" Rules "}"
+  Rules           = Rule*
+  Rule            = RuleKey "=" "(" RuleBody ")"
+  RuleKey         = Key (spaces ":" RuleType)?
+  RuleType        = Id
+  RuleBody        = SingleQuoteStr | DoubleQuoteStr
+
+  -- Cutnpaste
+  signedInteger = "+" decimalDigit* -- positive
+                | "-" decimalDigit* -- negative
+                |     decimalDigit+ -- noSign
+  unicodeSpaceSeparator = "\u2000".."\u200B" | "\u3000"
+  zeroToThree = "0".."3"
+  fourToSeven = "4".."7"
+  whitespace = "\t"
+             | "\x0B"    -- verticalTab
+             | "\x0C"    -- formFeed
+             | " "
+             | "\u00A0"  -- noBreakSpace
+             | "\uFEFF"  -- byteOrderMark
+             | unicodeSpaceSeparator
+  doubleStringCharacter = ~("\"" | "\\" | lineTerminator) sourceCharacter -- nonEscaped
+                      | "\\" escapeSequence                             -- escaped
+                      | lineContinuation                                -- lineContinuation
+  singleStringCharacter = ~("'" | "\\" | lineTerminator) sourceCharacter -- nonEscaped
+                      | "\\" escapeSequence                            -- escaped
+                      | lineContinuation                               -- lineContinuation
+  sourceCharacter = any
+  lineContinuation = "\\" lineTerminatorSequence
+    escapeSequence = unicodeEscapeSequence
+                | hexEscapeSequence
+                | octalEscapeSequence
+                | characterEscapeSequence  // Must come last.
+  characterEscapeSequence = singleEscapeCharacter
+                          | nonEscapeCharacter
+  singleEscapeCharacter = "'" | "\"" | "\\" | "b" | "f" | "n" | "r" | "t" | "v"
+  nonEscapeCharacter = ~(escapeCharacter | lineTerminator) sourceCharacter
+  escapeCharacter = singleEscapeCharacter | decimalDigit | "x" | "u"
+  octalEscapeSequence = zeroToThree octalDigit octalDigit    -- whole
+                      | fourToSeven octalDigit               -- eightTimesfourToSeven
+                      | zeroToThree octalDigit ~decimalDigit -- eightTimesZeroToThree
+                      | octalDigit ~decimalDigit             -- octal
+  hexEscapeSequence = "x" hexDigit hexDigit
+  unicodeEscapeSequence = "u" hexDigit hexDigit hexDigit hexDigit
+
+  octalDigit = "0".."7"
+  decimalDigit = "0".."9"
+  nonZeroDigit = "1".."9"
+  lineTerminatorSequence = "\n" | "\r" ~"\n" | "\u2028" | "\u2029" | "\r\n"
+  lineTerminator = "\n" | "\r" | "\u2028" | "\u2029"
+}

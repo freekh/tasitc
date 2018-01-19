@@ -1,55 +1,33 @@
 TAS {
   Cmd (a valid top-level expression)
-                  = ListOf<Expr, TASTerm>
+                  = NonemptyListOf<Expr, Term> -- Exprs
+  Term            = "|" | lineTerminator
 
-  -- TAS
-  TASTerm         = "|" | lineTerminator
-
-  -- Expressions
   Expr (a valid expression) 
-                  = StdExpr | Block | ObjExpr | ObjBlock | Val
-  ExprId (a path) = Path
-  PropSubscript   = "." Key
-  ArraySubscript  = "[" (Int | DoubleQuoteStr | SingleQuoteStr) "]"
-  Subscript       = ArraySubscript | PropSubscript
+                  = CmdExpr | CtxExpr | Val
   FunExpr         = "?" Subscript*
-  ObjExpr         = "$" Subscript*
-  CmdExpr         = ExprId (whitespace* (Block | FunBlock | FunExpr | StdExpr))*
-  StdExpr         = CmdExpr
-  FunBlock        = "(" FunExpr ")"
-  ObjBlock        = "(" ObjExpr ")"
-  Block           = "(" StdExpr ")"
+  CtxExpr         = "$" Subscript*
+  Subscript       = ArraySubscript | PropSubScript
+  ArraySubscript  = "[" Int "]"
+  PropSubScript   = "." Key
+  ArgExpr         = FunExpr | CmdExpr
+  CmdId           = letter alnum*
+  CmdExpr         = CmdId (whitespace* (FunExpr))*
   Val             = whitespace* (
                     Int
-                  | Number
-                  | DoubleQuoteStr
-                  | SingleQuoteStr
-                  | Path
                   | ObjLiteral
                   | ArrayLiteral
                   ) whitespace*
-  Path            = (letter | "." | "/" | "~") (alnum | "." | "/" | "~")*
-
-  -- Literals
-  Int             = signedInteger
-  Number          = Int "." digit+
-  DoubleQuoteStr  = "\"" alnum* "\""
-  SingleQuoteStr  = "'" alnum* "'"
-  Id              = letter alnum*
-
-  -- Array
-  ArrayLiteral    = "[" ListOf<Expr, ","> "]"
-
-  -- Obj
+  ArrayLiteral    = "[" (Val ("," Val)* ","?)? "]"
+  Int             = "+" decimalDigit* -- positive
+                  | "-" decimalDigit* -- negative
+                  |     decimalDigit+ -- noSign
   ObjLiteral      = "{" (ObjPair ("," ObjPair)* ","?)? "}"
   ObjPair         = spaces (Key ":" Val) spaces
-  Key             = KeyPath | DoubleQuoteStr | Id
-  KeyPath         = spaces (letter+ alnum*) spaces
+  Key             = KeyPath
+  KeyPath         = spaces (letter alnum*) spaces
 
-  -- Cutnpaste
-  signedInteger = "+" decimalDigit* -- positive
-                | "-" decimalDigit* -- negative
-                |     decimalDigit+ -- noSign
+
   unicodeSpaceSeparator = "\u2000".."\u200B" | "\u3000"
   zeroToThree = "0".."3"
   fourToSeven = "4".."7"

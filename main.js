@@ -53,7 +53,7 @@ const semantics = g.createSemantics().addOperation('eval', {
     }
     return res;
   },
-  ObjPair: function(_, key, _, val, _) {
+  ObjPair: function( key, _, val) {
     return [key.eval(), val.eval()];
   },
   KeyPath: function(_, a, b, _) {
@@ -73,7 +73,7 @@ const semantics = g.createSemantics().addOperation('eval', {
       }, Q);
     };
   },
-  Val: function(val) {
+  Val: function(_, val, _) {
     return val.eval();
   },
   ArrayLiteral: function(_, first, _, pairs, _, _) {
@@ -126,27 +126,26 @@ const semantics = g.createSemantics().addOperation('eval', {
 });
 
 const testCases = [
-  // `
-  // [{age: 36}] | $
-  // `,
-  // `
-  // [{age: 36}] | $[0].age
-  // `,
-  // `
-  // [{age: 36}] | $[0]
-  // `,
-  // `
-  // [1,2] | map ?
-  // `,
-  ` hello | hello `,
-  ` hello |
-  hello `,
-  ` hello
-hello `,
-` hello
-  hello `,
-  // ` hello
-  // | hello `,
+  `[1,2] | map ?
+  `,
+  `[1,2]
+  map ?
+  `,
+  `[{ age: 36} ]`,
+  `[{age: 36}] | $[0].age
+  `,
+  `[{age:36}]
+  $[0].age`,
+  `[{age:36}] |
+  $[0].age`,
+  `[{age: 36}] | $[0]
+  `,
+  `[{age: 36}] | $[0]
+  `,
+  `[{age: 36}] | map ?.age
+  `,
+  `[{age: 36}, { age: 12 }] | map ?.age
+  `,
   // `
   // (
   //   let fun = ?
@@ -155,32 +154,33 @@ hello `,
   // `,
 ];
 
-const test = () => {
-  const contents = fs.readFileSync('test.ohm');
-  const g = ohm.grammar(contents);
+// const test = () => {
+//   const contents = fs.readFileSync('test.ohm');
+//   const g = ohm.grammar(contents);
 
-  testCases.forEach((tc) => {
-    const match = g.match(tc, "Cmd");
-    console.log(JSON.stringify(tc));
-    if (match.succeeded()) {
-      console.log('YEAH');
-      // console.log(semantics(match).eval());
-    } else {
-      console.log(match.message);
-    }
-  });
-};
-test();
+//   testCases.forEach((tc) => {
+//     const match = g.match(tc, "Cmd");
+//     console.log(JSON.stringify(tc));
+//     if (match.succeeded()) {
+//       console.log('YEAH');
+//       // console.log(semantics(match).eval());
+//     } else {
+//       console.log(match.message);
+//     }
+//   });
+// };
+// test();
 
-// testCases.forEach((tc) => {
-//   const match = g.match(tc, "Cmd");
-//   console.log(JSON.stringify(tc));
-//   if (match.succeeded()) {
-//     console.log(semantics(match).eval());
-//   } else {
-//     console.log(match.message);
-//   }
-// });
+testCases.forEach((tc) => {
+  const input = tc.trim();
+  const match = g.match(input, "Cmd");
+  console.log(JSON.stringify(input));
+  if (match.succeeded()) {
+    console.log(semantics(match).eval());
+  } else {
+    console.log(match.message);
+  }
+});
 
 // RL
 

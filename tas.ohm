@@ -1,10 +1,13 @@
 TAS {
+  space := whitespace
+
   Cmd (a valid top-level expression)
-                  = NonemptyListOf<Expr, "\n"> -- Exprs
-  Term            = "|" | lineTerminator
+                  = NonemptyListOf<Expr, Term> -- Exprs
+  Term            = Bar | lineTerminator
+  Bar             = "|" lineTerminator?
 
   Expr (a valid expression) 
-                  = (CmdExpr | Val)
+                  = (CmdExpr | CtxExpr | Val)
   FunExpr         = "?" Subscript*
   CtxExpr         = "$" Subscript*
   Subscript       = ArraySubscript | PropSubScript
@@ -13,18 +16,19 @@ TAS {
   ArgExpr         = FunExpr | CmdExpr
   CmdId           = letter alnum*
   CmdExpr         = CmdId (whitespace* (FunExpr))*
-  Val             = (
+  Val             = whitespace* (
                     Int
+                  | ObjLiteral
                   | ArrayLiteral
-                  )
+                  ) whitespace*
   ArrayLiteral    = "[" (Val ("," Val)* ","?)? "]"
   Int             = "+" decimalDigit* -- positive
                   | "-" decimalDigit* -- negative
                   |     decimalDigit+ -- noSign
   ObjLiteral      = "{" (ObjPair ("," ObjPair)* ","?)? "}"
-  ObjPair         = spaces (Key ":" Val) spaces
+  ObjPair         = (Key ":" Val)
   Key             = KeyPath
-  KeyPath         = spaces (letter alnum*) spaces
+  KeyPath         = whitespace* (letter alnum*) whitespace*
 
 
   unicodeSpaceSeparator = "\u2000".."\u200B" | "\u3000"

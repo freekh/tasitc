@@ -154,23 +154,6 @@ const testCases = [
   // `,
 ];
 
-// const test = () => {
-//   const contents = fs.readFileSync('test.ohm');
-//   const g = ohm.grammar(contents);
-
-//   testCases.forEach((tc) => {
-//     const match = g.match(tc, "Cmd");
-//     console.log(JSON.stringify(tc));
-//     if (match.succeeded()) {
-//       console.log('YEAH');
-//       // console.log(semantics(match).eval());
-//     } else {
-//       console.log(match.message);
-//     }
-//   });
-// };
-// test();
-
 testCases.forEach((tc) => {
   const input = tc.trim();
   const match = g.match(input, "Cmd");
@@ -184,29 +167,29 @@ testCases.forEach((tc) => {
 
 // RL
 
-// const readline = require('readline');
+const readline = require('readline');
 
-// const rl = readline.createInterface({
-//   input: process.stdin,
-//   output: process.stdout
-// });
-// const ps1 = '> ';
-// rl.setPrompt(ps1);
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+const ps1 = '> ';
+rl.setPrompt(ps1);
 
-// console.log("Welcome to tas - v0.0.1");
-// rl.prompt();
-// rl.on('line', (input) => {
-//   if (input) {
-//     const match = g.match(input, "Cmd");
-//     if (match.succeeded()) {
-//       try {
-//         console.log(semantics(match).eval());
-//       } catch (err) {
-//         console.error("\x1b[31m" + err.message + "\x1b[0m");
-//       }
-//     } else {
-//       console.error("\x1b[31m" + match.message + "\x1b[0m");
-//     }
-//   }
-//   rl.prompt();
-// });
+console.log("Welcome to tas - v0.0.1");
+rl.prompt();
+rl.on('line', (input) => {
+  if (input) {
+    const match = g.match(input, "Cmd");
+    if (match.succeeded()) {
+      try {
+        console.log(semantics(match).eval());
+      } catch (err) {
+        console.error("\x1b[31m" + err.message + "\x1b[0m");
+      }
+    } else {
+      console.error("\x1b[31m" + match.message + "\x1b[0m");
+    }
+  }
+  rl.prompt();
+});

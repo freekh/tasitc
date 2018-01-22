@@ -1,0 +1,19 @@
+TAS {
+  space := whitespace
+
+  Cmd (a valid top-level expression)
+                  = NonemptyListOf<Expr, Term> -- Exprs
+  TheRealTerm     = "|" lineTerminator?
+  Term            = TheRealTerm | lineTerminator
+  lineTerminator  = "\n" | "\r" | "\u2028" | "\u2029"
+  Expr            = "hello"
+
+  whitespace = "\t"
+             | "\x0B"    -- verticalTab
+             | "\x0C"    -- formFeed
+             | " "
+             | "\u00A0"  -- noBreakSpace
+             | "\uFEFF"  -- byteOrderMark
+             | unicodeSpaceSeparator
+  unicodeSpaceSeparator = "\u2000".."\u200B" | "\u3000"
+}

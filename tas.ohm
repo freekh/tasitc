@@ -7,9 +7,12 @@ TAS {
   Bar             = "|" lineTerminator?
 
   Expr (a valid expression) 
-                  = (CmdExpr | CtxExpr | Val)
+                  = (Let | CmdExpr | CtxExpr |  Val) (":" TypeExpr)?
+  TypeExpr        = letter alnum*                  
+  Let             = "let" CmdId "=" Val
   FunExpr         = "?" Subscript*
   CtxExpr         = "$" Subscript*
+  ValueExpr       = CmdId Subscript*
   Subscript       = ArraySubscript | PropSubScript
   ArraySubscript  = "[" Int "]"
   PropSubScript   = "." Key

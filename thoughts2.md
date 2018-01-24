@@ -119,28 +119,27 @@ For example:
 ```
 
 ```tas
-:'hello' # returns :str
+[?]: [?]
 ```
 
 ```tas
-@.first + @.second
+$: _ # implicit
+@: ?
+shape { hello: (?: @) } (
+  { hello: @ }
+) > foo
+
+@: foo ?
+shape [{value: @.hello }] (
+  [{value: @.hello}]
+) > bar
+
+bar (foo 'world')
 ```
 
-The type of the arguments here is: `{ first: ?, second: ?} where ?: int | number | str`. Context will change  to: `? where ?: int | number | string`.
+### Shapes
 
-You can also limit it:
-
-```tas
-@: (int, int)
-let (first, second) = @
-first + second
-```
-
-The type of the arguments here is: `{ first: int, second: int}`. Context will now be: `int`.
-
-```tas
-
-```
+TODO
 
 ## Alias
 

@@ -83,7 +83,7 @@ Still, here are some imaginary use cases:
 Again, more to come... :)
 
 ## Notes:
-- When ready, move master (again). First commit: ab incunabulis ofc..
+- When ready, move master (again). First commit: Et erant codice ofc..
 
 
 ## More notes:

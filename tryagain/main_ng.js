@@ -80,6 +80,7 @@ const rules = {
 const exec = (rules, input) => (main) => {
   const matching_trails = [];
   const failing_trails = [];
+  // TODO: figure out if branches might be a better way of solving things. const branches = [];
   let visited_nodes = 0;
   let expected_nodes = 1;
   const iti = (rule, cursor, id, trail) => {
@@ -117,7 +118,7 @@ const exec = (rules, input) => (main) => {
       if (res.match) {
         return res;
       }
-      // return
+      return { ...res_stub, match: true }; // in a star we allow 0 matches
     } else if (rule.e) {      
       let result = {
         cursor,
@@ -128,8 +129,8 @@ const exec = (rules, input) => (main) => {
       for (i = 0; i < rule.e.length; i++) {
         const sub_id = `${id}[${i}]`;
         result = iti(rule.e[i], result.cursor, sub_id, result.trail.concat(sub_id));
-        if (!result.match) {
-          break;
+        if (result.match) {
+          return result;
         }
       }
       // return

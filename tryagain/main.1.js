@@ -75,7 +75,77 @@ const rules = {
 };
 
 const exec = (rules, input) => (main) => {
-  
+  const trails = new BloomFilter(32 * 256, 16);
+  let last_failed;
+  const iti = (rule, cursor, id, trail) => {
+    trails.add(trail.join(''));
+    const token = input[cursor];
+    if (rule.p) {
+      let i = 0;
+      const this_rule = { ...rule, p: undefined };
+      let result = iti(this_rule, cursor, id, trail);
+      if (!result.match) {
+        return result;
+      }
+      let last_success;
+      while (result.match) {
+        i++;
+        last_success = result;
+        const sub_id = id + '+' + i;
+        result = iti(this_rule, result.cursor, sub_id, result.trail.concat(sub_id));
+      }
+      return last_success;
+    } else if (rule.e) {
+      let result = {
+        cursor,
+        trail,
+      };
+      let complete = true;
+      let i;
+      for (i = 0; i < rule.e.length; i++) {
+        const sub_id = `${id}[${i}]`;
+        result = iti(rule.e[i], result.cursor, sub_id, result.trail.concat(sub_id));
+        complete = result.complete && complete;
+        if (!result.match) {
+          break;
+        }
+      }
+      if (result.match && i === rule.e.length) {
+        return { ...result, complete };
+      } else if (!complete) {
+        return iti(rule, cursor, id, trail);
+      }
+      return { ...result, match: false };
+    } else if (rule.r) {
+      return iti(rules[rule.r], cursor, rule.r, trail);
+    } else if (rule.a) {
+      let i, visited = 0;
+      for (i = 0; i < rule.a.length; i++) {
+        const alt_rule = rule.a[i];
+        const alt_trail = trail.concat(id + '(' + i + ')');
+        const not_visited = trails.test(alt_trail.join('')) === false; // false if definitely not visited
+        if (not_visited) {
+          const result = iti(alt_rule, cursor, id, alt_trail);
+          if (result.match) {
+            return { ...result, complete: false };
+          }
+        } else {
+          visited++;
+        }
+      }
+      const complete = i === visited;
+      return { match: false, cursor, complete, id, trail };
+    } else if (rule.v) {
+      const match = token === rule.v;
+      if (match) {
+        return { match, complete: true, cursor: cursor + 1, token, id, trail: trail.concat("match:'"+rule.v+"'") };
+      }
+      last_failed = { token, cursor, expected: rule.v };
+      return { match: false, complete: true, cursor: cursor, token, id, trail: trail.concat("!match:'"+rule.v+"'") };
+    }
+    throw new Error(`Malformed rule: ${ JSON.stringify(rule) }`);
+  };
+  return { ...iti(rules[main], 0, main, []), last_failed };
 };
 
 const test = ([input, must_pass]) => {

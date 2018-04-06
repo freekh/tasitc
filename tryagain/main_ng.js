@@ -80,31 +80,75 @@ const rules = {
 const exec = (rules, input) => (main) => {
   const matching_trails = [];
   const failing_trails = [];
+  let visited_nodes = 0;
+  let expected_nodes = 1;
   const iti = (rule, cursor, id, trail) => {
-    const trail_id = trail.join('');
-    if (trails.indexOf(trail_id) !== -1) {
-      return { 
-    }
-    trails.push(trail_id);
+    visited_nodes++;
     const token = input[cursor];
+    const trail_id = trail.join('');
+    console.log(`Id: ${ id }, token: ${ token }`, visited_nodes, expected_nodes, matching_trails.length);
+    if (visited_nodes > expected_nodes) {
+      throw Error(`Visited more nodes (${ visited_nodes }) than what I expected (${ expected_nodes }). Id: ${ id }, token: ${ token }`)
+    }
+    if (expected_nodes === visited_nodes) {
+      return { matching_trails: matching_trails.slice(), failing_trails: failing_trails.slice() };
+    }
+    if (failing_trails.indexOf(trail_id) !== -1 && matching_trails.indexOf(trail_id) !== -1) {
+      throw Error(`Trail both matches and fails: ${ id }?`);
+    }
+    const res_stub = { cursor, id, trail };
+    if (matching_trails.indexOf(trail_id) !== -1) {
+      return { ...res_stub, match: true };
+    }
+    if (failing_trails.indexOf(trail_id) !== -1 ) {
+      return { ...res_stub, match: false };
+    }
     if (rule.p && rule.s) {
-      throw new Error("Cannot understand rules thar are plus AND star");
+      throw new Error("Cannot understand rules that are plus AND star");
     } else if (rule.s) {
       const curr_rule = { ...rule, s: undefined };
       let i = 0
       let res = iti(curr_rule, cursor, id, trail.concat(`*[${ i }]`));
       while (res.match) {
         i++;
+        expected_nodes += 1;
         res = iti(curr_rule, res.cursor, res.id, trail.concat(`*[${ i }]`));
       }
       if (res.match) {
         return res;
       }
-      return { match: 
-    } else if (rule.e) {
-      
+      // return
+    } else if (rule.e) {      
+      let result = {
+        cursor,
+        trail,
+      };
+      let i;
+      expected_nodes += rule.e.length;
+      for (i = 0; i < rule.e.length; i++) {
+        const sub_id = `${id}[${i}]`;
+        result = iti(rule.e[i], result.cursor, sub_id, result.trail.concat(sub_id));
+        if (!result.match) {
+          break;
+        }
+      }
+      // return
     } else if (rule.a) {
-      
+      let i, visited = 0;
+      for (i = 0; i < rule.a.length; i++) {
+        const alt_rule = rule.a[i];
+        const alt_trail = trail.concat(id + '(' + i + ')');
+        const not_visited = TODO;
+        if (not_visited) {
+          const result = iti(alt_rule, cursor, id, alt_trail);
+          if (result.match) {
+            return { ...result, complete: false };
+          }
+        } else {
+          visited++;
+        }
+      }
+      // return
     } else if (rule.v) {
       const complete = true;
       const match = token === rule.v;

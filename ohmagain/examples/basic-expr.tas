@@ -1,0 +1,2 @@
+{ name: 'fredrik' } | $.name
+string/lower-case $

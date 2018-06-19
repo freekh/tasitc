@@ -1,0 +1,20 @@
+tasitc {
+
+  RecordValue
+    = string | int
+
+  string
+    = "'" letter* "'"
+
+  int
+    = digit+
+
+  RecordKey
+    = letter alnum*
+
+  RecordPair
+    = RecordKey ":" RecordValue
+
+  record (a record)
+    = "{" RecordPair "}"
+}

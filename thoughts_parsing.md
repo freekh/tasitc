@@ -59,3 +59,6 @@ Effecient type checking means less AST nodes.
 
 Result of parsing should have a size << than the input in most scenarios where we have lots of repeating structures (i.e. the common case).
 Being able to use immutable structures that can be cached and invalidation is the key.
+
+### 
+

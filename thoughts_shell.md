@@ -1,0 +1,1 @@
+Bundle a small visual editor which makes it easy to jump between shell and editor.
